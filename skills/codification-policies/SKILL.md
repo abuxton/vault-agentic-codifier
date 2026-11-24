@@ -50,6 +50,9 @@ Output: `discovered_terraform/terraform/<layer>/policies.tf`, `imports.tf`,
   `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
   returns in the file header. If it disagrees with `task-006-decision.md`, stop
   and report it (see `vault-codifier-conventions` section 1).
+  If the Terraform MCP binary is not installed, fall back to
+  `https://raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`
+  and record the fallback in the run notes.
 
 ## 3. Prerequisites
 
@@ -144,12 +147,12 @@ The harness has none; record "none" in `coverage.md`.
 
 ## 7. Acceptance criteria (harness)
 
-- 9 `vault_policy` resources: root `operator`; `admin` -> `admin`,
+- 10 `vault_policy` resources (harness drift: includes root `exporter`): root `operator`; `admin` -> `admin`,
   `namespace-admin`; `admin/platform` -> `platform-sre-read`,
   `platform-devops-write`; `admin/app-billing` -> `billing-developers-read`,
   `billing-owners-write`; `admin/app-identity` -> `identity-developers-read`,
   `identity-owners-write`. `default`, `root` and `default-ceiling` not emitted.
-- Distribution: 3 in `admin/` (operator, admin, namespace-admin), 6 in `seed/`.
+- Distribution: 4 in `admin/` (exporter, operator, admin, namespace-admin), 6 in `seed/`.
 - Lossless round-trip: the policy text from Vault equals the text rendered from
   the generated file (whitespace-normalised); `terraform plan` shows no change.
 - `correlation.md` records `operator` <- `terraform-admin`,
@@ -159,7 +162,7 @@ The harness has none; record "none" in `coverage.md`.
   `identity-developers-read` <- `identity-service`.
 - A policy named by a role but absent from its namespace is marked `dangling`.
 - `correlation.json` validates as JSON and is non-empty.
-- 9 `import {}` blocks.
+- 10 `import {}` blocks.
 
 ## 8. Stop conditions
 
@@ -168,3 +171,25 @@ The harness has none; record "none" in `coverage.md`.
 - TASK-006 import ID table is unavailable and the format cannot be determined:
   stop and ask rather than guess.
 - A policy name contains characters that cannot form a safe file name.
+
+## 9. Reference implementation (validated against the harness)
+
+Run `skills/codification-policies/scripts/generate.sh [raw] [out-root]`.
+
+- Layout: `admin/<ns>_policies.tf` and `admin/imports_policies.tf` (root and `admin`),
+  `seed/...` (tenants, one provider alias per namespace via `scaffold-layer.sh`),
+  `<layer>/policies/<root|ns__path>/<name>.hcl`, `policies/correlation.{md,json}`, `policies/coverage.md`.
+- Bodies over 10 lines, bodies with tabs, CR, `${`, `%{` or an `EOT` line, and bodies without a
+  trailing newline go to `.hcl` files written byte-for-byte. Others become `<<-EOT` heredocs.
+- The harness now has **10** non-built-in ACL policies, not 9: the `exporter` policy is part of
+  the cluster (root `exporter` and `operator`; `admin` x2; 6 tenant policies). Distribution is
+  4 in `admin/` and 6 in `seed/`. Skills must tolerate this drift.
+- Exit 2 on a missing or unreadable `policies.json`, an unsafe policy name, or a duplicate label.
+- A policy named by a role, group or entity but absent from its namespace is `dangling` in
+  `correlation.{md,json}`; nothing is fabricated for it.
+- EGP/RGP: discovery lists names only, so `coverage.md` records them for manual review.
+
+Validated: `fmt -check` and `validate` pass in `admin/` and `seed/`; `terraform plan` shows
+`7 to import` in `admin/` (policies, audit, quota, namespace) and `6 to import` in `seed/`, all with
+0 add, 0 change, 0 destroy (lossless round-trip); a second run is byte-identical; a `ghost` fixture
+is reported as dangling; tab-bearing and newline-less fixtures are written verbatim.

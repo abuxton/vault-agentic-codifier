@@ -43,7 +43,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-014 | Discovery orchestrator and raw payload store | 2 | N/A | implementation | M | Skill authored, awaiting validation |
 | TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Done — validated |
 | TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Done — validated |
-| TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Skill authored, awaiting validation |
+| TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Done — validated |
 | TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Skill authored, awaiting validation |
 | TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Skill authored, awaiting validation |
 | TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Skill authored, awaiting validation |
@@ -344,7 +344,7 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Effort**: L
 **Skill**: [`skills/codification-policies/SKILL.md`](../../../skills/codification-policies/SKILL.md)
 **Depends on**: TASK-009, TASK-010, TASK-012, TASK-003, TASK-004, TASK-006
-**Status**: Blocked
+**Status**: Done — validated (generate.sh; zero-diff import plan)
 **Description**: Generate `vault_policy` for every ACL policy except `default` and `root`, with documents under `policies/<namespace>/<name>.hcl` loaded via `file("${path.module}/policies/<namespace>/<name>.hcl")` for policies over 10 lines and heredocs for shorter ones; `vault_egp_policy` and `vault_rgp_policy` when present; `policies/correlation.md` (policy × auth mount/role, identity group, identity entity, per namespace, with dangling references flagged); `policies/correlation.json` for the teams generator; `policies/coverage.md`; and `import {}` blocks with `id = "<name>"`.
 **Acceptance Criteria**:
 - AC: Nine `vault_policy` resources with the exact per-namespace names in CAP-006 AC1.
