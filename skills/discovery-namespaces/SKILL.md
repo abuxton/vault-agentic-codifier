@@ -137,23 +137,46 @@ curl -s -S \
   "${VAULT_ADDR}/v1/sys/namespaces/platform" | jq -S .data
 ```
 
+### Reference implementation (validated against the harness)
+
+Runs under macOS `/bin/bash` 3.2: `${h[@]+"${h[@]}"}` is required because an empty array is "unbound" under `set -u`.
+Under zsh do not rely on word-splitting of `$keys`; use `while read`.
+
+```bash
+set -euo pipefail
+walk() {
+  local parent="$1" h=()
+  [ -n "$parent" ] && h=(--header "X-Vault-Namespace: $parent")
+  curl -sS --request LIST --header "X-Vault-Token: ${EXPORTER_TOKEN}" ${h[@]+"${h[@]}"} "${VAULT_ADDR}/v1/sys/namespaces" \
+    | jq -r '.data.keys[]?' | LC_ALL=C sort | while read -r k; do
+      k=${k%/}
+      curl -sS --header "X-Vault-Token: ${EXPORTER_TOKEN}" ${h[@]+"${h[@]}"} "${VAULT_ADDR}/v1/sys/namespaces/$k" \
+        | jq -c --arg p "${parent:+$parent/}$k" --arg par "$parent" \
+          '.data | {path:$p,parent:$par,id:.id,custom_metadata:(.custom_metadata // null),depth:($p|split("/")|length)}'
+      walk "${parent:+$parent/}$k"
+    done
+}
+walk "" | jq -s -S 'sort_by([.depth,.path])' > discovered_terraform/raw/namespaces.json
+```
+
 ## 6. Output Schema
 
-The output file `discovered_terraform/raw/namespaces.json` must adhere to the following schema:
+The output file `discovered_terraform/raw/namespaces.json` must adhere to the following schema.
+Namespace IDs are short opaque strings (e.g. `qOOjV`), not UUIDs. A namespace with no metadata returns `{}`, not `null`.
 
 ```json
 [
   {
     "path": "admin",
     "parent": "",
-    "id": "c1f7b9e0-8a4d-4b9e-9d2a-1b2c3d4e5f60",
-    "custom_metadata": null,
+    "id": "qOOjV",
+    "custom_metadata": {},
     "depth": 1
   },
   {
     "path": "admin/app-billing",
     "parent": "admin",
-    "id": "e3a8c1f0-2b5d-4c8e-8f1a-3d4e5f607182",
+    "id": "FJ3lt",
     "custom_metadata": {
       "description": "Billing application team namespace"
     },
@@ -162,7 +185,7 @@ The output file `discovered_terraform/raw/namespaces.json` must adhere to the fo
   {
     "path": "admin/app-identity",
     "parent": "admin",
-    "id": "f4b9d2e1-3c6e-4d9f-9a2b-4e5f60718293",
+    "id": "x7ROq",
     "custom_metadata": {
       "description": "Identity service team namespace"
     },
@@ -171,7 +194,7 @@ The output file `discovered_terraform/raw/namespaces.json` must adhere to the fo
   {
     "path": "admin/platform",
     "parent": "admin",
-    "id": "d2e8a0f1-1a3c-4b7d-8e0f-2a3b4c5d6e7f",
+    "id": "CaNRp",
     "custom_metadata": {
       "description": "Platform engineering team namespace"
     },
@@ -193,7 +216,7 @@ The output file `discovered_terraform/raw/namespaces.json` must adhere to the fo
 ## 8. Acceptance Criteria Checklist
 
 - [ ] **AC-1 (CAP-005 AC1)**: Against the harness, exactly 4 namespaces are discovered: `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`.
-- [ ] **AC-2 (CAP-005 AC2)**: Custom metadata descriptions match harness configuration for tenant namespaces (`platform`, `app-billing`, `app-identity`), while `admin` has `null` custom metadata.
+- [ ] **AC-2 (CAP-005 AC2)**: Custom metadata descriptions match harness configuration for tenant namespaces (`platform`, `app-billing`, `app-identity`), while `admin` has `{}` custom metadata.
 - [ ] **AC-3 (CAP-005 AC3)**: Topologically ordered such that every parent namespace precedes its child namespaces.
 - [ ] **AC-4 (CAP-005 AC5)**: Handles arbitrary depth (`depth >= 3`) correctly without hardcoded level limits.
 - [ ] **AC-5 (CAP-005 AC6)**: Root namespace `""` is excluded from the output list.

@@ -37,7 +37,7 @@ The following non-negotiable governance rules apply:
 2. **Read-Only**: Execute ONLY `GET` and `LIST` requests. Never write, mutate, or trigger cluster lifecycle actions.
 3. **License Protection**: NEVER read `/v1/sys/license` (which returns raw license text). ONLY read `/v1/sys/license/status` for metadata (features, expiration date, license ID). Never emit license text.
 4. **No Secret / Sensitive Data**: Never capture or store tokens, unseal keys, or sensitive backend parameters.
-5. **Deterministic Payloads**: Store payloads formatted with sorted keys (`jq -S`). Strip volatile fields (`request_id`, `lease_id`, `lease_duration`, `renewable`).
+5. **Deterministic Payloads**: Store payloads formatted with sorted keys (`jq -S`). Strip volatile fields (`request_id`, `lease_id`, `lease_duration`, `renewable`). `sys/health` also carries `server_time_utc`, `last_wal`, `echo_duration_ms`, `clock_skew_ms` and `replication_primary_canary_age_ms`; `sys/seal-status` carries `nonce` and `progress`. Delete all of them or re-runs will differ. Prefer `.data` (the envelope is volatile) where the endpoint wraps its response.
 6. **Non-Fatal Graceful Degradation**: On HTTP 403 or 404 for optional system endpoints, record a line in `discovered_terraform/raw/run_report.jsonl` and continue.
 7. **Provenance**: Cite upstream HashiCorp documentation: `https://developer.hashicorp.com/vault/api-docs/system` and `https://developer.hashicorp.com/vault/docs/configuration`.
 
@@ -72,7 +72,7 @@ The following non-negotiable governance rules apply:
 [5. GET /v1/sys/replication/status]
        │
        ▼
-[6. GET /v1/sys/config/ui/headers & GET sys/internal/ui/feature-flags]
+[6. LIST /v1/sys/config/ui/headers (sudo) & GET sys/internal/ui/feature-flags]
        │
        ▼
 [7. Write raw payloads to discovered_terraform/raw/root/*.json via jq -S]
@@ -93,8 +93,8 @@ The following non-negotiable governance rules apply:
    Read license status to capture `license_id`, `start_time`, `expiration_time`, and licensed `features`. Strictly avoid `/v1/sys/license`.
 5. **Step 5: Replication Status (`GET /v1/sys/replication/status`)**  
    Check replication mode (disabled, primary, secondary, performance, dr).
-6. **Step 6: UI Configuration (`GET /v1/sys/config/ui/headers`, `GET /v1/sys/internal/ui/feature-flags`)**  
-   Capture custom UI header configurations and UI feature flags.
+6. **Step 6: UI Configuration (`LIST /v1/sys/config/ui/headers`, `GET /v1/sys/internal/ui/feature-flags`)**
+   Capture the names of custom UI headers and the UI feature flags. `sys/config/ui/headers` needs `sudo`, and `GET` on the bare path is 405: only `LIST` is valid. A `LIST` that returns 404 means "no headers configured" and is saved as `{"keys": []}`, not logged as a failure (applies to every `LIST` in the discovery skills).
 7. **Step 7: Format and Write Payloads**  
    Format each payload with `jq -S` and save under `discovered_terraform/raw/root/`.
 8. **Step 8: Log Non-200 Responses**  
@@ -163,10 +163,10 @@ curl -s -S \
 
 ### 6. UI Headers & Feature Flags
 ```bash
-curl -s -S \
+curl -s -S --request LIST \
   --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
   "${VAULT_ADDR}/v1/sys/config/ui/headers" | jq -S .data \
-  > discovered_terraform/raw/root/ui_headers.json
+  > discovered_terraform/raw/root/ui_headers.json   # 404 => write {"keys":[]}
 
 curl -s -S \
   --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
@@ -185,7 +185,7 @@ Output payloads are saved under `discovered_terraform/raw/root/`:
 | `seal_status.json` | `GET /v1/sys/seal-status` | `type`, `initialized`, `sealed`, `t`, `n`, `version`, `cluster_name` | `nonce`, `migration` |
 | `license_status.json` | `GET /v1/sys/license/status` | `license_id`, `start_time`, `expiration_time`, `features` | `license_text`, `request_id` |
 | `replication_status.json` | `GET /v1/sys/replication/status` | `mode`, `dr`, `performance` | `request_id`, `lease_id` |
-| `ui_headers.json` | `GET /v1/sys/config/ui/headers` | `headers`, `default` | `request_id`, `lease_id` |
+| `ui_headers.json` | `LIST /v1/sys/config/ui/headers` | `keys` (names only) | `request_id`, `lease_id` |
 
 ## 7. What NOT to Capture
 

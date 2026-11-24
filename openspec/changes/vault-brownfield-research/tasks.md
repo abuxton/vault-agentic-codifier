@@ -194,7 +194,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: M
 **Skill**: [`skills/discovery-namespaces/SKILL.md`](../../../skills/discovery-namespaces/SKILL.md)
 **Depends on**: TASK-005, TASK-003, TASK-031
-**Status**: Ready to start
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): 4 namespaces, parent-before-child, IDs match `vault namespace list -detailed`
 **Description**: Implement the recursive depth-first namespace walk from `design.md` §6 (`LIST sys/namespaces` at root, then under `X-Vault-Namespace` for each child; leaf detection on empty/404/403) and read `GET sys/namespaces/<path>` for `id`, `path` and `custom_metadata`. Produce the ordered, parent-before-child namespace list that every other discovery module consumes. Handle depth greater than two.
 **Acceptance Criteria**:
 - AC: Against the harness the discovered set is exactly `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity` (4 namespaces, max depth 2) (CAP-005 AC1).
@@ -208,7 +208,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: M
 **Skill**: [`skills/discovery-root-config/SKILL.md`](../../../skills/discovery-root-config/SKILL.md)
 **Depends on**: TASK-005, TASK-007, TASK-031
-**Status**: Ready to start
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): root payloads under `raw/root/`; `sys/config/ui/headers` needs sudo and LIST (exporter policy fixed); empty LIST 404 = empty set
 **Description**: Query the root namespace inputs listed in CAP-001: `sys/audit`, root mount tuning (`sys/mounts` and `/tune`), `sys/quotas/rate-limit` (list and per-name read) and `sys/quotas/config`, `sys/seal-status`, `sys/health`, `sys/host-info`, `sys/license/status` (never the licence text), `sys/replication/status`, `sys/config/ui/headers` and `sys/internal/ui/feature-flags`. Store raw payloads and record unreachable endpoints in the run report.
 **Acceptance Criteria**:
 - AC: Against the harness, raw payloads show one `file` audit device with `file_path = /vault/logs/audit.log` and the `global-rate-limit` quota with `rate = 1000`, `interval = 60`, `block_interval = 60` (CAP-001 AC1, AC2).
@@ -223,7 +223,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: M
 **Skill**: [`skills/discovery-policies/SKILL.md`](../../../skills/discovery-policies/SKILL.md)
 **Depends on**: TASK-005, TASK-007, TASK-031
-**Status**: Ready to start
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): 10 ACL policies byte-identical to the API; `default-ceiling` is a Vault 2.x built-in and is skipped; EGP/RGP empty
 **Description**: For the root namespace and every namespace from TASK-007, `LIST sys/policies/acl` and `GET sys/policies/acl/<name>`, excluding `default` and `root`. Also `LIST sys/policies/egp` and `sys/policies/rgp` (Enterprise), recorded for `coverage.md`. Store the policy text byte-for-byte as returned.
 **Acceptance Criteria**:
 - AC: Against the harness the discovered non-builtin policies are exactly the 9 names in CAP-006 AC1 across root, `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`.
@@ -237,7 +237,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: L
 **Skill**: [`skills/discovery-auth-mounts/SKILL.md`](../../../skills/discovery-auth-mounts/SKILL.md)
 **Depends on**: TASK-005, TASK-007, TASK-031
-**Status**: Ready to start
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): 5 approle mounts, 6 roles; `sys/auth/<m>/tune` needs sudo at every depth (exporter policy fixed); no role-id or secret-id values
 **Description**: Per namespace, read `sys/auth` (type, description, config, options, accessor, local, seal_wrap) and `sys/auth/<path>/tune`, then method-specific reads: AppRole `LIST auth/<path>/role` and `GET .../role/<name>`; `GET auth/<path>/config`; `LIST .../groups` and `.../users` for ldap/okta/github; plus jwt/oidc, kubernetes, aws and cert reads listed in CAP-003 outputs. Skip the builtin `token/` mount. Never read `role-id` or `secret-id` endpoints.
 **Acceptance Criteria**:
 - AC: Against the harness the raw set contains exactly five `approle` mounts (one per namespace) and five roles with the names and namespaces in CAP-003 AC2.
@@ -252,7 +252,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: L
 **Skill**: [`skills/discovery-secrets-engines/SKILL.md`](../../../skills/discovery-secrets-engines/SKILL.md)
 **Depends on**: TASK-005, TASK-007, TASK-031
-**Status**: Ready to start
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): KV v2 `secret/` in root and 3 tenants, `admin` has none; `agent-registry/` (Vault 2.x built-in) is skipped by mount type
 **Description**: Per namespace, read `sys/mounts` and `sys/mounts/<path>/tune`, skipping `sys/`, `identity/` and `cubbyhole/`. Read engine configuration read-only: KV v2 `config`; PKI `config/urls`, `config/crl`, `LIST roles`; database `config/<name>` and roles; AWS/Azure/GCP `config/root` (non-secret fields only); Transit key metadata (no key material). Never read secret data paths.
 **Acceptance Criteria**:
 - AC: Against the harness the raw set contains exactly three `kv` v2 mounts at `secret` in `admin/platform`, `admin/app-billing` and `admin/app-identity`, with the descriptions in CAP-004 AC1; no mounts for `admin` (CAP-004 AC2).
@@ -267,7 +267,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: L
 **Skill**: [`skills/discovery-identity-teams/SKILL.md`](../../../skills/discovery-identity-teams/SKILL.md)
 **Depends on**: TASK-005, TASK-007, TASK-010, TASK-031
-**Status**: Ready to start
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): admin: 9 groups, 6 entities; root: exporter-agent + AppRole alias; null member lists normalised
 **Description**: Per namespace, `LIST identity/group/name` and `GET identity/group/name/<name>` (type, policies, member_entity_ids, member_group_ids, metadata); `LIST identity/entity/name` and `GET .../<name>`; `LIST identity/group-alias/id` and `identity/entity-alias/id` with per-ID reads; and `sys/auth` accessor-to-mount-path resolution using TASK-010 payloads. Capture group and entity IDs only as lookup keys for reference resolution.
 **Acceptance Criteria**:
 - AC: Against the harness the raw set contains 9 groups (3 tenant-admin, 6 team) and 6 entities in `admin`, and none in other namespaces (CAP-007 AC1, AC2).
@@ -281,7 +281,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: M
 **Skill**: [`skills/discovery-admin-config/SKILL.md`](../../../skills/discovery-admin-config/SKILL.md)
 **Depends on**: TASK-005, TASK-007, TASK-010, TASK-031
-**Status**: Ready to start
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): no human auth detected; operator policies admin and namespace-admin; 3 operator groups
 **Description**: Query the admin-namespace-specific inputs from CAP-002: `GET sys/namespaces/admin`, and with `X-Vault-Namespace: admin`, `sys/auth` plus `auth/<mount>/config` and role/group endpoints for `oidc`, `jwt`, `ldap` and `approle` mounts. Reuse TASK-009, TASK-010 and TASK-012 payloads for policies and identity rather than re-querying. Detect human auth methods (`oidc`, `jwt`, `ldap`).
 **Acceptance Criteria**:
 - AC: Against the harness the module reports "no human auth method detected in `admin`" (CAP-002 AC3).
@@ -294,7 +294,7 @@ Per-capability skills that query the live Vault API with the exporter token (`va
 **Effort**: M
 **Skill**: [`skills/discovery-orchestrator/SKILL.md`](../../../skills/discovery-orchestrator/SKILL.md)
 **Depends on**: TASK-007, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013
-**Status**: Blocked
+**Status**: Done — validated against the harness (Vault 2.2.2+ent): `skills/discovery-orchestrator/scripts/run.sh`: exit 0, no non-200s, byte-identical re-run, 221 exporter requests all read/list, none on data/metadata/role-id/secret-id
 **Description**: Implement the Phase 1 (Discovery) driver from `design.md` §2.1: run the discovery modules in the dependency order `namespaces` → `root-config` → `policies` → `auth-mounts` → `secrets-engines` → `teams` → `admin-config`; write raw JSON to a per-namespace directory with stable, sorted keys; emit a single run report (endpoints queried, non-200 outcomes, warnings, exit status). Exit non-zero only where a capability spec says so (for example CAP-001 AC7).
 **Acceptance Criteria**:
 - AC: One command runs all discovery against `VAULT_ADDR`/`VAULT_TOKEN` and produces a raw payload tree with one directory per namespace plus root.

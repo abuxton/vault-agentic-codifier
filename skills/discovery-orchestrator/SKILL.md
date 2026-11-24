@@ -100,6 +100,25 @@ export VAULT_TOKEN="${EXPORTER_TOKEN}"   # NEVER root
 
 Steps 3-6 may run concurrently; for deterministic logs, serial is the default. Output bytes must not depend on ordering.
 
+### Reference implementation (validated against the harness)
+
+The runnable implementation lives in [`scripts/`](scripts/): `lib.sh` (shared `vget`/`fetch` helpers), one script
+per discovery skill, and `run.sh` (the orchestrator). One command runs everything:
+
+```bash
+export VAULT_CONFIG_PATH=/dev/null VAULT_ADDR=http://127.0.0.1:8200
+export EXPORTER_TOKEN=...            # from vault-exporter-setup; never a root token, never printed
+bash skills/discovery-orchestrator/scripts/run.sh          # FROM=discovery-auth-mounts to resume
+```
+
+Validated results (Vault 2.2.2+ent harness, 4 namespaces): a clean run takes about 6 s, exits 0 with
+`non_200_responses: []`; a second run produces a byte-identical `raw/` tree; the audit log for both runs shows
+221 exporter requests, all `read` or `list`, none under `data/`, `metadata/`, `role-id`, `secret-id`, `sys/license`
+(text) or `config/root`, and no error responses. Needs macOS `/bin/bash` 3.2 or newer, `curl` and `jq`; no Python.
+
+`run.sh` also enforces the stop conditions itself: invalid or expired token, a token carrying the `root` policy and
+a missing audit device all exit 2 before any discovery call.
+
 ```bash
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"; START="$(date -u +%FT%TZ)"
 for step in discovery-namespaces discovery-root-config discovery-policies \
@@ -133,7 +152,7 @@ The run report is excluded from the comparison (it contains timestamps). Any dif
 
 ## Run report format
 
-`discovered_terraform/run_report.json`:
+`discovered_terraform/run_report.json` (written by `run.sh`; per-skill non-200s go to `raw/run_report.jsonl` and are merged here):
 
 ```json
 {
@@ -158,30 +177,29 @@ The run report is excluded from the comparison (it contains timestamps). Any dif
 ```
 discovered_terraform/
   run_report.json
+  .state.json
   raw/
     namespaces.json
+    coverage.json                 # policies: acl_total 10, no EGP/RGP
+    root/                         # root namespace
+      audit.json  health.json  license_status.json  replication_status.json  seal_status.json
+      quotas_config.json  quotas_rate_limit_list.json  quota_rate_limit_global_rate_limit.json
+      ui_headers.json  ui_feature_flags.json
+      policies.json  auth_mounts.json  secrets_engines.json
+      identity.json             # exporter-agent entity + its AppRole alias
     admin/
-      root_config.json
-      policies.json
-      auth_mounts.json
-      secrets_engines.json      # mounts: [] (no KV in admin)
+      policies.json  auth_mounts.json
+      secrets_engines.json      # mounts: [] (agent-registry is skipped)
       identity.json             # 9 groups, 6 entities, 0 aliases
       admin_config.json
-    admin/platform/             # path is flattened per skill convention (e.g. admin_platform/)
-      policies.json
-      auth_mounts.json
+    admin/platform/  admin/app-billing/  admin/app-identity/
+      policies.json  auth_mounts.json
       secrets_engines.json      # 1 KV v2 mount: secret/
-    admin/app-billing/
-      policies.json
-      auth_mounts.json
-      secrets_engines.json
-    admin/app-identity/
-      policies.json
-      auth_mounts.json
-      secrets_engines.json
 ```
 
-No `identity.json` in child namespaces (empty sets create no file). Directory layout for nested namespaces follows `discovered_terraform/raw/<namespace>/` as defined by TASK-007.
+There is no `root_config.json`: root-config writes one file per endpoint under `raw/root/`. No `identity.json`
+in child namespaces (empty sets create no file). Nested namespaces use `discovered_terraform/raw/<namespace>/`
+(the path keeps its slashes, e.g. `raw/admin/platform/`).
 
 ---
 

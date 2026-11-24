@@ -53,7 +53,7 @@ Terraform MCP rules:
 2. **Never emit** these resource types: `vault_kv_secret_v2`, `vault_kv_secret`,
    `vault_generic_secret`, `vault_approle_auth_backend_role_secret_id`. They
    persist secret material in state.
-3. **Builtin objects are never codified.** Policies `default` and `root`; auth
+3. **Builtin objects are never codified.** Policies `default`, `root` and `default-ceiling` (Vault 2.x, every namespace); auth
    mount `token/`; secrets mounts `sys/`, `identity/`, `cubbyhole/`.
 4. **Ownership.** One resource type has exactly one owning skill:
 

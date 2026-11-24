@@ -104,6 +104,18 @@ The following non-negotiable governance rules apply:
 
 ## 5. Exact API & CLI Calls
 
+> **Validated notes (harness, Vault 2.2.2+ent).**
+> - `GET sys/auth/<path>` and `GET sys/auth/<path>/tune` require **`sudo`**
+>   ([API docs](https://developer.hashicorp.com/vault/api-docs/system/auth)). The exporter policy grants
+>   `read`+`sudo` on `sys/auth/+` and `sys/auth/+/tune` at every namespace depth. Without it the tune read is
+>   403 in every namespace. The endpoint accepts no writes with that grant.
+> - Fetch `sys/auth` once per namespace; do not re-read it per mount.
+> - The tune payload keeps `default_lease_ttl`, `max_lease_ttl`, `token_type`, `listing_visibility`,
+>   `audit_non_hmac_*_keys`, `passthrough_request_headers`, `allowed_response_headers`. A mount that was never
+>   tuned reports the system default (`2764800`), not `0`.
+> - Role payload keeps config keys only (`bind_secret_id`, `secret_id_*`, `token_*`). The key names contain
+>   `secret_id` but hold no secret values; a credential check must match values, not key names.
+
 ### 1. AppRole Discovery (Harness Oracle)
 ```bash
 # List auth mounts in namespace admin/platform
@@ -212,8 +224,8 @@ The output payload is written to `discovered_terraform/raw/<namespace>/auth_moun
 ## 9. Acceptance Criteria Checklist
 
 - [ ] **AC-1 (CAP-003 AC1)**: Discovers exactly 5 `approle` mounts (one per namespace: root, `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`). `token/` is skipped.
-- [ ] **AC-2 (CAP-003 AC2)**: Discovers exactly 5 roles: `terraform-admin` (root), `namespace-provisioner` (`admin`), `platform-ci` (`admin/platform`), `billing-service` (`admin/app-billing`), `identity-service` (`admin/app-identity`).
-- [ ] **AC-3 (CAP-003 AC3)**: Roles capture `token_ttl = 3600`, `token_max_ttl = 14400`, `secret_id_num_uses = 1`, and correct `secret_id_ttl` (900s for root/admin/billing/identity, 1800s for platform-ci).
+- [ ] **AC-2 (CAP-003 AC2)**: Discovers exactly 6 roles: `terraform-admin` and `exporter` (root), `namespace-provisioner` (`admin`), `platform-ci` (`admin/platform`), `billing-service` (`admin/app-billing`), `identity-service` (`admin/app-identity`). `exporter` is the discovery identity itself; it is present once `vault-exporter-setup` has run.
+- [ ] **AC-3 (CAP-003 AC3)**: Roles capture `token_ttl = 3600`, `token_max_ttl = 14400`, `secret_id_num_uses = 1`, and correct `secret_id_ttl` (900s for root/admin/billing/identity, 1800s for platform-ci). The `exporter` role has `secret_id_ttl = 900`, `secret_id_num_uses = 1`.
 - [ ] **AC-4 (CAP-003 AC5)**: Zero `role_id` or `secret_id` values appear in raw payloads.
 - [ ] **AC-5 (CAP-003 AC6)**: `coverage` records all 5 mounts with `vault_auth_backend` and roles with `vault_approle_auth_backend_role`.
 - [ ] **AC-6 (CAP-003 AC7)**: Unhandled auth types (e.g. `userpass`) are captured with mount metadata and flagged for fallback.

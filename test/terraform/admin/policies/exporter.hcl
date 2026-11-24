@@ -62,6 +62,15 @@ path "sys/auth/*" {
   capabilities = ["list", "read"]
 }
 
+# Reading auth-mount config and tuning requires sudo (read only; no update).
+path "sys/auth/+" {
+  capabilities = ["read", "sudo"]
+}
+
+path "sys/auth/+/tune" {
+  capabilities = ["read", "sudo"]
+}
+
 path "auth/+/role" {
   capabilities = ["list"]
 }
@@ -80,6 +89,14 @@ path "+/sys/auth" {
 
 path "+/sys/auth/*" {
   capabilities = ["list", "read"]
+}
+
+path "+/sys/auth/+" {
+  capabilities = ["read", "sudo"]
+}
+
+path "+/sys/auth/+/tune" {
+  capabilities = ["read", "sudo"]
 }
 
 path "+/auth/+/role" {
@@ -102,6 +119,14 @@ path "+/+/sys/auth/*" {
   capabilities = ["list", "read"]
 }
 
+path "+/+/sys/auth/+" {
+  capabilities = ["read", "sudo"]
+}
+
+path "+/+/sys/auth/+/tune" {
+  capabilities = ["read", "sudo"]
+}
+
 path "+/+/auth/+/role" {
   capabilities = ["list"]
 }
@@ -120,6 +145,14 @@ path "+/+/+/sys/auth" {
 
 path "+/+/+/sys/auth/*" {
   capabilities = ["list", "read"]
+}
+
+path "+/+/+/sys/auth/+" {
+  capabilities = ["read", "sudo"]
+}
+
+path "+/+/+/sys/auth/+/tune" {
+  capabilities = ["read", "sudo"]
 }
 
 path "+/+/+/auth/+/role" {
@@ -466,6 +499,14 @@ path "sys/replication/status" {
 
 path "sys/config/ui" {
   capabilities = ["read"]
+}
+
+path "sys/config/ui/headers" {
+  capabilities = ["list", "read", "sudo"]
+}
+
+path "sys/config/ui/headers/*" {
+  capabilities = ["list", "read", "sudo"]
 }
 
 path "sys/internal/ui/feature-flags" {

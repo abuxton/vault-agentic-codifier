@@ -34,7 +34,7 @@ Policies define authorization boundaries and capabilities within Vault. Capturin
 The following non-negotiable governance rules apply:
 1. **Authentication**: Use ONLY the exporter AppRole token (`${EXPORTER_TOKEN}`). Never use root or operator tokens.
 2. **Read-Only**: Execute ONLY `GET` and `LIST` operations (`LIST /v1/sys/policies/acl`, `GET /v1/sys/policies/acl/<name>`).
-3. **Skip Builtins**: Always ignore and exclude the built-in `default` and `root` policies. They are managed internally by Vault and cannot be managed via standard `vault_policy` resources.
+3. **Skip Builtins**: Always ignore and exclude the built-in `default`, `root` and `default-ceiling` policies. Vault 2.x creates `default-ceiling` (the agent-registry ceiling policy) in every namespace; it is managed internally and is not codified. They cannot be managed via standard `vault_policy` resources.
 4. **Verbatim Policy Text**: Stored policy documents must preserve the raw string returned by Vault byte-for-byte (including comments and whitespace).
 5. **No Mutation of Paths**: Path stanzas within policies (even if using relative paths like `secret/data/*`) must NOT be rewritten during discovery.
 6. **Graceful Handling of Sentinel (EGP/RGP)**: On non-Enterprise editions or when permissions are missing, log 403/404 to the run report and record "none" / "unavailable" in coverage.
@@ -64,7 +64,7 @@ The following non-negotiable governance rules apply:
        ├──► [LIST /v1/sys/policies/acl]
        │       │
        │       ▼
-       │    [Filter out 'default' and 'root']
+       │    [Filter out 'default', 'root', 'default-ceiling']
        │       │
        │       ▼
        │    [For each policy name: GET /v1/sys/policies/acl/<name>]
@@ -89,7 +89,7 @@ The following non-negotiable governance rules apply:
 2. **Step 2: List ACL Policies**  
    Issue `LIST /v1/sys/policies/acl` with `X-Vault-Namespace` set to the current namespace.
 3. **Step 3: Fetch Policy Contents**  
-   For each policy name returned, check if it is `default` or `root`. If so, skip. Otherwise, execute `GET /v1/sys/policies/acl/<name>` and retrieve the raw `policy` string.
+   For each policy name returned, check if it is `default`, `root` or `default-ceiling`. If so, skip. Otherwise, execute `GET /v1/sys/policies/acl/<name>` and retrieve the raw `policy` string.
 4. **Step 4: Check Sentinel Policies (Enterprise)**  
    Execute `LIST /v1/sys/policies/egp` and `LIST /v1/sys/policies/rgp`. If empty or 403, record status as "none" or "unavailable".
 5. **Step 5: Write Per-Namespace Payloads**  
@@ -169,15 +169,23 @@ Saved to `discovered_terraform/raw/<namespace>/policies.json` (or `root/policies
 ```
 
 ### Coverage Record (`coverage.json`)
+`LIST` on an empty EGP/RGP set returns 404, which is recorded as an empty list, not a failure.
 ```json
 {
   "policies": {
-    "acl_total": 9,
+    "acl_total": 10,
     "egp_policies": [],
-    "rgp_policies": [],
-    "sentinel_supported": false
+    "rgp_policies": []
   }
 }
+```
+
+### Reference implementation (validated against the harness)
+Per namespace: `LIST sys/policies/acl`, drop built-ins, `GET` each, emit `{name, namespace, policy_text: .data.policy, type}`
+sorted by name. Compare with `jq -j` (no trailing newline) when checking byte-for-byte against the API.
+```bash
+vget LIST "$ns" sys/policies/acl | jq -r '.data.keys[]? | select(. != "default" and . != "root" and . != "default-ceiling")' | LC_ALL=C sort
+vget GET  "$ns" "sys/policies/acl/$n" | jq -c --arg ns "$ns" '.data | {name:.name,namespace:$ns,policy_text:.policy,type:"acl"}'
 ```
 
 ## 7. Deduplication & Namespace Scoping
@@ -195,13 +203,13 @@ Saved to `discovered_terraform/raw/<namespace>/policies.json` (or `root/policies
 
 ## 9. Acceptance Criteria Checklist
 
-- [ ] **AC-1 (CAP-006 AC1)**: Discovers exactly the 9 non-builtin ACL policies across namespaces:
-  - Root: `operator` (1)
+- [ ] **AC-1 (CAP-006 AC1)**: Discovers exactly the 10 non-builtin ACL policies across namespaces:
+  - Root: `operator`, `exporter` (2)
   - `admin`: `admin`, `namespace-admin` (2)
   - `admin/platform`: `platform-sre-read`, `platform-devops-write` (2)
   - `admin/app-billing`: `billing-developers-read`, `billing-owners-write` (2)
   - `admin/app-identity`: `identity-developers-read`, `identity-owners-write` (2)
-- [ ] **AC-2 (CAP-006 AC1)**: Built-in policies `default` and `root` are excluded from all output payloads.
+- [ ] **AC-2 (CAP-006 AC1)**: Built-in policies `default`, `root` and `default-ceiling` are excluded from all output payloads.
 - [ ] **AC-3 (CAP-006 AC2)**: Stored `policy_text` matches the live cluster API output byte-for-byte.
 - [ ] **AC-4 (CAP-006 AC7)**: Path stanzas with namespace-relative paths (e.g. `secret/data/*`) are preserved without alterations.
 - [ ] **AC-5 (CAP-006 AC8)**: EGP/RGP checks return "none" for the harness without causing errors.

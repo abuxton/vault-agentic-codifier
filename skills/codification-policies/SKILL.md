@@ -62,7 +62,7 @@ Output: `discovered_terraform/terraform/<layer>/policies.tf`, `imports.tf`,
 ## 4. Process
 
 1. **Load** each namespace's `policies.json` (`name`, `policy` text).
-2. **Skip** `default` and `root`.
+2. **Skip** `default`, `root` and `default-ceiling` (Vault 2.x built-in).
 3. **Choose body style by line count** of the policy text:
    - More than 10 lines: write `policies/<namespace>/<name>.hcl` (namespace with
      `/` normalised to `_`) and emit
@@ -148,7 +148,7 @@ The harness has none; record "none" in `coverage.md`.
   `namespace-admin`; `admin/platform` -> `platform-sre-read`,
   `platform-devops-write`; `admin/app-billing` -> `billing-developers-read`,
   `billing-owners-write`; `admin/app-identity` -> `identity-developers-read`,
-  `identity-owners-write`. `default` and `root` not emitted.
+  `identity-owners-write`. `default`, `root` and `default-ceiling` not emitted.
 - Distribution: 3 in `admin/` (operator, admin, namespace-admin), 6 in `seed/`.
 - Lossless round-trip: the policy text from Vault equals the text rendered from
   the generated file (whitespace-normalised); `terraform plan` shows no change.

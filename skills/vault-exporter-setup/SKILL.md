@@ -84,6 +84,14 @@ Key design points (verified against the harness, Vault Enterprise 2.2.2):
   ([API docs](https://developer.hashicorp.com/vault/api-docs/system/audit)).
   The grant is `read` + `sudo` on that one root path only. Without it,
   `discovery-root-config` gets a 403 on its mandatory audit-device read.
+- **`sys/auth/<path>` and `sys/auth/<path>/tune` also need `sudo`**
+  ([API docs](https://developer.hashicorp.com/vault/api-docs/system/auth)). Grant `read`+`sudo` on
+  `sys/auth/+` and `sys/auth/+/tune` at every depth. `discovery-auth-mounts` gets a 403 on tuning without it.
+- **`sys/config/ui/headers` also needs `sudo`**
+  ([API docs](https://developer.hashicorp.com/vault/api-docs/system/config-ui-headers)),
+  and only `LIST` is valid on the bare path. Grant `list`, `read`, `sudo` on
+  `sys/config/ui/headers` and `sys/config/ui/headers/*`. Without `sudo` the
+  exporter gets 403 even though `vault token capabilities` reports `list, read`.
 - **Explicit `deny`** on `<mount>/data/*` and `<mount>/metadata/*` at every
   depth, and on AppRole `role-id` / `secret-id` endpoints.
 - No `create`, `update` or `delete` anywhere.
