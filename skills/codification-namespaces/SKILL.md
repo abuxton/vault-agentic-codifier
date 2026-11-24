@@ -41,6 +41,9 @@ how they apply here. Additional rules specific to this skill:
   `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
   returns in the file header. If it disagrees with `task-006-decision.md`, stop
   and report it (see `vault-codifier-conventions` section 1).
+  If the Terraform MCP binary is not installed, fall back to the provider docs at
+  `https://raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`
+  and record the fallback in the run notes.
 
 
 - **Root namespace is never emitted.** The root namespace (`""` / `root`) has no
@@ -242,3 +245,17 @@ The `Id` column is copied verbatim from `namespaces.json`; ids appear only in
 - `namespaces.json` missing or invalid JSON.
 - Two namespaces normalise to the same Terraform label: stop and report both
   paths (CAC6, label uniqueness).
+
+## 10. Reference implementation (validated against the harness)
+
+Run `skills/codification-namespaces/scripts/generate.sh [namespaces.json] [out-root]`.
+It calls `vault-codifier-conventions/scripts/scaffold-layer.sh` for `versions.tf` and
+`providers.tf`, writes `admin/` and `namespaces/`, runs `terraform fmt`, and stops
+(exit 2) on an orphan parent or a duplicate label.
+
+Validated: 4 `vault_namespace` resources; `fmt -check` and `validate` pass in both layers;
+a second run is byte-identical; no `namespace =` argument and no `"admin/` literal in any
+`vault_namespace` block; a depth-3 fixture (`admin/platform/sre-team`) gets
+`provider = vault.admin_platform` plus `depends_on`; an orphan fixture exits 2;
+`terraform plan` shows `4 to import, 0 to add, 0 to change, 0 to destroy` (1 in `admin/`, 3 in `namespaces/`).
+Import blocks omit `provider =`, so they use the provider of the target resource.

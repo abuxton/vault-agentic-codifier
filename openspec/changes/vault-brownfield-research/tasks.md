@@ -41,7 +41,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-012 | Identity and teams discovery | 2 | CAP-007 | implementation | L | Skill authored, awaiting validation |
 | TASK-013 | Admin-namespace discovery | 2 | CAP-002 | implementation | M | Skill authored, awaiting validation |
 | TASK-014 | Discovery orchestrator and raw payload store | 2 | N/A | implementation | M | Skill authored, awaiting validation |
-| TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Skill authored, awaiting validation |
+| TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Done — validated |
 | TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Skill authored, awaiting validation |
 | TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Skill authored, awaiting validation |
 | TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Skill authored, awaiting validation |
@@ -314,7 +314,7 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Effort**: M
 **Skill**: [`skills/codification-namespaces/SKILL.md`](../../../skills/codification-namespaces/SKILL.md)
 **Depends on**: TASK-007, TASK-003, TASK-004, TASK-002
-**Status**: Blocked
+**Status**: Done — validated (generate.sh; zero-diff import plan)
 **Description**: Generate `namespaces/namespaces.tf` (`vault_namespace`, children referencing the parent by resource reference or aliased provider rather than string concatenation), `namespaces/hierarchy.md` (Mermaid tree and a table of full path, parent, namespace ID, custom metadata and depth), `namespaces/namespaces.auto.tfvars.json` or a `locals` map consumed as the ordered namespace list, and `import {}` blocks.
 **Acceptance Criteria**:
 - AC: Four `vault_namespace` resources are produced; the three tenants carry the `custom_metadata.description` values in CAP-005 AC2; `admin` has no `custom_metadata`.
