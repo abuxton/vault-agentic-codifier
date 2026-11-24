@@ -42,7 +42,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-013 | Admin-namespace discovery | 2 | CAP-002 | implementation | M | Skill authored, awaiting validation |
 | TASK-014 | Discovery orchestrator and raw payload store | 2 | N/A | implementation | M | Skill authored, awaiting validation |
 | TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Done — validated |
-| TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Skill authored, awaiting validation |
+| TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Done — validated |
 | TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Skill authored, awaiting validation |
 | TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Skill authored, awaiting validation |
 | TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Skill authored, awaiting validation |
@@ -329,7 +329,7 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Effort**: L
 **Skill**: [`skills/codification-root-config/SKILL.md`](../../../skills/codification-root-config/SKILL.md)
 **Depends on**: TASK-008, TASK-003, TASK-004, TASK-002, TASK-006
-**Status**: Blocked
+**Status**: Done — validated (generate.sh; zero-diff import plan)
 **Description**: Generate `root/audit.tf` (`vault_audit`), `root/quotas.tf` (`vault_quota_rate_limit`, and `vault_quota_lease_count` when present), `root/sys_config.tf` and `root/replication.tf` (`vault_generic_endpoint` only where no dedicated resource exists and, for replication, only when enabled), `root/README.md` with the "not managed by Terraform" table (seal type, licence ID/expiry, replication mode, each with the reason it cannot be codified), and `root/imports.tf`. Emit no `vault_policy`, `vault_auth_backend`, `vault_mount` or `vault_namespace` (ownership table).
 **Acceptance Criteria**:
 - AC: Exactly one `vault_audit` with `type = "file"` and `options = { file_path = "/vault/logs/audit.log" }` and an import ID of `file` (CAP-001 AC1).

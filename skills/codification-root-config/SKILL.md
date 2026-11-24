@@ -27,9 +27,10 @@ configured outside the API (seal type, licence, replication mode) is documented
 in a README table with the reason it cannot be codified.
 
 Input: `discovered_terraform/raw/root/`
-Output: `discovered_terraform/terraform/admin/root/` (layer `admin/`), containing
-`audit.tf`, `quotas.tf`, `sys_config.tf`, `replication.tf` (conditional),
-`README.md`, `imports.tf`.
+Output: layer `admin/` under `discovered_terraform/terraform/admin/`, containing
+`audit.tf`, `quotas.tf`, `imports_root_config.tf` and `root_config_README.md`
+(flat files, so they sit beside the namespaces output; other capabilities own `imports.tf`).
+`sys_config.tf` and `replication.tf` are not generated (see section 10).
 
 ## 2. Governance
 
@@ -49,6 +50,9 @@ Output: `discovered_terraform/terraform/admin/root/` (layer `admin/`), containin
   `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
   returns in the file header. If it disagrees with `task-006-decision.md`, stop
   and report it (see `vault-codifier-conventions` section 1).
+  If the Terraform MCP binary is not installed, fall back to
+  `https://raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`
+  and record the fallback in the run notes.
 
 ## 3. Prerequisites
 
@@ -181,3 +185,25 @@ Root-namespace resources need no `namespace` argument and no provider alias.
   report the field name (never print its value).
 - Two quotas or audit devices normalise to the same label.
 - Generated output would contain a resource type owned by another capability.
+
+## 10. Reference implementation (validated against the harness)
+
+Run `skills/codification-root-config/scripts/generate.sh [raw/root] [out-root]`.
+
+- Reads `audit.json`, `quotas_rate_limit_list.json`, `quota_rate_limit_<name>.json`,
+  `seal_status.json`, `license_status.json` (ID and expiry only), `replication_status.json`
+  and `ui_headers.json`.
+- Exit 2 when `audit.json` is missing, when an audit option key looks like a secret
+  (`password|secret|token|credential`), or when two labels collide.
+- **Provider 4.8.0 does not read `inheritable` back on import** of `vault_quota_rate_limit`.
+  Emitting `inheritable = true` plans an in-place change after import, so the generator omits it.
+  A manual review item, not a drift.
+- **`vault_audit.path` imports by bare path** (`file`); the payload key is `file/`, so the
+  trailing slash is stripped.
+- `sys_config.tf` (UI headers) is not generated: discovery lists header names only and
+  never reads values, so there is nothing safe to codify. The README says so.
+- `replication.tf` is not generated; the README records the discovered mode.
+
+Validated: `fmt -check` and `validate` pass; `terraform plan` of the `admin` layer shows
+`3 to import, 0 to add, 0 to change, 0 to destroy` (audit, quota, `admin` namespace); empty
+audit payload produces no `audit.tf`; a secret-like option key exits 2; re-running is idempotent.
