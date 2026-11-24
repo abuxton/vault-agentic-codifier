@@ -17,8 +17,7 @@ depends_on:
   - codification-policies (TASK-017)
   - codification-auth-mounts (TASK-018)
   - codification-teams (TASK-020)
-  - provider-template (TASK-002)
-  - naming-library (TASK-003)
+  - vault-codifier-conventions (TASK-002, TASK-003, TASK-004)
 role: solution-architect
 ---
 
@@ -47,14 +46,19 @@ Output: `discovered_terraform/terraform/admin/` - `main.tf`, `human_auth.tf`
   `vault_ldap_auth_backend_group` for a top-level human auth method.
 - **Secret guard**: `oidc_client_secret`, `client_secret`, `bindpass` ->
   `variable "<label>_<field>" { sensitive = true }`, no default.
-- All shared coding standards apply (section 7).
+- All rules in `vault-codifier-conventions` apply (tool selection, secret guard, naming, header, layers).
+- **Schema lookup (Terraform MCP).** Before emitting each resource type, call the
+  Terraform MCP (`search_providers` / `get_provider_details` for `hashicorp/vault`
+  `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
+  returns in the file header. If it disagrees with `task-006-decision.md`, stop
+  and report it (see `vault-codifier-conventions` section 1).
 
 ## 3. Prerequisites
 
 1. `admin_config.json` exists (fields: `namespace`, `human_auth_mounts`,
    `operator_policies`, `operator_groups`).
 2. Outputs from TASK-015, 017, 018, 020 are generated, so labels can be resolved.
-3. Naming library and provider template available.
+3. `vault-codifier-conventions` read; Terraform MCP reachable for schema lookups.
 
 ## 4. Process
 

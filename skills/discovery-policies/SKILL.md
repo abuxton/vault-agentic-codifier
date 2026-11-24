@@ -18,6 +18,11 @@ role: vault-expert
 
 # Policy Discovery Skill (`discovery-policies`)
 
+> **Tool choice.** This skill uses the `vault` CLI, `curl` and `jq` with the exporter token.
+> The Vault MCP server cannot serve it: it has no namespace, auth, policy, identity,
+> quota or `sys/*` read tools, and it exposes write tools. See `vault-codifier-conventions`
+> section 1. Optional cross-check: Vault MCP `list_mounts` against `sys/mounts`.
+
 This skill discovers all Access Control List (ACL) policies and Enterprise Sentinel policies (EGP and RGP) across the root namespace and all tenant namespaces. It extracts and stores policy documents byte-for-byte as returned by Vault, outputting structured JSON payloads to `discovered_terraform/raw/<namespace>/policies.json`.
 
 ## 1. Purpose

@@ -18,6 +18,11 @@ role: vault-expert
 
 # Auth Mounts Discovery Skill (`discovery-auth-mounts`)
 
+> **Tool choice.** This skill uses the `vault` CLI, `curl` and `jq` with the exporter token.
+> The Vault MCP server cannot serve it: it has no namespace, auth, policy, identity,
+> quota or `sys/*` read tools, and it exposes write tools. See `vault-codifier-conventions`
+> section 1. Optional cross-check: Vault MCP `list_mounts` against `sys/mounts`.
+
 This skill discovers all enabled authentication backends, their tuning parameters, and associated role/group configurations across all namespaces. It captures non-sensitive configuration data for Terraform generation (`vault_auth_backend`, `vault_approle_auth_backend_role`, etc.) while strictly preventing any read of credential endpoints.
 
 ## 1. Purpose

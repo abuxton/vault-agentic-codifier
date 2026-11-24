@@ -13,9 +13,8 @@ capability: CAP-004
 task: TASK-019
 depends_on:
   - discovery-secrets-engines (TASK-011)
-  - provider-template (TASK-002)
-  - naming-library (TASK-003)
-  - resolve-open-items (TASK-006)
+  - vault-codifier-conventions (TASK-002, TASK-003, TASK-004)
+  - task-006-decision (TASK-006, done)
 role: solution-architect
 ---
 
@@ -45,14 +44,19 @@ Output: `discovered_terraform/terraform/seed/` (`secrets_<namespace>.tf`),
 - **Skipped built-ins**: `sys/`, `identity/`, `cubbyhole/`.
 - A preloaded root `secret/` mount (Vault dev mode) is emitted once with a note
   in `coverage.md`; if absent, no root mount is emitted.
-- All shared coding standards apply (section 6).
+- All rules in `vault-codifier-conventions` apply (tool selection, secret guard, naming, header, layers).
+- **Schema lookup (Terraform MCP).** Before emitting each resource type, call the
+  Terraform MCP (`search_providers` / `get_provider_details` for `hashicorp/vault`
+  `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
+  returns in the file header. If it disagrees with `task-006-decision.md`, stop
+  and report it (see `vault-codifier-conventions` section 1).
 
 ## 3. Prerequisites
 
 1. `mounts.json` per namespace from `GET /v1/sys/mounts` plus
    `sys/mounts/<path>/tune`.
 2. Engine config payloads where applicable (read-only, non-secret fields).
-3. Naming library, provider template and TASK-006 import ID table available.
+3. `vault-codifier-conventions` read; Terraform MCP reachable; TASK-006 import ID table (`task-006-decision.md`) available.
 
 ## 4. Process
 

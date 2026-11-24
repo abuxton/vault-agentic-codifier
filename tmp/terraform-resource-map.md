@@ -84,3 +84,18 @@ Legend — **Scope**: `R` root namespace only · `N` any namespace · `E` Vault 
 4. **Computed IDs.** Groups/entities/aliases are keyed by UUID in Terraform state but by name in Vault; imports must supply the UUID.
 5. **Policy rename.** `vault_policy.name` forces replacement; a replaced policy briefly disappears and tokens that reference it lose access.
 6. **State exposure.** Every attribute read from Vault is stored in state. KV v2 `data_json` values and sensitive config become state contents; state storage must be encrypted and access-controlled.
+
+---
+
+## 5. Verified import IDs (TASK-006, provider 4.8.0)
+
+Verified by `terraform plan` with `import {}` against the harness. Full table and evidence: `openspec/changes/vault-brownfield-research/task-006-decision.md`. Where this differs from the table in section 1, this section wins.
+
+- IDs are relative to the provider's namespace. Never prefix the namespace.
+- `vault_auth_backend`: bare mount path (`approle`). `auth/approle` fails.
+- `vault_namespace`: leaf name under the parent's provider alias (`platform`). `admin/platform` fails with HTTP 400.
+- `vault_approle_auth_backend_role`: `auth/<mount>/role/<name>`.
+- `vault_kv_secret_backend_v2`: `<mount>/config`.
+- `vault_identity_group` / `vault_identity_entity`: UUID.
+- `vault_generic_endpoint`: import not supported.
+- Resource-level `namespace` breaks `import {}` (plan shows replacement); use aliased providers.

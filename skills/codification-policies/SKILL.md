@@ -14,9 +14,8 @@ task: TASK-017
 depends_on:
   - discovery-policies (TASK-010)
   - codification-namespaces (TASK-015)
-  - provider-template (TASK-002)
-  - naming-library (TASK-003)
-  - resolve-open-items (TASK-006)
+  - vault-codifier-conventions (TASK-002, TASK-003, TASK-004)
+  - task-006-decision (TASK-006, done)
 role: solution-architect
 ---
 
@@ -45,14 +44,19 @@ Output: `discovered_terraform/terraform/<layer>/policies.tf`, `imports.tf`,
   example `secret/data/platform/sre/*`) are never rewritten.
 - Correlation is read-only analysis: no policy is fabricated for a dangling
   reference.
-- All shared coding standards apply (section 6).
+- All rules in `vault-codifier-conventions` apply (tool selection, secret guard, naming, header, layers).
+- **Schema lookup (Terraform MCP).** Before emitting each resource type, call the
+  Terraform MCP (`search_providers` / `get_provider_details` for `hashicorp/vault`
+  `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
+  returns in the file header. If it disagrees with `task-006-decision.md`, stop
+  and report it (see `vault-codifier-conventions` section 1).
 
 ## 3. Prerequisites
 
 1. `policies.json` exists for every namespace listed in `namespaces.json`.
 2. `auth_mounts.json` and `identity.json` exist for correlation (missing ->
    mark the affected column "unavailable", do not fail).
-3. Naming library and provider template available.
+3. `vault-codifier-conventions` read; Terraform MCP reachable for schema lookups.
 4. `/opt/homebrew/bin/terraform` available.
 
 ## 4. Process
@@ -106,22 +110,20 @@ resource "vault_policy" "admin_platform_platform_sre_read" {
 }
 ```
 
-### Namespace-qualified import ID (TASK-006 resolution)
+### Import ID (TASK-006 resolution)
 
-TASK-006 verifies import IDs against the harness; this skill uses its table
-rather than inferring. The convention: the `import` `id` is the policy name for
-the namespace the provider is configured for; the provider prefixes the
-namespace through its provider-level or resource-level `namespace` setting.
+Verified against the harness: the import `id` is the bare policy name, relative
+to the namespace of the provider alias the resource uses. Never prefix the
+namespace (`admin/namespace-admin` is wrong).
 
-| Namespace | Style | Import `id` |
-|---|---|---|
-| root | any | `operator` |
-| `admin` | alias or `namespace` argument | `admin` / `namespace-admin` |
-| `admin` | when TASK-006 reports the `<ns>/<name>` form is required | `admin/namespace-admin` |
+| Namespace | Import `id` |
+|---|---|
+| root | `operator` |
+| `admin` | `namespace-admin` |
+| `admin/platform` | `platform-sre-read` (resource uses `provider = vault.<alias>`) |
 
-If the verified TASK-006 format is `<namespace>/<name>` for non-root, emit
-`admin/operator`-style IDs consistently; if it is name-only, emit `operator`.
-Never mix both in one run. Record the chosen form in `coverage.md` header.
+EGP/RGP use `vault_egp_policy` / `vault_rgp_policy` with the name as import ID.
+The harness has none; record "none" in `coverage.md`.
 
 ## 6. Coding standards applied
 

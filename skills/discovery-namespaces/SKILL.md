@@ -14,12 +14,16 @@ capability: CAP-005
 task: TASK-007
 depends_on:
   - vault-exporter-setup (TASK-031)
-  - discovery-client-setup (TASK-005)
-  - naming-library (TASK-003)
+  - vault-codifier-conventions (TASK-003)
 role: vault-expert
 ---
 
 # Namespace Discovery Skill (`discovery-namespaces`)
+
+> **Tool choice.** This skill uses the `vault` CLI, `curl` and `jq` with the exporter token.
+> The Vault MCP server cannot serve it: it has no namespace, auth, policy, identity,
+> quota or `sys/*` read tools, and it exposes write tools. See `vault-codifier-conventions`
+> section 1. Optional cross-check: Vault MCP `list_mounts` against `sys/mounts`.
 
 This skill performs automated, deterministic, read-only discovery of the Vault Enterprise namespace tree. It walks namespaces depth-first starting from root, gathers namespace IDs and custom metadata, and outputs a parent-before-child ordered topology to `discovered_terraform/raw/namespaces.json`.
 

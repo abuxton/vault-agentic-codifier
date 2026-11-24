@@ -12,8 +12,7 @@ capability: CAP-005
 task: TASK-015
 depends_on:
   - discovery-namespaces (TASK-007)
-  - provider-template (TASK-002)
-  - naming-library (TASK-003)
+  - vault-codifier-conventions (TASK-002, TASK-003, TASK-004)
 role: solution-architect
 ---
 
@@ -34,29 +33,38 @@ Output: `discovered_terraform/terraform/admin/` (the `admin` namespace) and
 
 ## 2. Governance
 
-All eleven shared coding standards apply (see section 7). Additional rules
-specific to this skill:
+All rules in `vault-codifier-conventions` apply. The table in section 7 shows
+how they apply here. Additional rules specific to this skill:
+
+- **Schema lookup (Terraform MCP).** Before emitting each resource type, call the
+  Terraform MCP (`search_providers` / `get_provider_details` for `hashicorp/vault`
+  `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
+  returns in the file header. If it disagrees with `task-006-decision.md`, stop
+  and report it (see `vault-codifier-conventions` section 1).
+
 
 - **Root namespace is never emitted.** The root namespace (`""` / `root`) has no
   `vault_namespace` resource. Skip it even if present in `namespaces.json`.
-- **Children reference their parent by resource reference**, e.g.
-  `namespace = vault_namespace.admin.path_fq`. A literal parent path string such
-  as `"admin"` or `"admin/"` in a `vault_namespace` block is a defect.
+- **Children are created through the parent's provider alias** (default
+  `aliased` style, ratified by TASK-006): `provider = vault.admin`. A
+  `namespace = "..."` argument or a literal parent path string such as `"admin"`
+  or `"admin/"` inside a `vault_namespace` block is a defect. Resource-level
+  `namespace` makes `import {}` plan a replacement, so it is only used when the
+  run selects `--namespace-style resource`.
 - **Ownership**: `vault_namespace` is owned by this skill only. Do not emit
   policies, mounts, auth backends or identity objects.
 - **Layer placement**: `admin` goes to `admin/`; every other namespace goes to
   `namespaces/`. A child in `namespaces/` of a parent in `admin/` is a
-  cross-layer reference: resolve it through the `admin` layer output
-  `namespace_paths` (consumed with `data "terraform_remote_state"`), keeping the
-  same expression shape in the generated block.
+  cross-layer dependency: the `namespaces/` layer declares
+  `provider "vault" { alias = "admin" namespace = "admin" }` (conventions section 7), so no
+  remote-state lookup is needed for the parent path.
 
 ## 3. Prerequisites
 
 1. `discovered_terraform/raw/namespaces.json` exists and parses as JSON. If it
    is missing, stop and ask the user to run `discovery-namespaces` (TASK-007).
-2. The naming library (TASK-003) is available and exposes `label(namespace,
-   path, name)`.
-3. The provider template (TASK-002) is available (`versions.tf`, `providers.tf`).
+2. `vault-codifier-conventions` read; Terraform MCP reachable for schema lookups.
+3. Provider and naming rules come from the conventions skill (sections 5 and 7).
 4. `/opt/homebrew/bin/terraform` is present for the validation step.
 
 ## 4. Process
@@ -71,16 +79,17 @@ specific to this skill:
 4. **Sort by depth ascending**, then alphabetically, so parents are always
    emitted before children.
 5. **Generate one `vault_namespace` block per namespace:**
-   - Depth 1: `path = "<segment>"`, no `namespace` argument.
+   - Depth 1: `path = "<segment>"`, default provider, no `namespace` argument.
    - Depth >= 2: `path = "<last segment>"` and
-     `namespace = vault_namespace.<parent_label>.path_fq`. `path_fq` is used
-     instead of `path` so that depth 3+ resolves to the full parent path.
+     `provider = vault.<parent_alias>`, where the alias maps to the parent's
+     full path (`admin/platform` for a depth-3 child).
    - Emit `custom_metadata = { ... }` **only** when the map is non-empty.
-   - Label = naming library output for the full path (`admin/app-billing` ->
+   - Label = conventions section 5 applied to the full path (`admin/app-billing` ->
      `admin_app_billing`).
 6. **Generate `import {}` blocks** in `imports.tf` of the same layer:
-   `to = vault_namespace.<label>`, `id = "<full path>"`. Use the import ID format
-   confirmed by TASK-006 if it differs.
+   `to = vault_namespace.<label>`, `id = "<leaf name>"`, emitted under the
+   provider alias of the parent namespace (TASK-006: a full path such as
+   `admin/platform` fails with HTTP 400). Depth 1 uses the root provider.
 7. **Generate `namespaces/hierarchy.md`** with a Mermaid `graph TD` tree and a
    table with columns: full path, parent, id, custom_metadata, depth.
 8. **Add the provenance header** to every `.tf` file and run
@@ -108,8 +117,8 @@ resource "vault_namespace" "admin" {
 # Doc ref: https://developer.hashicorp.com/vault/docs
 
 resource "vault_namespace" "admin_app_billing" {
-  namespace = local.admin_namespace_path_fq
-  path      = "app-billing"
+  provider = vault.admin
+  path     = "app-billing"
 
   custom_metadata = {
     description = "Billing application team namespace"
@@ -117,8 +126,8 @@ resource "vault_namespace" "admin_app_billing" {
 }
 
 resource "vault_namespace" "admin_app_identity" {
-  namespace = local.admin_namespace_path_fq
-  path      = "app-identity"
+  provider = vault.admin
+  path     = "app-identity"
 
   custom_metadata = {
     description = "Identity service team namespace"
@@ -126,8 +135,8 @@ resource "vault_namespace" "admin_app_identity" {
 }
 
 resource "vault_namespace" "admin_platform" {
-  namespace = local.admin_namespace_path_fq
-  path      = "platform"
+  provider = vault.admin
+  path     = "platform"
 
   custom_metadata = {
     description = "Platform engineering team namespace"
@@ -135,10 +144,10 @@ resource "vault_namespace" "admin_platform" {
 }
 ```
 
-Where `local.admin_namespace_path_fq` is defined once in
-`namespaces/main.tf` from `data.terraform_remote_state.admin.outputs.namespace_paths["admin"]`.
-When parent and child share a layer, the expression is the direct reference
-`vault_namespace.<parent_label>.path_fq`.
+The `vault.admin` alias is declared in `namespaces/providers.tf`. Parentage is
+expressed by the alias, not by a string inside the resource. Ordering across
+layers is guaranteed by layer apply order (admin, then namespaces); inside one
+layer add `depends_on = [vault_namespace.<parent_label>]`.
 
 `discovered_terraform/terraform/admin/imports.tf` (namespaces portion)
 
@@ -154,17 +163,17 @@ import {
 ```hcl
 import {
   to = vault_namespace.admin_app_billing
-  id = "admin/app-billing"
+  id = "app-billing"
 }
 
 import {
   to = vault_namespace.admin_app_identity
-  id = "admin/app-identity"
+  id = "app-identity"
 }
 
 import {
   to = vault_namespace.admin_platform
-  id = "admin/platform"
+  id = "platform"
 }
 ```
 
@@ -199,12 +208,12 @@ The `Id` column is copied verbatim from `namespaces.json`; ids appear only in
 | 1 | Provenance header | Every `.tf` file starts with the 4-line header, `Capability: namespaces` |
 | 2 | Provider pin | `hashicorp/vault ~> 4`, `required_version >= "1.9"`, `skip_child_token = true` from TASK-002 |
 | 3 | Naming | `admin/app-billing` -> `admin_app_billing`; `r_` prefix for digit-leading labels |
-| 4 | Namespace targeting | One style per run (default from TASK-006); examples use resource-level `namespace`; under alias style use `provider = vault.<parent_alias>` instead. Never mixed |
+| 4 | Namespace targeting | One style per run; default `aliased` (TASK-006). Examples use `provider = vault.<parent_alias>`; under `resource` style use `namespace = ...` instead and set `TERRAFORM_VAULT_NAMESPACE_IMPORT` for imports. Never mixed |
 | 5 | Secret guard | No secret-bearing fields exist on `vault_namespace` |
 | 6 | Ownership | Only `vault_namespace` is emitted |
 | 7 | Import blocks | One per resource in the layer's `imports.tf` |
 | 8 | Zero-TTL omission | Not applicable |
-| 9 | Cross-references | Child -> parent via `.path_fq` reference |
+| 9 | Cross-references | Child -> parent via provider alias (or `depends_on` in the same layer) |
 | 10 | Empty set | If only the root namespace exists, emit no files and report "no namespaces" |
 | 11 | Validation | `terraform fmt -check -recursive` and `terraform validate` must pass |
 
@@ -214,14 +223,14 @@ The `Id` column is copied verbatim from `namespaces.json`; ids appear only in
   `admin_app_billing`, `admin_app_identity`.
 - The three tenants carry `custom_metadata.description` with the expected text;
   `admin` carries no `custom_metadata`.
-- Every child references its parent by resource reference; this returns 0 lines:
+- Every child targets its parent through `provider = vault.<alias>`; this returns 0 lines:
   `grep -rnE 'namespace\s*=\s*"' discovered_terraform/terraform/*/namespaces.tf`
 - No `"admin/"` string literal appears inside any `vault_namespace` block
   (import `id` values in `imports.tf` are exempt).
 - 4 matching `import {}` blocks; `hierarchy.md` shows `admin` as parent of three
   tenants with depth 1 and 2.
 - A scratch namespace `admin/platform/sre-team` is emitted at depth 3 with
-  `namespace = vault_namespace.admin_platform.path_fq`.
+  `provider = vault.admin_platform`.
 - `terraform fmt -check -recursive` and `terraform validate` exit 0.
 
 ## 9. Stop conditions

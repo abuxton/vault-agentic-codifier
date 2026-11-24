@@ -19,6 +19,11 @@ role: vault-expert
 
 # Root Configuration Discovery Skill (`discovery-root-config`)
 
+> **Tool choice.** This skill uses the `vault` CLI, `curl` and `jq` with the exporter token.
+> The Vault MCP server cannot serve it: it has no namespace, auth, policy, identity,
+> quota or `sys/*` read tools, and it exposes write tools. See `vault-codifier-conventions`
+> section 1. Optional cross-check: Vault MCP `list_mounts` against `sys/mounts`.
+
 This skill discovers root-namespace structural configurations in a Vault Enterprise cluster. It captures audit devices, rate-limit quotas, health status, replication state, license metadata, and UI configuration, saving raw JSON payloads under `discovered_terraform/raw/root/`.
 
 ## 1. Purpose

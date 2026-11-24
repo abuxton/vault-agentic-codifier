@@ -20,6 +20,11 @@ role: vault-expert
 
 # Discovery: Admin Namespace Config (TASK-013, CAP-002 `admin-config`)
 
+> **Tool choice.** This skill uses the `vault` CLI, `curl` and `jq` with the exporter token.
+> The Vault MCP server cannot serve it: it has no namespace, auth, policy, identity,
+> quota or `sys/*` read tools, and it exposes write tools. See `vault-codifier-conventions`
+> section 1. Optional cross-check: Vault MCP `list_mounts` against `sys/mounts`.
+
 ## Purpose
 
 Discover what is specific to the `admin` (org-level) namespace under the HashiCorp

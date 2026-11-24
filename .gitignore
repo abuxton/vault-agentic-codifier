@@ -18,17 +18,6 @@ discovered_terraform/raw/
 discovered_terraform/run-report*.json
 discovered_terraform/run-report*.jsonl
 
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-.pytest_cache/
-*.egg-info/
-dist/
-build/
-.venv/
-venv/
-
 # Editor and OS artefacts
 .DS_Store
 *.swp

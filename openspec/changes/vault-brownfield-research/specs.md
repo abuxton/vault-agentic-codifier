@@ -212,7 +212,7 @@ Resources in non-root namespaces are emitted using either an aliased provider (m
 - `GET /v1/sys/namespaces/<path>` for `id`, `path`, `custom_metadata`
 - Existing Terraform state, if present
 **Outputs**:
-- `namespaces/namespaces.tf` — `vault_namespace` resources; the root-level `admin` namespace has no `namespace` argument; children use `namespace = vault_namespace.admin.path` (or the aliased provider) and `path = "<child>"` so parentage is expressed through references rather than string concatenation
+- `namespaces/namespaces.tf` — `vault_namespace` resources; the root-level `admin` namespace has no `namespace` argument; children use the aliased provider (`provider = vault.admin`; resource-level `namespace` only under `--namespace-style resource`) and `path = "<child>"` so parentage is expressed through the provider rather than string concatenation
 - `namespaces/hierarchy.md` — Mermaid diagram of the tree plus a table with columns: full path, parent, namespace ID, custom metadata, depth
 - `namespaces/namespaces.auto.tfvars.json` or equivalent data structure (a `locals` map), consumed by other specs as the ordered namespace list
 - `imports.tf` — one `import {}` per namespace
@@ -220,7 +220,7 @@ Resources in non-root namespaces are emitted using either an aliased provider (m
 - AC1: Against the harness, the discovered set is exactly `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity` (4 namespaces, maximum depth 2), and `hierarchy.md` shows `admin` as parent of the three tenants.
 - AC2: Four `vault_namespace` resources are produced. The three tenant resources carry `custom_metadata = { description = "<text>" }` with these descriptions: `platform` → "Platform engineering team namespace", `app-billing` → "Billing application team namespace", `app-identity` → "Identity service team namespace". `admin` has no `custom_metadata`.
 - AC3: The ordered list places every parent before its children (`admin` precedes `admin/*`), and `terraform validate` reports no dependency cycles (CAC1).
-- AC4: Each child resource refers to its parent by reference (`vault_namespace.admin`) and not by a hard-coded string; a grep for `"admin/` literals inside `vault_namespace` blocks returns zero matches.
+- AC4: Each child resource reaches its parent through the parent's provider alias (`provider = vault.admin`, per the TASK-006 default) and not by a hard-coded string; a grep for `"admin/` literals inside `vault_namespace` blocks returns zero matches.
 - AC5: Namespaces nested deeper than two levels are discovered (verify by creating `admin/platform/sre-team` in a scratch run); the codifier emits it with `depth = 3` in `hierarchy.md` and in correct order.
 - AC6: The codifier does not emit a `vault_namespace` for the root namespace; the harness root `""` never appears in output.
 - AC7: Namespace IDs reported in `hierarchy.md` match `vault namespace list -detailed` output for the harness.
@@ -309,8 +309,10 @@ Resources in non-root namespaces are emitted using either an aliased provider (m
 
 The codifier runs specs in this order because later specs consume earlier outputs: `namespaces` → `root-config` → `policies` → `auth-mounts` → `secrets-engines` → `teams` → `admin-config` (composition last).
 
-## Open items (to resolve during research phase)
+## Open items (resolved by TASK-006)
 
-- Confirm the namespace-qualified import ID format for each resource type in provider `4.8.0` against the provider documentation (`content/vault/` in `git@github.com:hashicorp/web-unified-docs.git` and the provider registry docs).
-- Decide whether aliased providers or the resource-level `namespace` argument is the default output style (both are permitted by this spec; pick one per run).
-- Confirm which Enterprise features (EGP/RGP, MFA, Sentinel, replication) need dedicated provider resources versus `vault_generic_endpoint` fallback.
+Full evidence and tables: [`task-006-decision.md`](task-006-decision.md).
+
+- **Import IDs: resolved.** IDs are relative to the provider namespace and never namespace-prefixed. `vault_auth_backend` uses the bare mount path (`approle`, not `auth/approle`); `vault_namespace` uses the leaf name (`platform`, not `admin/platform`); AppRole roles use `auth/<mount>/role/<name>`; identity objects use UUIDs. `vault_generic_endpoint` does not support import.
+- **Namespace-targeting default: `aliased`.** Resource-level `namespace` makes `import {}` plan a replacement or fail, so only aliased providers satisfy CAC2 across several namespaces.
+- **Enterprise features: resolved.** EGP, RGP and identity MFA get dedicated resources; replication and legacy MFA are documented, not codified. None exist in the harness.

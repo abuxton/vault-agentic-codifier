@@ -25,6 +25,11 @@ role: vault-expert
 
 # Discovery Orchestrator (TASK-014)
 
+> **Tool choice.** This skill uses the `vault` CLI, `curl` and `jq` with the exporter token.
+> The Vault MCP server cannot serve it: it has no namespace, auth, policy, identity,
+> quota or `sys/*` read tools, and it exposes write tools. See `vault-codifier-conventions`
+> section 1. Optional cross-check: Vault MCP `list_mounts` against `sys/mounts`.
+
 ## Purpose
 
 The single entry point for a full brownfield survey. It runs the seven discovery
@@ -50,7 +55,7 @@ All shared rules apply to the orchestrator and every skill it invokes:
 7. Byte-identical across runs: strip `request_id`, `lease_id`, `renewable`, `lease_duration`.
 8. Provenance header citing `https://developer.hashicorp.com/vault/docs` on every generated file.
 9. Sensitive values -> `variable` references with no default; never to disk.
-10. Naming: `<namespace>/<path>/<name>`, `/` and `-` -> `_`, valid identifier.
+10. Naming: see `vault-codifier-conventions` section 5 (`/` and `-` -> `_`, `r_` prefix for digit-leading, valid identifier).
 
 Orchestrator-specific:
 

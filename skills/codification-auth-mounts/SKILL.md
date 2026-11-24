@@ -14,9 +14,8 @@ task: TASK-018
 depends_on:
   - discovery-auth-mounts (TASK-009)
   - codification-policies (TASK-017)
-  - provider-template (TASK-002)
-  - naming-library (TASK-003)
-  - resolve-open-items (TASK-006)
+  - vault-codifier-conventions (TASK-002, TASK-003, TASK-004)
+  - task-006-decision (TASK-006, done)
 role: solution-architect
 ---
 
@@ -47,7 +46,12 @@ Output: one file per namespace and mount, for example
   with no default.
 - The `token/` mount is never emitted.
 - Layer: root and `admin` mounts -> `admin/`; tenant mounts -> `seed/`.
-- All shared coding standards apply (section 6).
+- All rules in `vault-codifier-conventions` apply (tool selection, secret guard, naming, header, layers).
+- **Schema lookup (Terraform MCP).** Before emitting each resource type, call the
+  Terraform MCP (`search_providers` / `get_provider_details` for `hashicorp/vault`
+  `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
+  returns in the file header. If it disagrees with `task-006-decision.md`, stop
+  and report it (see `vault-codifier-conventions` section 1).
 
 ## 3. Prerequisites
 
@@ -55,7 +59,7 @@ Output: one file per namespace and mount, for example
    `config`, `options`, `local`).
 2. Policy labels from `codification-policies` are available (the policy set per
    namespace) so `token_policies` can be cross-referenced.
-3. Naming library and provider template available.
+3. `vault-codifier-conventions` read; Terraform MCP reachable for schema lookups.
 
 ## 4. Process
 
@@ -82,8 +86,8 @@ For each namespace, for each mount (skip `token/`):
    `vault_policy.<label>.name`; otherwise emit the literal string and add a
    warning to `coverage.md`.
 4. **Role/backend linkage**: `backend = vault_auth_backend.<label>.path`.
-5. **Import blocks**: backend `id = "auth/<path>"`; role
-   `id = "auth/<path>/role/<name>"`. Namespace-qualified form follows TASK-006.
+5. **Import blocks**: backend `id = "<path>"` (no `auth/` prefix; verified in TASK-006); role
+   `id = "auth/<path>/role/<name>"`. IDs are always relative to the provider's namespace (alias); never prefix the namespace.
 6. **Coverage**: `auth-mounts/coverage.md` lists every mount with resource type,
    fallback or "unsupported", and any warnings.
 7. Provenance header (`Capability: auth-mounts`), fmt, validate.
@@ -121,7 +125,7 @@ Imports:
 ```hcl
 import {
   to = vault_auth_backend.admin_platform_approle
-  id = "auth/approle"
+  id = "approle"
 }
 
 import {

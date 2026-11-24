@@ -13,8 +13,7 @@ capability: CAP-001
 task: TASK-016
 depends_on:
   - discovery-root-config (TASK-008)
-  - provider-template (TASK-002)
-  - naming-library (TASK-003)
+  - vault-codifier-conventions (TASK-002, TASK-003, TASK-004)
 role: solution-architect
 ---
 
@@ -44,7 +43,12 @@ Output: `discovered_terraform/terraform/admin/root/` (layer `admin/`), containin
   option values. Record licence ID and expiry only.
 - **No fabrication.** Audit options that Vault masks or omits (for example
   `hmac_accessor`) are not invented.
-- All shared coding standards apply (section 5).
+- All rules in `vault-codifier-conventions` apply (tool selection, secret guard, naming, header, layers).
+- **Schema lookup (Terraform MCP).** Before emitting each resource type, call the
+  Terraform MCP (`search_providers` / `get_provider_details` for `hashicorp/vault`
+  `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
+  returns in the file header. If it disagrees with `task-006-decision.md`, stop
+  and report it (see `vault-codifier-conventions` section 1).
 
 ## 3. Prerequisites
 
@@ -52,7 +56,7 @@ Output: `discovered_terraform/terraform/admin/root/` (layer `admin/`), containin
 2. Optional payloads: `sys_quotas_rate_limit.json`, `sys_quotas_lease_count.json`,
    `sys_config_ui_headers.json`, `sys_seal_status.json`, `sys_license_status.json`,
    `sys_replication_status.json`.
-3. Naming library (TASK-003) and provider template (TASK-002) available.
+3. `vault-codifier-conventions` read; Terraform MCP reachable for schema lookups.
 4. `/opt/homebrew/bin/terraform` available for validation.
 
 ## 4. Process

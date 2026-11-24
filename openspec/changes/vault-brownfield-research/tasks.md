@@ -31,23 +31,23 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-002 | Provider and version-pin template | 1 | N/A | implementation | S | **Done** |
 | TASK-003 | Deterministic naming and label library | 1 | N/A | implementation | M | **Done** |
 | TASK-004 | Provenance headers and secret-scrubbing guard | 1 | N/A | implementation | M | **Done** |
-| TASK-005 | Read-only Vault API client and run report | 1 | N/A | implementation | M | **Done** |
-| TASK-006 | Resolve specs open items | 1 | N/A | research | M | Ready to start |
-| TASK-007 | Namespace discovery | 2 | CAP-005 | implementation | M | Ready to start |
-| TASK-008 | Root-config discovery | 2 | CAP-001 | implementation | M | Ready to start |
-| TASK-009 | Policy discovery | 2 | CAP-006 | implementation | M | Ready to start |
-| TASK-010 | Auth-mount discovery | 2 | CAP-003 | implementation | L | Ready to start |
-| TASK-011 | Secrets-engine discovery | 2 | CAP-004 | implementation | L | Ready to start |
-| TASK-012 | Identity and teams discovery | 2 | CAP-007 | implementation | L | Ready to start |
-| TASK-013 | Admin-namespace discovery | 2 | CAP-002 | implementation | M | Ready to start |
-| TASK-014 | Discovery orchestrator and raw payload store | 2 | N/A | implementation | M | Ready to start |
-| TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Blocked |
-| TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Blocked |
-| TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Blocked |
-| TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Blocked |
-| TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Blocked |
-| TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Blocked |
-| TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Blocked |
+| TASK-005 | Read-only Vault API client and run report | 1 | N/A | implementation | M | **Superseded** |
+| TASK-006 | Resolve specs open items | 1 | N/A | research | M | **Done** |
+| TASK-007 | Namespace discovery | 2 | CAP-005 | implementation | M | Skill authored, awaiting validation |
+| TASK-008 | Root-config discovery | 2 | CAP-001 | implementation | M | Skill authored, awaiting validation |
+| TASK-009 | Policy discovery | 2 | CAP-006 | implementation | M | Skill authored, awaiting validation |
+| TASK-010 | Auth-mount discovery | 2 | CAP-003 | implementation | L | Skill authored, awaiting validation |
+| TASK-011 | Secrets-engine discovery | 2 | CAP-004 | implementation | L | Skill authored, awaiting validation |
+| TASK-012 | Identity and teams discovery | 2 | CAP-007 | implementation | L | Skill authored, awaiting validation |
+| TASK-013 | Admin-namespace discovery | 2 | CAP-002 | implementation | M | Skill authored, awaiting validation |
+| TASK-014 | Discovery orchestrator and raw payload store | 2 | N/A | implementation | M | Skill authored, awaiting validation |
+| TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Skill authored, awaiting validation |
+| TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Skill authored, awaiting validation |
+| TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Skill authored, awaiting validation |
+| TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Skill authored, awaiting validation |
+| TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Skill authored, awaiting validation |
+| TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Skill authored, awaiting validation |
+| TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Skill authored, awaiting validation |
 | TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Blocked |
 | TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Blocked |
 | TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Blocked |
@@ -70,7 +70,7 @@ Project scaffolding, provider configuration and the shared libraries every capab
 **Type**: implementation
 **Effort**: M
 **Depends on**: none
-**Status**: Done — `codifier/shared/constants.py`, layout reconciled, `discovered_terraform/` created
+**Status**: Done — layout and constants now live in `skills/vault-codifier-conventions/SKILL.md` (sections 2, 8); `discovered_terraform/` created
 **Description**: Create the codifier source layout (discovery, codification, validation and shared-library directories), choose the implementation language, and define the generated-output layout. Reconcile the two layouts in the OpenSpec artifacts: `specs.md` names per-capability output directories (`root/`, `admin/`, `namespaces/`, `policies/`, `auth-mounts/`, `secrets-engines/`, `teams/`), while `design.md` §7 names three state layers (`admin/`, `namespaces/`, `seed/`). Record the mapping in a short layout note (for example root-config → layer `admin/`; admin-config and org-level resources → layer `namespaces/`; tenant mounts, roles and tenant policies → layer `seed/`) so the 3-layer structure remains the state boundary and capability files land inside it. Record a decision on `vault_kv_secret_v2`: specs CAP-004 AC3 forbids it, so the design resource map row for it is superseded.
 **Acceptance Criteria**:
 - AC: A layout document lists, for each of the 7 capabilities, the generated files named in `specs.md` and the state layer (`admin/`, `namespaces/` or `seed/`) each file belongs to.
@@ -83,7 +83,7 @@ Project scaffolding, provider configuration and the shared libraries every capab
 **Type**: implementation
 **Effort**: S
 **Depends on**: none
-**Status**: Done — `codifier/shared/providers.py`, unit tests pass
+**Status**: Done — provider template in `skills/vault-codifier-conventions/SKILL.md` section 7; `terraform validate` check in section 9
 **Description**: Create the shared `terraform {}` and `provider "vault"` templates emitted at the top of each generated layer. Pin `required_version >= 1.9` and `hashicorp/vault ~> 4`. Per ADR-002, set `skip_child_token = true` in the layer 1 and 2 provider blocks. `address` and `token` are supplied through `VAULT_ADDR` and `VAULT_TOKEN` or sensitive variables, never literals. Provide both namespace-targeting styles required by the specs (aliased provider with `provider = vault.<alias>`, and resource-level `namespace`), selected by a single run option.
 **Acceptance Criteria**:
 - AC: Rendering the template produces `providers.tf` and `versions.tf` that pass `terraform fmt -check` and `terraform validate` (CAC1) inside a scratch directory.
@@ -96,7 +96,7 @@ Project scaffolding, provider configuration and the shared libraries every capab
 **Type**: implementation
 **Effort**: M
 **Depends on**: none
-**Status**: Done — `codifier/shared/naming.py`, 40 unit tests pass
+**Status**: Done — naming rules in `skills/vault-codifier-conventions/SKILL.md` section 5
 **Description**: Implement the shared function that derives Terraform resource labels and file names from namespace + path + object name, normalising `/` and `-` to `_`, guaranteeing valid identifiers, uniqueness per directory and stability across runs. Include collision handling for same-named objects in different namespaces (for example `default-readonly` in two namespaces) and policy file paths of the form `policies/<namespace>/<name>.hcl`. Include a reference-address helper (for example `vault_namespace.admin`, `vault_policy.admin_namespace_admin.name`) used by the cross-capability references.
 **Acceptance Criteria**:
 - AC: Unit tests show identical input produces identical labels on repeated calls and across processes (CAC6, CAC5).
@@ -109,7 +109,7 @@ Project scaffolding, provider configuration and the shared libraries every capab
 **Type**: implementation
 **Effort**: M
 **Depends on**: none
-**Status**: Done — `codifier/shared/headers.py` + `codifier/shared/guard.py`, unit tests pass
+**Status**: Done — header and secret guard in `skills/vault-codifier-conventions/SKILL.md` sections 3, 4; verified by grep checks, not unit tests
 **Description**: Implement (a) the header-comment writer that stamps every generated file with the owning capability and the documentation path in `git@github.com:hashicorp/web-unified-docs.git` justifying the mapping (CAC7), and (b) a pre-write guard that refuses to emit values that must never reach disk: root/client tokens, AppRole `secret_id`, KV data, `bindpass`, `client_secret`, `oidc_client_secret`, database passwords, licence text, and any field Vault marks sensitive. Sensitive provider arguments are converted into `variable` references (no default) by the guard (CAC3). The doc-path map for each capability is seeded from `tmp/terraform-resource-map.md` and the two validated-design paths named in `specs.md`.
 **Acceptance Criteria**:
 - AC: A generated sample file begins with a header naming the capability and a repository-relative documentation path (never a local filesystem path) (CAC7).
@@ -122,7 +122,7 @@ Project scaffolding, provider configuration and the shared libraries every capab
 **Type**: implementation
 **Effort**: M
 **Depends on**: none
-**Status**: Done — `codifier/discovery/client.py`, 18 unit tests pass
+**Status**: Superseded — discovery uses the `vault` CLI, `curl` and `jq` with the exporter token (conventions section 1). The Python client was removed; read-only is enforced by the exporter policy and TASK-025
 **Description**: Build the single Vault HTTP client all discovery modules use. It permits only `GET` and `LIST` (and `sys/internal/ui/*` reads), sets `X-Vault-Namespace` per call, reads `VAULT_ADDR`/`VAULT_TOKEN`, and raises on any attempt to issue another method (CAC4). Provide uniform handling of 403/404/empty responses (leaf namespaces, missing endpoints, no permission) and a run report that records endpoint, namespace and HTTP status for every non-200 outcome, per CAP-001 AC7. Include retry/backoff and token-expiry detection during long scans (from `tmp/brownfield-discovery-guide.md` troubleshooting).
 **Acceptance Criteria**:
 - AC: Calling the client with `POST`, `PUT`, `DELETE` or `PATCH` fails before any network request is made (CAC4).
@@ -136,7 +136,7 @@ Project scaffolding, provider configuration and the shared libraries every capab
 **Type**: research
 **Effort**: M
 **Depends on**: TASK-002, TASK-005
-**Status**: Ready to start
+**Status**: Done — [`task-006-decision.md`](task-006-decision.md)
 **Description**: Close the three open items listed at the end of `specs.md`: (1) confirm the namespace-qualified `terraform import` ID format for each resource type in provider `4.8.0` (mounts, auth backends, AppRole roles, policies, identity objects, audit, quotas, namespaces), verified experimentally against the harness; (2) decide the default namespace-targeting style (aliased provider or resource-level `namespace`); (3) decide which Enterprise features (EGP/RGP, MFA, Sentinel, replication) get dedicated provider resources versus `vault_generic_endpoint`. Record the results in a decision note and update `tmp/terraform-resource-map.md` where it differs.
 **Acceptance Criteria**:
 - AC: A table lists every resource type produced by CAP-001 to CAP-007 with its verified import ID syntax, each confirmed with a successful `terraform import` or `import {}` plan against the harness.
@@ -186,14 +186,13 @@ Project scaffolding, provider configuration and the shared libraries every capab
 
 ## Phase 2: Discovery Engine
 
-Per-capability modules that query the live Vault API through the TASK-005 client and write raw JSON payloads. Discovery never emits HCL.
+Per-capability skills that query the live Vault API with the exporter token (`vault` CLI, `curl`, `jq`) and write raw JSON payloads. Discovery never emits HCL.
 
 ### TASK-007: Namespace discovery
 **Capability**: CAP-005
 **Type**: implementation
 **Effort**: M
 **Skill**: [`skills/discovery-namespaces/SKILL.md`](../../../skills/discovery-namespaces/SKILL.md)
-**Module**: `codifier/discovery/namespaces.py`
 **Depends on**: TASK-005, TASK-003, TASK-031
 **Status**: Ready to start
 **Description**: Implement the recursive depth-first namespace walk from `design.md` §6 (`LIST sys/namespaces` at root, then under `X-Vault-Namespace` for each child; leaf detection on empty/404/403) and read `GET sys/namespaces/<path>` for `id`, `path` and `custom_metadata`. Produce the ordered, parent-before-child namespace list that every other discovery module consumes. Handle depth greater than two.
@@ -208,7 +207,6 @@ Per-capability modules that query the live Vault API through the TASK-005 client
 **Type**: implementation
 **Effort**: M
 **Skill**: [`skills/discovery-root-config/SKILL.md`](../../../skills/discovery-root-config/SKILL.md)
-**Module**: `codifier/discovery/root_config.py`
 **Depends on**: TASK-005, TASK-007, TASK-031
 **Status**: Ready to start
 **Description**: Query the root namespace inputs listed in CAP-001: `sys/audit`, root mount tuning (`sys/mounts` and `/tune`), `sys/quotas/rate-limit` (list and per-name read) and `sys/quotas/config`, `sys/seal-status`, `sys/health`, `sys/host-info`, `sys/license/status` (never the licence text), `sys/replication/status`, `sys/config/ui/headers` and `sys/internal/ui/feature-flags`. Store raw payloads and record unreachable endpoints in the run report.
@@ -224,7 +222,6 @@ Per-capability modules that query the live Vault API through the TASK-005 client
 **Type**: implementation
 **Effort**: M
 **Skill**: [`skills/discovery-policies/SKILL.md`](../../../skills/discovery-policies/SKILL.md)
-**Module**: `codifier/discovery/policies.py`
 **Depends on**: TASK-005, TASK-007, TASK-031
 **Status**: Ready to start
 **Description**: For the root namespace and every namespace from TASK-007, `LIST sys/policies/acl` and `GET sys/policies/acl/<name>`, excluding `default` and `root`. Also `LIST sys/policies/egp` and `sys/policies/rgp` (Enterprise), recorded for `coverage.md`. Store the policy text byte-for-byte as returned.
@@ -239,7 +236,6 @@ Per-capability modules that query the live Vault API through the TASK-005 client
 **Type**: implementation
 **Effort**: L
 **Skill**: [`skills/discovery-auth-mounts/SKILL.md`](../../../skills/discovery-auth-mounts/SKILL.md)
-**Module**: `codifier/discovery/auth_mounts.py`
 **Depends on**: TASK-005, TASK-007, TASK-031
 **Status**: Ready to start
 **Description**: Per namespace, read `sys/auth` (type, description, config, options, accessor, local, seal_wrap) and `sys/auth/<path>/tune`, then method-specific reads: AppRole `LIST auth/<path>/role` and `GET .../role/<name>`; `GET auth/<path>/config`; `LIST .../groups` and `.../users` for ldap/okta/github; plus jwt/oidc, kubernetes, aws and cert reads listed in CAP-003 outputs. Skip the builtin `token/` mount. Never read `role-id` or `secret-id` endpoints.
@@ -255,7 +251,6 @@ Per-capability modules that query the live Vault API through the TASK-005 client
 **Type**: implementation
 **Effort**: L
 **Skill**: [`skills/discovery-secrets-engines/SKILL.md`](../../../skills/discovery-secrets-engines/SKILL.md)
-**Module**: `codifier/discovery/secrets_engines.py`
 **Depends on**: TASK-005, TASK-007, TASK-031
 **Status**: Ready to start
 **Description**: Per namespace, read `sys/mounts` and `sys/mounts/<path>/tune`, skipping `sys/`, `identity/` and `cubbyhole/`. Read engine configuration read-only: KV v2 `config`; PKI `config/urls`, `config/crl`, `LIST roles`; database `config/<name>` and roles; AWS/Azure/GCP `config/root` (non-secret fields only); Transit key metadata (no key material). Never read secret data paths.
@@ -271,7 +266,6 @@ Per-capability modules that query the live Vault API through the TASK-005 client
 **Type**: implementation
 **Effort**: L
 **Skill**: [`skills/discovery-identity-teams/SKILL.md`](../../../skills/discovery-identity-teams/SKILL.md)
-**Module**: `codifier/discovery/identity_teams.py`
 **Depends on**: TASK-005, TASK-007, TASK-010, TASK-031
 **Status**: Ready to start
 **Description**: Per namespace, `LIST identity/group/name` and `GET identity/group/name/<name>` (type, policies, member_entity_ids, member_group_ids, metadata); `LIST identity/entity/name` and `GET .../<name>`; `LIST identity/group-alias/id` and `identity/entity-alias/id` with per-ID reads; and `sys/auth` accessor-to-mount-path resolution using TASK-010 payloads. Capture group and entity IDs only as lookup keys for reference resolution.
@@ -286,7 +280,6 @@ Per-capability modules that query the live Vault API through the TASK-005 client
 **Type**: implementation
 **Effort**: M
 **Skill**: [`skills/discovery-admin-config/SKILL.md`](../../../skills/discovery-admin-config/SKILL.md)
-**Module**: `codifier/discovery/admin_config.py`
 **Depends on**: TASK-005, TASK-007, TASK-010, TASK-031
 **Status**: Ready to start
 **Description**: Query the admin-namespace-specific inputs from CAP-002: `GET sys/namespaces/admin`, and with `X-Vault-Namespace: admin`, `sys/auth` plus `auth/<mount>/config` and role/group endpoints for `oidc`, `jwt`, `ldap` and `approle` mounts. Reuse TASK-009, TASK-010 and TASK-012 payloads for policies and identity rather than re-querying. Detect human auth methods (`oidc`, `jwt`, `ldap`).
@@ -300,7 +293,6 @@ Per-capability modules that query the live Vault API through the TASK-005 client
 **Type**: implementation
 **Effort**: M
 **Skill**: [`skills/discovery-orchestrator/SKILL.md`](../../../skills/discovery-orchestrator/SKILL.md)
-**Module**: `codifier/discovery/orchestrator.py`
 **Depends on**: TASK-007, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013
 **Status**: Blocked
 **Description**: Implement the Phase 1 (Discovery) driver from `design.md` §2.1: run the discovery modules in the dependency order `namespaces` → `root-config` → `policies` → `auth-mounts` → `secrets-engines` → `teams` → `admin-config`; write raw JSON to a per-namespace directory with stable, sorted keys; emit a single run report (endpoints queried, non-200 outcomes, warnings, exit status). Exit non-zero only where a capability spec says so (for example CAP-001 AC7).
@@ -321,7 +313,6 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Type**: implementation
 **Effort**: M
 **Skill**: [`skills/codification-namespaces/SKILL.md`](../../../skills/codification-namespaces/SKILL.md)
-**Module**: `codifier/codification/namespaces.py`
 **Depends on**: TASK-007, TASK-003, TASK-004, TASK-002
 **Status**: Blocked
 **Description**: Generate `namespaces/namespaces.tf` (`vault_namespace`, children referencing the parent by resource reference or aliased provider rather than string concatenation), `namespaces/hierarchy.md` (Mermaid tree and a table of full path, parent, namespace ID, custom metadata and depth), `namespaces/namespaces.auto.tfvars.json` or a `locals` map consumed as the ordered namespace list, and `import {}` blocks.
@@ -337,7 +328,6 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Type**: implementation
 **Effort**: L
 **Skill**: [`skills/codification-root-config/SKILL.md`](../../../skills/codification-root-config/SKILL.md)
-**Module**: `codifier/codification/root_config.py`
 **Depends on**: TASK-008, TASK-003, TASK-004, TASK-002, TASK-006
 **Status**: Blocked
 **Description**: Generate `root/audit.tf` (`vault_audit`), `root/quotas.tf` (`vault_quota_rate_limit`, and `vault_quota_lease_count` when present), `root/sys_config.tf` and `root/replication.tf` (`vault_generic_endpoint` only where no dedicated resource exists and, for replication, only when enabled), `root/README.md` with the "not managed by Terraform" table (seal type, licence ID/expiry, replication mode, each with the reason it cannot be codified), and `root/imports.tf`. Emit no `vault_policy`, `vault_auth_backend`, `vault_mount` or `vault_namespace` (ownership table).
@@ -353,7 +343,6 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Type**: implementation
 **Effort**: L
 **Skill**: [`skills/codification-policies/SKILL.md`](../../../skills/codification-policies/SKILL.md)
-**Module**: `codifier/codification/policies.py`
 **Depends on**: TASK-009, TASK-010, TASK-012, TASK-003, TASK-004, TASK-006
 **Status**: Blocked
 **Description**: Generate `vault_policy` for every ACL policy except `default` and `root`, with documents under `policies/<namespace>/<name>.hcl` loaded via `file("${path.module}/policies/<namespace>/<name>.hcl")` for policies over 10 lines and heredocs for shorter ones; `vault_egp_policy` and `vault_rgp_policy` when present; `policies/correlation.md` (policy × auth mount/role, identity group, identity entity, per namespace, with dangling references flagged); `policies/correlation.json` for the teams generator; `policies/coverage.md`; and `import {}` blocks with `id = "<name>"`.
@@ -369,7 +358,6 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Type**: implementation
 **Effort**: XL
 **Skill**: [`skills/codification-auth-mounts/SKILL.md`](../../../skills/codification-auth-mounts/SKILL.md)
-**Module**: `codifier/codification/auth_mounts.py`
 **Depends on**: TASK-010, TASK-017, TASK-003, TASK-004, TASK-002, TASK-006
 **Status**: Blocked
 **Description**: Generate `vault_auth_backend` (with `tune {}`) per non-builtin mount and the method-specific resources by type (AppRole, jwt/oidc, ldap, kubernetes, aws, cert), one file per namespace and mount (for example `namespaces/admin_platform/auth_approle.tf`). Use `vault_generic_endpoint` for unsupported types with a documented fallback and never emit credentials. `token_policies` cross-reference `vault_policy` resources owned by TASK-017 when the policy exists in the same namespace, otherwise keep the literal and warn. Generate `auth-mounts/coverage.md` and `import {}` blocks. Top-level OIDC/LDAP in the `admin` namespace is left to TASK-021 (ownership table).
@@ -385,7 +373,6 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Type**: implementation
 **Effort**: XL
 **Skill**: [`skills/codification-secrets-engines/SKILL.md`](../../../skills/codification-secrets-engines/SKILL.md)
-**Module**: `codifier/codification/secrets_engines.py`
 **Depends on**: TASK-011, TASK-003, TASK-004, TASK-002, TASK-006
 **Status**: Blocked
 **Description**: Generate `vault_mount` for each non-builtin mount (retaining `options = { version = "2" }` for KV v2), omitting zero-valued lease TTLs and unpinned `plugin_version`, plus engine-specific resources (`vault_kv_secret_backend_v2`, PKI, database, AWS/Azure/GCP, Transit, SSH) where Vault returns configuration. Engine resources reference the mount (for example `mount = vault_mount.admin_platform_secret.path`). Never emit `vault_kv_secret_v2`, `vault_kv_secret`, `vault_generic_secret` or database connection passwords. Generate `secrets-engines/coverage.md` and `import {}` blocks.
@@ -401,7 +388,6 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Type**: implementation
 **Effort**: XL
 **Skill**: [`skills/codification-teams/SKILL.md`](../../../skills/codification-teams/SKILL.md)
-**Module**: `codifier/codification/teams.py`
 **Depends on**: TASK-012, TASK-017, TASK-018, TASK-003, TASK-004, TASK-002, TASK-006
 **Status**: Blocked
 **Description**: Generate `vault_identity_group`, `vault_identity_entity`, `vault_identity_group_alias` and `vault_identity_entity_alias`, with `member_entity_ids` expressed as resource references and `mount_accessor` as `vault_auth_backend.<label>.accessor`. Choose the exclusive versus non-exclusive membership pattern and record it in the README. Generate `teams/teams.md` (team → namespace → group → entities → auth roles → policies), `teams/teams.json`, and `import {}` blocks. Inferred policy links (for example `platform-sre-read` for `vault-platform-sre`) are marked "inferred" versus Vault-recorded. Create no empty files when no aliases exist.
@@ -417,7 +403,6 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Type**: implementation
 **Effort**: L
 **Skill**: [`skills/codification-admin-config/SKILL.md`](../../../skills/codification-admin-config/SKILL.md)
-**Module**: `codifier/codification/admin_config.py`
 **Depends on**: TASK-013, TASK-015, TASK-017, TASK-018, TASK-020, TASK-003, TASK-004, TASK-002
 **Status**: Blocked
 **Description**: Generate the `admin/` composition: `main.tf` with the provider alias for namespace `admin` and references to resources owned by `namespaces`, `policies`, `auth-mounts` and `teams`; `human_auth.tf` only when an `oidc`/`jwt` (`vault_jwt_auth_backend`, `vault_jwt_auth_backend_role`) or `ldap` (`vault_ldap_auth_backend`, `vault_ldap_auth_backend_group`) mount exists, with `bindpass`, `client_secret` and `oidc_client_secret` as sensitive variables with no default; `variables.tf`, `outputs.tf`, `README.md` and `imports.tf`.

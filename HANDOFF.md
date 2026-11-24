@@ -1,14 +1,16 @@
 # Handoff Document — terraform-vault-vault-codifier
 
-**Date**: 2026-11-24  
-**Commit**: `1be0e4f` (branch `main`, no remote yet)  
-**Status**: Phase 1 (Foundation) **complete** — Phase 2 (Discovery Engine) **ready to start**
+**Date**: 2026-11-24
+**Commit**: `3b84fd0` (branch `main`, no remote yet), plus uncommitted work from the TASK-006 and "skills only" sessions
+**Status**: Phase 1 and TASK-006 **done**. Discovery and codification skills (TASK-007..021) are **authored but not yet executed**. Next step: validate them against the harness, starting with `discovery-orchestrator`.
+
+> **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
 ---
 
 ## 1. What this project is
 
-`terraform-vault-vault-codifier` is an agentic, spec-driven Python tool that surveys a **live HashiCorp Vault Enterprise cluster** through read-only API calls and produces **idiomatic Terraform HCL** that adopts the existing configuration into version control.
+`terraform-vault-vault-codifier` is an agentic, spec-driven toolkit (agent skills plus a small Python foundation library) that surveys a **live HashiCorp Vault Enterprise cluster** through read-only API calls and produces **idiomatic Terraform HCL** that adopts the existing configuration into version control.
 
 The goal is a Terraform baseline for which `terraform plan` shows **no changes** against the live cluster, aligned with HashiCorp Validated Design (HVD) best practices.
 
@@ -20,53 +22,23 @@ The goal is a Terraform baseline for which `terraform plan` shows **no changes**
 
 ```
 terraform-vault-vault-codifier/
-├── PROJECT_BRIEF.md                   ← one-page overview
+├── PROJECT_BRIEF.md
 ├── openspec/changes/vault-brownfield-research/
-│   ├── proposal.md                    ← original problem statement
-│   ├── specs.md                       ← 7 capability specs (CAP-001..007)
-│   ├── design.md                      ← 4-phase pipeline, 3-layer structure
-│   └── tasks.md                       ← 31 tasks with status
-│
-├── tmp/                               ← research artifacts (never commit vault.hclic)
-│   ├── domain-model.md                ← Vault concept taxonomy
-│   ├── terraform-resource-map.md      ← Vault API path → Terraform resource map
-│   ├── brownfield-discovery-guide.md  ← walkthrough + troubleshooting
-│   └── hvd-alignment-matrix.md        ← HVD guide → capability alignment
-│
-├── codifier/                          ← Python package (stdlib only, Python 3.9+)
-│   ├── __main__.py                    ← CLI entry point
-│   ├── shared/
-│   │   ├── constants.py               ← capability slugs, layer map, sensitive fields
-│   │   ├── providers.py               ← TASK-002: versions.tf + providers.tf generator
-│   │   ├── naming.py                  ← TASK-003: deterministic label/path library
-│   │   ├── headers.py                 ← TASK-004a: provenance header writer
-│   │   └── guard.py                   ← TASK-004b: secret-scrubbing guard
-│   ├── discovery/
-│   │   ├── client.py                  ← TASK-005: read-only Vault HTTP client + RunReport
-│   │   └── <7 stubs>                  ← TASK-007..013 (namespaces through admin-config)
-│   ├── codification/
-│   │   └── <8 stubs>                  ← TASK-015..022
-│   └── validation/
-│       └── <4 stubs>                  ← TASK-023..027
-│
-├── tests/
-│   ├── test_shared.py                 ← 40 tests: providers, naming, guard, headers
-│   └── test_client.py                 ← 18 tests: VaultClient + RunReport (offline)
-│
-├── skills/                            ← 16 agent SKILL.md files
-│   ├── vault-exporter-setup/          ← how to provision exporter identity
+│   ├── proposal.md · specs.md · design.md · tasks.md
+│   └── task-006-decision.md           ← verified import IDs, namespace style, Enterprise features
+├── skills/                            ← 17 agent skills (the deliverable)
+│   ├── vault-codifier-conventions/    ← START HERE: tool choice, secret guard, naming, header, providers, layers
+│   ├── vault-exporter-setup/          ← TASK-031: provision the read-only exporter identity
 │   ├── discovery-{namespaces,root-config,policies,auth-mounts,
-│   │             secrets-engines,identity-teams,admin-config,orchestrator}/
+│   │             secrets-engines,identity-teams,admin-config,orchestrator}/   ← TASK-007..014
 │   └── codification-{namespaces,root-config,policies,auth-mounts,
-│                     secrets-engines,teams,admin-config}/
-│
-├── test/                              ← synthetic brownfield harness
-│   ├── Makefile                       ← make all / make smoke-test
-│   ├── docker-compose.yml             ← Vault Enterprise 2.2.2+ent dev-HA
-│   └── terraform/{admin,namespaces,seed}/
-│
-└── discovered_terraform/              ← codifier output (raw/ excluded by .gitignore)
+│                     secrets-engines,teams,admin-config}/                     ← TASK-015..021
+├── test/                              ← synthetic brownfield harness (docker-compose + 3 Terraform layers)
+├── tmp/                               ← research notes (never commit vault.hclic)
+└── discovered_terraform/              ← skill output (raw/ is git-ignored)
 ```
+
+**Removed**: the `codifier/` Python package and `tests/`. The skills never imported them, and 15 of the files were `NotImplementedError` stubs. The useful rules (naming, secret guard, forbidden resources, provider template, header, layer map) moved into `vault-codifier-conventions`.
 
 ---
 
@@ -76,64 +48,90 @@ terraform-vault-vault-codifier/
 
 | Task | Title | Deliverable |
 |---|---|---|
-| TASK-001 | Project scaffolding | `codifier/` package, `constants.py`, output layout |
-| TASK-002 | Provider template | `shared/providers.py` — `versions.tf` + `providers.tf` |
-| TASK-003 | Naming library | `shared/naming.py` — labels, paths, collision registry |
-| TASK-004 | Headers + guard | `shared/headers.py` + `shared/guard.py` |
-| TASK-005 | Vault API client | `discovery/client.py` — read-only, RunReport, retry/backoff |
+| TASK-001 | Scaffolding, layout | `vault-codifier-conventions` §2, §8 |
+| TASK-002 | Provider template | `vault-codifier-conventions` §7 |
+| TASK-003 | Naming rules | `vault-codifier-conventions` §5 |
+| TASK-004 | Header + secret guard | `vault-codifier-conventions` §3, §4 (checked by grep, not unit tests) |
+| TASK-005 | Vault API client | **Superseded**: discovery uses `vault` CLI + `curl` + `jq` with the exporter token |
+| TASK-006 | Resolve open items | `task-006-decision.md` |
 | TASK-031 | Exporter identity | `test/terraform/admin/policies/exporter.hcl` + `skills/vault-exporter-setup/SKILL.md` |
 
-**Tests: 58/58 passing.** Run with:
+### Tool choice by phase (and why)
 
-```bash
-python3 -m unittest discover -s tests -p "test_*.py" -v
-```
+| Phase | Tool | Why |
+|---|---|---|
+| Discovery | `vault` CLI, `curl`, `jq` | The Vault MCP server only exposes mount, KV and PKI tools. It has none for namespaces, auth, policies, identity, quotas or `sys/*`, and it exposes write tools. |
+| Codification | Terraform MCP (`search_providers`, `get_provider_details`, `search_provider_docs`) | Look up resource schemas and import syntax for `hashicorp/vault` 4.8.0 before writing HCL. |
+| Validation | `terraform fmt`, `validate`, `plan` | The Terraform MCP does not run them. |
 
-### Phase 2 — Discovery Engine (ready to start)
+Read-only is enforced by the exporter policy and the audit log (TASK-025), not by client code.
 
-| Task | Title | Module | Skill |
-|---|---|---|---|
-| TASK-006 | Resolve specs open items | research task | — |
-| TASK-007 | Namespace discovery | `discovery/namespaces.py` | `discovery-namespaces` |
-| TASK-008 | Root-config discovery | `discovery/root_config.py` | `discovery-root-config` |
-| TASK-009 | Policy discovery | `discovery/policies.py` | `discovery-policies` |
-| TASK-010 | Auth-mount discovery | `discovery/auth_mounts.py` | `discovery-auth-mounts` |
-| TASK-011 | Secrets-engine discovery | `discovery/secrets_engines.py` | `discovery-secrets-engines` |
-| TASK-012 | Identity/teams discovery | `discovery/identity_teams.py` | `discovery-identity-teams` |
-| TASK-013 | Admin-config discovery | `discovery/admin_config.py` | `discovery-admin-config` |
-| TASK-014 | Discovery orchestrator | `discovery/orchestrator.py` | `discovery-orchestrator` |
+**Status legend for Phases 2–3**: *Skill authored* = `SKILL.md` written and committed. *Validated* = executed against the harness with its acceptance criteria checked. Nothing in Phases 2–3 is validated yet: `discovered_terraform/raw/` is empty and no HCL has been generated.
 
-TASK-006 should be done first — it resolves three open items in `specs.md` that inform the discovery modules.
+### Phase 2 — Discovery Engine (skills authored, not validated)
 
-### Phases 3–5 — Blocked on Phase 2
+| Task | Title | Skill (the deliverable) | Skill authored | Validated |
+|---|---|---|---|---|
+| TASK-006 | Resolve specs open items | — (research task) | n/a | **Done** — see §4 |
+| TASK-007 | Namespace discovery | `discovery-namespaces` | Yes | No |
+| TASK-008 | Root-config discovery | `discovery-root-config` | Yes | No |
+| TASK-009 | Policy discovery | `discovery-policies` | Yes | No |
+| TASK-010 | Auth-mount discovery | `discovery-auth-mounts` | Yes | No |
+| TASK-011 | Secrets-engine discovery | `discovery-secrets-engines` | Yes | No |
+| TASK-012 | Identity/teams discovery | `discovery-identity-teams` | Yes | No |
+| TASK-013 | Admin-config discovery | `discovery-admin-config` | Yes | No |
+| TASK-014 | Discovery orchestrator | `discovery-orchestrator` | Yes | No |
 
-Codification generators (TASK-015..021), assembly (TASK-022), validation (TASK-023..027), and documentation (TASK-028..030) are all blocked until Phase 2 is complete.
+The orchestrator skill runs the seven discovery skills in dependency order and writes `discovered_terraform/raw/<namespace>/*.json` plus `discovered_terraform/run_report.json`. It requires `EXPORTER_TOKEN` and an enabled audit device, and refuses to run with a root token.
+
+### Phase 3 — Codification Engine (skills authored, not validated)
+
+| Task | Title | Skill | Skill authored | Validated |
+|---|---|---|---|---|
+| TASK-015 | Namespaces generator | `codification-namespaces` | Yes | No |
+| TASK-016 | Root-config generator | `codification-root-config` | Yes | No |
+| TASK-017 | Policies generator + correlation matrix | `codification-policies` | Yes | No |
+| TASK-018 | Auth-mounts generator | `codification-auth-mounts` | Yes | No |
+| TASK-019 | Secrets-engines generator | `codification-secrets-engines` | Yes | No |
+| TASK-020 | Teams generator | `codification-teams` | Yes | No |
+| TASK-021 | Admin-config generator | `codification-admin-config` | Yes | No |
+| TASK-022 | Layer assembly, imports, ownership check | **none yet** | No | No |
+
+TASK-022 has no skill, and neither do TASK-023..027. TASK-028..030 are documentation tasks.
+
+### Phases 4–5 — Not started
+
+Validation (TASK-023..027) and documentation (TASK-028..030) have no deliverables yet. They need generated HCL from Phase 3 to be meaningful.
+
+### Known discrepancies to resolve
+
+- ~~`tasks.md` status stale~~ — fixed. ~~`**Module**:` Python paths~~ — removed. ~~Dangling `discovery-client-setup`~~ — removed.
+- `design.md` §6.2 still contains Python pseudocode. It is illustrative; the skills are authoritative.
+- The skills have never run. Expect acceptance-criteria failures in the first validation pass.
 
 ---
 
-## 4. Specs open items (TASK-006)
+## 4. Specs open items (TASK-006) — resolved
 
-Three questions need answers before writing the discovery modules. They are listed at the bottom of [`specs.md`](openspec/changes/vault-brownfield-research/specs.md):
+Evidence and tables are in [`task-006-decision.md`](openspec/changes/vault-brownfield-research/task-006-decision.md). Summary:
 
-1. **Import ID formats** — Confirm the `terraform import` ID format for each resource type in provider `4.8.0`. For namespace-scoped resources the format is typically `<namespace>/<path>`. Verify experimentally against the harness with `terraform import` or an `import {}` block.
+1. **Import IDs**: relative to the provider namespace, never namespace-prefixed. `vault_auth_backend` uses the bare mount path (`approle`); `vault_namespace` uses the leaf name; AppRole roles use `auth/<mount>/role/<name>`; identity objects use UUIDs. `vault_generic_endpoint` cannot be imported.
+2. **Namespace targeting**: `aliased` is ratified. Resource-level `namespace` makes `import {}` plan a replacement.
+3. **Enterprise features**: EGP, RGP and identity MFA get dedicated resources; replication and legacy MFA are documented only.
 
-2. **Namespace-targeting style default** — `aliased` (one `provider "vault" { alias = "admin" }` per namespace) vs `resource` (single provider + `namespace = "..."` per resource). Both are implemented in `shared/providers.py`. Pick one as the default and wire it into `__main__.py`.
-
-3. **EGP / RGP / MFA / Sentinel / replication** — Which Enterprise features get a dedicated `vault_*` Terraform resource vs `vault_generic_endpoint` fallback? None exist in the harness, so a "skip + document" approach is acceptable.
-
----
+Skills `codification-namespaces`, `codification-auth-mounts` and `codification-policies` were corrected to match. The dangling `discovery-client-setup` dependency was removed from `discovery-namespaces`.
 
 ## 5. Key constraints (must not be violated)
 
 | Constraint | Enforced by |
 |---|---|
-| `vault_kv_secret_v2` is **forbidden** — never emit | `guard.assert_resource_allowed()` + `constants.FORBIDDEN_RESOURCES` |
-| No secret values on disk | `guard.Guard.scrub()` replaces with `var.*` references |
-| Read-only Vault access | `VaultClient._assert_method_allowed()` — POST/PUT/DELETE/PATCH raise `PermissionError` before any network call |
-| Never root/operator token for discovery | Use exporter AppRole token only (see `skills/vault-exporter-setup/SKILL.md`) |
-| All doc refs must be public HTTPS URLs | Verified live at `developer.hashicorp.com/vault/docs` and `developer.hashicorp.com/validated-designs/vault/` |
-| Tokens never logged or in run report | `RunReport` stores only endpoint + namespace + status |
-| Builtin objects not codified | `constants.BUILTIN_POLICIES`, `BUILTIN_AUTH_MOUNTS`, `BUILTIN_SECRET_MOUNTS` |
+| `vault_kv_secret_v2` (and `vault_kv_secret`, `vault_generic_secret`, AppRole `secret_id` resource) are **forbidden** | `vault-codifier-conventions` §2 |
+| No secret values on disk | conventions §3 (replace with `var.*`, grep check after generation) |
+| Read-only Vault access | exporter policy + audit log check (TASK-025). Never call Vault MCP write tools or `read_secret` |
+| Never root/operator token for discovery | exporter AppRole token only (`vault-exporter-setup`) |
+| Builtin objects not codified | conventions §2 (`default`, `root`, `token/`, `sys/`, `identity/`, `cubbyhole/`) |
+| Tokens never logged or in the run report | run report holds endpoint + namespace + status only |
+| Doc refs are public HTTPS URLs | conventions §4 |
 
 ---
 
@@ -173,7 +171,7 @@ make -C test smoke-test  # verify 6/6 checks pass
 |---|---|
 | Vault CLI | `/opt/homebrew/bin/vault` |
 | Terraform | `/opt/homebrew/bin/terraform` |
-| Docker | `/usr/local/bin/docker` |
+| Docker | `~/.rd/bin/docker` (Rancher Desktop; was `/usr/local/bin/docker` in earlier notes) |
 | Vault licence | `./tmp/vault.hclic` (never committed) |
 
 **Always set before any `vault` CLI call:**
@@ -198,60 +196,37 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 | Stale `~/.config/vault-enterprise/server.hcl` | Always set `VAULT_CONFIG_PATH=/dev/null` |
 | `vault_kv_secret_v2` is FORBIDDEN | CAP-004 AC3 — supersedes the design.md resource map |
 | Provider `skip_child_token` | Must be `true` in layer 1 (`admin/`) and layer 2 (`namespaces/`) provider blocks |
-| Namespace-targeting default | `aliased` style (one provider alias per namespace) — not yet wired as default in CLI |
+| Namespace-targeting default | `aliased`, ratified by TASK-006 (resource-level `namespace` breaks `import {}`) |
 
 ---
 
 ## 9. How to continue
 
-### Quick orient
-
-```bash
-cd /Users/abuxton/src/github/terraform-vault-vault-codifier
-
-# Confirm tests green
-python3 -m unittest discover -s tests -p "test_*.py" -v
-
-# Read task status
-grep -A1 "TASK-006\|TASK-007\|TASK-008\|TASK-009" \
-  openspec/changes/vault-brownfield-research/tasks.md | head -40
-
-# Review the open items
-tail -10 openspec/changes/vault-brownfield-research/specs.md
-```
-
 ### Recommended start order
 
-1. **TASK-006** — resolve the three open items in `specs.md`; update `tmp/terraform-resource-map.md` where import IDs differ from assumptions; wire namespace-targeting default into `__main__.py`
-2. **TASK-007** — implement `codifier/discovery/namespaces.py` using `VaultClient.list("/sys/namespaces")` recursively; use the `discovery-namespaces` skill as the spec
-3. **TASK-008..013** — implement the remaining discovery modules in dependency order (see `specs.md §Dependency order`)
-4. **TASK-014** — wire all discovery modules into the orchestrator; write raw JSON payloads to `discovered_terraform/raw/`
-
-### Importing the foundation libraries
-
-Every new module starts with:
-
-```python
-from codifier.shared.constants import CAPABILITY_ORDER, BUILTIN_POLICIES, ...
-from codifier.shared.naming import resource_label, CollisionRegistry
-from codifier.shared.headers import prepend_header
-from codifier.shared.guard import Guard, assert_resource_allowed
-from codifier.discovery.client import VaultClient, RunReport
-```
+1. ~~TASK-006~~ — done (§4).
+2. **Validate Phase 2.** Provision the exporter (`vault-exporter-setup`), export `EXPORTER_TOKEN`, run `discovery-orchestrator`. Check TASK-007..014 acceptance criteria in `tasks.md` (4 namespaces, parent-before-child, byte-identical re-runs, run report with no surprises).
+3. **Validate Phase 3** against the raw payloads in dependency order: namespaces → root-config → policies → auth-mounts → secrets-engines → teams → admin-config. Fix skills where acceptance criteria fail.
+4. **Fill the gaps**: author skills for TASK-022 (assembly, imports, ownership check) and validation TASK-023..027.
+5. Documentation TASK-028..030.
 
 ### Running against the harness
 
 ```bash
 export VAULT_CONFIG_PATH=/dev/null
 export VAULT_ADDR=http://127.0.0.1:8200
-export VAULT_TOKEN=root        # or exporter AppRole token (preferred)
+make -C test up && make -C test all && make -C test smoke-test
 
-# CLI smoke check
-python3 -m codifier --dry-run
-
-# When discovery modules are implemented:
-python3 -m codifier --phase discovery --output-dir discovered_terraform
+# Skills must use the exporter token, never root (see skills/vault-exporter-setup/SKILL.md)
+export EXPORTER_TOKEN=...      # from the exporter AppRole login; never print or commit
 ```
+
+### MCP servers for agents
+
+Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude Code (`.mcp.json`) and VS Code Copilot (`.vscode/mcp.json`). They need `terraform-mcp-server` and `vault-mcp-server` on `PATH`, plus `TFE_TOKEN` and `VAULT_TOKEN`. `.bob/` and `.vscode/` are gitignored, so only `.mcp.json` is shareable.
+
+- The **Terraform MCP** is used by the codification skills for schema and import lookups.
+- The **Vault MCP** is **not** used for discovery (see §3). It can return secret values and has write tools, so point it only at the harness. Optional use: `list_mounts` as a cross-check.
 
 ---
 
@@ -259,9 +234,11 @@ python3 -m codifier --phase discovery --output-dir discovered_terraform
 
 ```
 Branch:  main
-Commit:  1be0e4f  feat: initial commit — Phase 1 foundation complete
+Commit:  3b84fd0  docs: add HANDOFF.md — Phase 1 complete, Phase 2 ready to start
+         1be0e4f  feat: initial commit — Phase 1 foundation complete
 Remote:  (none — add with: git remote add origin <url>)
-Files:   88 tracked, .gitignore excludes *.hclic, raw/, run-reports, .agents/, .bob/, .claude/
+Files:   89 tracked (includes all 16 skills). .gitignore excludes *.hclic, raw/, run-reports, .agents/, .bob/, .claude/, .vscode/
+Untracked: .github/, .opencode/, .mcp.json, skills-lock.json (agent tooling and MCP config, not yet committed)
 ```
 
 To push when ready:
