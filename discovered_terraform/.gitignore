@@ -1,0 +1,26 @@
+# discovered_terraform — generated output of the vault-brownfield-codifier
+# Raw payloads may contain structured cluster config.
+# Terraform state/plans may contain sensitive provider data.
+# NEVER commit these to version control.
+
+# Raw JSON payloads from discovery runs
+raw/*
+!raw/.gitkeep
+
+# Consolidated run reports (may contain endpoint metadata)
+run-report*.json
+run-report*.log
+
+# Any file that might contain token values
+*.token
+.vault-token
+
+# Terraform state and plans
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+
+# Vault licence files (never commit)
+*.hclic

@@ -1,0 +1,61 @@
+schema: spec-driven
+
+# Project context
+# This is shown to AI when creating artifacts.
+context: |
+  Project: terraform-vault-vault-codifier
+  Domain: Agentic workflow tool that captures brownfield HashiCorp Vault Enterprise
+  configurations and produces idiomatic Terraform HCL following HashiCorp Validated
+  Design (HVD) best practices.
+
+  Tech stack:
+  - HashiCorp Vault Enterprise (v1.17+)
+  - Terraform provider: hashicorp/vault (≥ 4.x)
+  - Terraform ≥ 1.9
+  - OpenSpec spec-driven workflow
+  - Multi-agent orchestration (Bob / Claude)
+
+  Documentation source:
+  - All references to HashiCorp Vault documentation MUST cite the repository
+    git@github.com:hashicorp/web-unified-docs.git
+  - Do NOT reference local filesystem paths such as ~/src/hashicorp/session-web-unified-docs/
+  - Validated Designs live under content/validated-designs/docs/docs/vault/ in that repo
+  - Vault release docs live under content/vault/<version>/content/docs/ in that repo
+
+  Test harness:
+  - Local Vault Enterprise 2.2.2+ent instance is in test/
+  - Started via Docker Compose: test/docker-compose.yml
+  - All lifecycle driven by test/Makefile (make all, make seed, make clean, etc.)
+  - Synthetic data in test/terraform/ (admin/ → namespaces/ → seed/ layers)
+  - Enterprise licence required at /tmp/vault.hclic — NEVER committed to code
+  - Vault Enterprise Docker image: hashicorp/vault-enterprise:2.2.2-ent
+  - Reference repos: https://github.com/tfo-apj-demos/terraform-vault-tfo-apj-demo-admin
+                     https://github.com/nhsy-hcp/terraform-vault-onboarding
+
+  Conventions:
+  - Terraform resources follow hashicorp/vault provider naming (vault_mount, vault_auth_backend, etc.)
+  - Namespace paths always end with "/" when used as VAULT_NAMESPACE values
+  - Brownfield discovery is read-only; never modify existing Vault state
+  - Research artifacts go in ./tmp/ (never /tmp/)
+  - Specs go in openspec/specs/<capability>/spec.md
+  - *.hclic files are NEVER committed — documented requirement only
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Keep proposals under 2 pages
+    - Always include a "Non-goals" section if scope needs bounding
+    - Vault documentation references must cite git@github.com:hashicorp/web-unified-docs.git
+  specs:
+    - Each spec covers exactly one Vault capability (namespace, auth, secrets, policy, etc.)
+    - Include Terraform resource types that implement the capability
+    - Include brownfield discovery commands (vault CLI / API) for that capability
+    - Vault documentation references must cite git@github.com:hashicorp/web-unified-docs.git
+  design:
+    - Include agent role assignments (Vault expert, SRE, Solution Architect, Tech Writer)
+    - Include data flow: discovery → research artifact → spec → Terraform HCL
+    - Vault documentation references must cite git@github.com:hashicorp/web-unified-docs.git
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Each task must map to exactly one capability spec
+    - Tag tasks with the responsible agent role

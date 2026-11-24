@@ -1,0 +1,43 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# LICENCE FILES — NEVER commit a Vault Enterprise licence
+# ──────────────────────────────────────────────────────────────────────────────
+*.hclic
+vault.hclic
+vault.lic
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Vault init state — contains unseal keys and root token
+# ──────────────────────────────────────────────────────────────────────────────
+.vault-init-state.json
+.vault-env
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Terraform working directories and state
+# ──────────────────────────────────────────────────────────────────────────────
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/terraform.tfstate.d/
+**/crash.log
+**/crash.*.log
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Local variable files (may contain token values)
+# ──────────────────────────────────────────────────────────────────────────────
+**/terraform.tfvars
+**/terraform.tfvars.json
+**/*.auto.tfvars
+**/*.auto.tfvars.json
+
+# ──────────────────────────────────────────────────────────────────────────────
+# macOS
+# ──────────────────────────────────────────────────────────────────────────────
+.DS_Store
+
+# Vault Raft data directory (bind-mount, never commit)
+vault/data/

@@ -1,0 +1,42 @@
+services:
+  vault:
+    image: hashicorp/vault-enterprise:2.2.2-ent
+    container_name: vault-codifier-dev
+    restart: unless-stopped
+    ports:
+      - "8200:8200"   # API / UI
+    cap_add:
+      - IPC_LOCK      # Required: prevents memory from being swapped to disk
+    environment:
+      VAULT_ADDR:              "http://0.0.0.0:8200"
+      VAULT_API_ADDR:          "http://0.0.0.0:8200"
+      VAULT_DEV_ROOT_TOKEN_ID: "root"
+      # Vault Enterprise dev mode requires integrated (Raft) storage.
+      # -dev-ha + -dev-transactional gives a single-node HA-ready dev cluster.
+      VAULT_DEV_HA_ENABLE:          "1"
+      VAULT_DEV_TRANSACTIONAL:      "1"
+      # Enterprise licence path inside the container.
+      # Host file is bind-mounted from /private/tmp/vault.hclic (macOS Docker Desktop
+      # cannot bind-mount /tmp directly — the Makefile copies it there automatically).
+      VAULT_LICENSE_PATH: "/vault/license/vault.hclic"
+    volumes:
+      # Enterprise licence — mounted directly from ./tmp/vault.hclic in the repo root.
+      # Docker Desktop shares the user's home directory, so this path always resolves correctly.
+      # The file is excluded from git via tmp/.gitignore.
+      - ../tmp/vault.hclic:/vault/license/vault.hclic:ro
+    # Dev mode: auto-initialised, auto-unsealed, root token = "root"
+    # Enterprise requires -dev-ha for raft storage.
+    # -dev-listen-address overrides the default 127.0.0.1 so the host can reach it.
+    command: >
+      vault server
+        -dev
+        -dev-root-token-id=root
+        -dev-ha
+        -dev-transactional
+        -dev-listen-address=0.0.0.0:8200
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      interval: 3s
+      timeout: 2s
+      retries: 15
+      start_period: 5s

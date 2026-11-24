@@ -1,0 +1,47 @@
+# =============================================================================
+# vault-brownfield-codifier — .gitignore
+# =============================================================================
+
+# Secrets and licence files — NEVER commit
+*.hclic
+tmp/vault.hclic
+
+# Terraform state and lock files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Generated output — raw payloads and run reports may contain tokens
+discovered_terraform/raw/
+discovered_terraform/run-report*.json
+discovered_terraform/run-report*.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Editor and OS artefacts
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Bob / agent workspace tooling — not part of the project
+.agents/
+.bob/
+
+# Other agent/editor tooling
+.claude/
+.codex/
+.cursor/
+.windsurf/
