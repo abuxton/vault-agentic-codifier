@@ -1,8 +1,8 @@
 # Handoff Document — terraform-vault-vault-codifier
 
 **Date**: 2026-11-24
-**Commit**: `3b84fd0` (branch `main`, no remote yet), plus uncommitted work from the TASK-006 and "skills only" sessions
-**Status**: Phase 1 and TASK-006 **done**. Discovery and codification skills (TASK-007..021) are **authored but not yet executed**. Next step: validate them against the harness, starting with `discovery-orchestrator`.
+**Commit**: `250a4ad` on `main` (no remote yet; see TASK-032), plus uncommitted `STATUS_REPORT.md`, `HANDOFF.md` and `tasks.md` edits
+**Status**: Phase 1 and Phase 2 **done and validated**. Phase 3 is validated for TASK-015..018 (namespaces, root-config, policies, auth-mounts). TASK-019..021 are authored, not run. Next step: TASK-019 (`codification-secrets-engines`). Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
@@ -10,11 +10,11 @@
 
 ## 1. What this project is
 
-`terraform-vault-vault-codifier` is an agentic, spec-driven toolkit (agent skills plus a small Python foundation library) that surveys a **live HashiCorp Vault Enterprise cluster** through read-only API calls and produces **idiomatic Terraform HCL** that adopts the existing configuration into version control.
+`terraform-vault-vault-codifier` is an agentic, spec-driven toolkit (agent skills with runnable bash and jq scripts; no Python) that surveys a **live HashiCorp Vault Enterprise cluster** through read-only API calls and produces **idiomatic Terraform HCL** that adopts the existing configuration into version control.
 
 The goal is a Terraform baseline for which `terraform plan` shows **no changes** against the live cluster, aligned with HashiCorp Validated Design (HVD) best practices.
 
-**It never writes to Vault.** Every API call is `GET` or `LIST`. Secrets are never read or emitted. All generated files are scrubbed by a guard before writing.
+**It never writes to Vault.** Every API call is `GET` or `LIST`. Secrets are never read or emitted. Generators refuse to write when a payload contains a credential field.
 
 ---
 
@@ -26,16 +26,17 @@ terraform-vault-vault-codifier/
 ├── openspec/changes/vault-brownfield-research/
 │   ├── proposal.md · specs.md · design.md · tasks.md
 │   └── task-006-decision.md           ← verified import IDs, namespace style, Enterprise features
-├── skills/                            ← 17 agent skills (the deliverable)
+├── skills/                            ← 17 agent skills (the deliverable); runnable scripts under each `scripts/`
 │   ├── vault-codifier-conventions/    ← START HERE: tool choice, secret guard, naming, header, providers, layers
 │   ├── vault-exporter-setup/          ← TASK-031: provision the read-only exporter identity
 │   ├── discovery-{namespaces,root-config,policies,auth-mounts,
 │   │             secrets-engines,identity-teams,admin-config,orchestrator}/   ← TASK-007..014
 │   └── codification-{namespaces,root-config,policies,auth-mounts,
 │                     secrets-engines,teams,admin-config}/                     ← TASK-015..021
+├── STATUS_REPORT.md                   ← point-in-time status, evidence and risks
 ├── test/                              ← synthetic brownfield harness (docker-compose + 3 Terraform layers)
 ├── tmp/                               ← research notes (never commit vault.hclic)
-└── discovered_terraform/              ← skill output (raw/ is git-ignored)
+└── discovered_terraform/              ← skill output: raw/ (git-ignored), terraform/{admin,namespaces,seed}/ (generated), run_report.json
 ```
 
 **Removed**: the `codifier/` Python package and `tests/`. The skills never imported them, and 15 of the files were `NotImplementedError` stubs. The useful rules (naming, secret guard, forbidden resources, provider template, header, layer map) moved into `vault-codifier-conventions`.
@@ -66,48 +67,69 @@ terraform-vault-vault-codifier/
 
 Read-only is enforced by the exporter policy and the audit log (TASK-025), not by client code.
 
-**Status legend for Phases 2–3**: *Skill authored* = `SKILL.md` written and committed. *Validated* = executed against the harness with its acceptance criteria checked. Nothing in Phases 2–3 is validated yet: `discovered_terraform/raw/` is empty and no HCL has been generated.
+**Status legend for Phases 2–3**: *Validated* = executed against the harness with its acceptance criteria checked. *Authored* = `SKILL.md` written, not yet run. Evidence is in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
-### Phase 2 — Discovery Engine (skills authored, not validated)
+### Phase 2 — Discovery Engine (all validated)
 
-| Task | Title | Skill (the deliverable) | Skill authored | Validated |
-|---|---|---|---|---|
-| TASK-006 | Resolve specs open items | — (research task) | n/a | **Done** — see §4 |
-| TASK-007 | Namespace discovery | `discovery-namespaces` | Yes | No |
-| TASK-008 | Root-config discovery | `discovery-root-config` | Yes | No |
-| TASK-009 | Policy discovery | `discovery-policies` | Yes | No |
-| TASK-010 | Auth-mount discovery | `discovery-auth-mounts` | Yes | No |
-| TASK-011 | Secrets-engine discovery | `discovery-secrets-engines` | Yes | No |
-| TASK-012 | Identity/teams discovery | `discovery-identity-teams` | Yes | No |
-| TASK-013 | Admin-config discovery | `discovery-admin-config` | Yes | No |
-| TASK-014 | Discovery orchestrator | `discovery-orchestrator` | Yes | No |
+| Task | Skill | Status |
+|---|---|---|
+| TASK-007 | `discovery-namespaces` | Validated |
+| TASK-008 | `discovery-root-config` | Validated |
+| TASK-009 | `discovery-policies` | Validated |
+| TASK-010 | `discovery-auth-mounts` | Validated |
+| TASK-011 | `discovery-secrets-engines` | Validated |
+| TASK-012 | `discovery-identity-teams` | Validated |
+| TASK-013 | `discovery-admin-config` | Validated |
+| TASK-014 | `discovery-orchestrator` (`scripts/run.sh`) | Validated: exit 0 in about 6 s, byte-identical re-run, 221 read or list requests in the audit log |
 
-The orchestrator skill runs the seven discovery skills in dependency order and writes `discovered_terraform/raw/<namespace>/*.json` plus `discovered_terraform/run_report.json`. It requires `EXPORTER_TOKEN` and an enabled audit device, and refuses to run with a root token.
+`skills/discovery-orchestrator/scripts/run.sh` runs the discovery scripts in dependency order and writes `discovered_terraform/raw/<namespace>/*.json`, `run_report.json` and `.state.json`. It requires `EXPORTER_TOKEN` and an enabled audit device, and refuses to run with a root token.
 
-### Phase 3 — Codification Engine (skills authored, not validated)
+### Phase 3 — Codification Engine
 
-| Task | Title | Skill | Skill authored | Validated |
-|---|---|---|---|---|
-| TASK-015 | Namespaces generator | `codification-namespaces` | Yes | No |
-| TASK-016 | Root-config generator | `codification-root-config` | Yes | No |
-| TASK-017 | Policies generator + correlation matrix | `codification-policies` | Yes | No |
-| TASK-018 | Auth-mounts generator | `codification-auth-mounts` | Yes | No |
-| TASK-019 | Secrets-engines generator | `codification-secrets-engines` | Yes | No |
-| TASK-020 | Teams generator | `codification-teams` | Yes | No |
-| TASK-021 | Admin-config generator | `codification-admin-config` | Yes | No |
-| TASK-022 | Layer assembly, imports, ownership check | **none yet** | No | No |
+| Task | Skill | Status | Generator |
+|---|---|---|---|
+| TASK-015 | `codification-namespaces` | **Validated** | `scripts/generate.sh` |
+| TASK-016 | `codification-root-config` | **Validated** | `scripts/generate.sh` |
+| TASK-017 | `codification-policies` | **Validated** | `scripts/generate.sh` |
+| TASK-018 | `codification-auth-mounts` | **Validated** for AppRole; other method types are backend-only | `scripts/generate.sh` |
+| TASK-019 | `codification-secrets-engines` | Authored, not run | none yet |
+| TASK-020 | `codification-teams` | Authored, not run | none yet |
+| TASK-021 | `codification-admin-config` | Authored, not run | none yet |
+| TASK-022 | layer assembly, imports, ownership check | **No skill yet** | — |
 
-TASK-022 has no skill, and neither do TASK-023..027. TASK-028..030 are documentation tasks.
+All four generators run from the repo root, read `discovered_terraform/raw/`, write `discovered_terraform/terraform/`, and are idempotent. Generate in this order: namespaces, root-config, policies, auth-mounts. They share the `admin/` and `seed/` layers, and `vault-codifier-conventions/scripts/scaffold-layer.sh` merges provider aliases through `<layer>/.namespaces`.
 
-### Phases 4–5 — Not started
+Latest plan (harness root token, `terraform plan`): `admin/` 12 import, `namespaces/` 3 import, `seed/` 12 import, with **0 add, 0 change, 0 destroy** in each.
 
-Validation (TASK-023..027) and documentation (TASK-028..030) have no deliverables yet. They need generated HCL from Phase 3 to be meaningful.
+### Phases 4–5 — Not started, plus three new tasks
+
+| Task | Title | Status |
+|---|---|---|
+| TASK-023..027 | Static gate, zero-diff plan, read-only and no-secrets check, variant fixtures, idempotence | No skills yet |
+| TASK-028..030 | AGENTS.md, README, traceability | Not started |
+| **TASK-032** | Create the GitHub repository and publish | New. Needs `gh auth login`; check ignored files first |
+| **TASK-033** | Waza review of skills TASK-007..021 and fixes | New. Baseline captured, no skill edited yet |
+| **TASK-034** | Terraform MCP installed, or fallback documented | New. Fallback note already in the TASK-015..018 skills |
+
+### Waza review (TASK-033), baseline
+
+[microsoft/waza](https://github.com/microsoft/waza) is installed at `~/bin/waza` (0.38.7; the current release is v0.42.0, update first). Run it like this:
+
+```bash
+export WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1
+~/bin/waza check --format json > /tmp/waza_check.json   # all skills, JSON
+~/bin/waza tokens count skills/
+~/bin/waza tokens suggest skills/
+```
+
+`waza check` also scans `.claude/skills` (the openspec skills); ignore those entries. Result for our 17 skills: none is `ready`. All 17 exceed the default 500-token limit (1,909 to 3,391 tokens each), all 17 use frontmatter fields outside the agentskills.io spec (`triggers`, `capability`, `task`, `depends_on`, `role`), and none has an eval suite. Plan and acceptance criteria are in `tasks.md` under TASK-033. Do not edit the skills before the generators for TASK-019..021 are validated, so the review runs once.
 
 ### Known discrepancies to resolve
 
-- ~~`tasks.md` status stale~~ — fixed. ~~`**Module**:` Python paths~~ — removed. ~~Dangling `discovery-client-setup`~~ — removed.
 - `design.md` §6.2 still contains Python pseudocode. It is illustrative; the skills are authoritative.
-- The skills have never run. Expect acceptance-criteria failures in the first validation pass.
+- The AC-1 counts in the discovery skills and in `codification-policies` and `codification-auth-mounts` now include the `exporter` objects (10 policies, 6 roles). Skills must tolerate harness drift.
+- Variant branches (EGP, RGP, MFA, OIDC, LDAP, aliases) are untested because the harness has none of them (TASK-026).
+- Provider 4.8.0 import quirks handled in generators: `vault_auth_backend` needs `lifecycle { ignore_changes }` for `disable_remount` and an untuned `tune`; `vault_quota_rate_limit` does not read back `inheritable`; `vault_audit` imports by bare path.
 
 ---
 
@@ -171,7 +193,9 @@ make -C test smoke-test  # verify 6/6 checks pass
 |---|---|
 | Vault CLI | `/opt/homebrew/bin/vault` |
 | Terraform | `/opt/homebrew/bin/terraform` |
-| Docker | `~/.rd/bin/docker` (Rancher Desktop; was `/usr/local/bin/docker` in earlier notes) |
+| Docker | `~/.rd/bin/docker` (Rancher Desktop) |
+| jq, curl | on `PATH` |
+| waza | `~/bin/waza` (0.38.7; v0.42.0 is current), used by TASK-033 |
 | Vault licence | `./tmp/vault.hclic` (never committed) |
 
 **Always set before any `vault` CLI call:**
@@ -191,7 +215,7 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 | Discovery | Detail |
 |---|---|
 | `disable_mlock = true` required | Vault Enterprise 2.2.2+ent needs it explicit in config |
-| `secret_id_ttl` is integer seconds | Not a duration string in `vault_approle_auth_backend_role` |
+| `secret_id_ttl` is integer seconds | Not a duration string in `vault_approle_auth_backend_role`; the `tune {}` block takes `"<n>s"` strings |
 | `sys/health` has no `enterprise` key | Vault Enterprise 2.2.2 — do not check for it |
 | Stale `~/.config/vault-enterprise/server.hcl` | Always set `VAULT_CONFIG_PATH=/dev/null` |
 | `vault_kv_secret_v2` is FORBIDDEN | CAP-004 AC3 — supersedes the design.md resource map |
@@ -204,11 +228,22 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 
 ### Recommended start order
 
-1. ~~TASK-006~~ — done (§4).
-2. **Validate Phase 2.** Provision the exporter (`vault-exporter-setup`), export `EXPORTER_TOKEN`, run `discovery-orchestrator`. Check TASK-007..014 acceptance criteria in `tasks.md` (4 namespaces, parent-before-child, byte-identical re-runs, run report with no surprises).
-3. **Validate Phase 3** against the raw payloads in dependency order: namespaces → root-config → policies → auth-mounts → secrets-engines → teams → admin-config. Fix skills where acceptance criteria fail.
-4. **Fill the gaps**: author skills for TASK-022 (assembly, imports, ownership check) and validation TASK-023..027.
-5. Documentation TASK-028..030.
+1. ~~TASK-006~~, ~~Phase 2 (TASK-007..014)~~, ~~TASK-015..018~~: done and validated.
+2. **TASK-019 secrets-engines**, then **TASK-020 teams**, then **TASK-021 admin-config**. For each: write `skills/codification-<x>/scripts/generate.sh` from the raw payloads (copy the structure of `codification-auth-mounts/scripts/generate.sh`), run fmt, validate and a zero-diff plan, then check the skill's acceptance criteria, add a "Reference implementation" section, mark the task done in `tasks.md` and commit.
+3. **TASK-022** layer assembly and ownership check, then **TASK-023..027** validation skills.
+4. **TASK-034** Terraform MCP or documented fallback (small, no dependencies).
+5. **TASK-033** waza review and fixes, once the generators are stable.
+6. **TASK-028..030** documentation, then **TASK-032** create the GitHub repository and push.
+
+Per-generator recipe that worked four times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
+
+### Gotchas (macOS, zsh)
+
+- `vault` and `terraform` are not on `PATH` by default: `export PATH=$PATH:/opt/homebrew/bin`.
+- zsh: `GID` is read-only, `--include=*` globs fail unquoted, and `$var` is not word-split. `jq` treats `label` as reserved; use `lbl`.
+- Scripts must run on `/bin/bash` 3.2: use `${arr[@]+"${arr[@]}"}` for empty arrays under `set -u`; no `mapfile`.
+- `gh` and the `timeout` command are not available in the default shell; `gh auth status` can hang.
+- Never print or commit the exporter token. Mint one with the `exporter` AppRole at `auth/approle/` (secret-id TTL 900 s, 1 use).
 
 ### Running against the harness
 
@@ -234,20 +269,24 @@ Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude
 
 ```
 Branch:  main
-Commit:  3b84fd0  docs: add HANDOFF.md — Phase 1 complete, Phase 2 ready to start
-         1be0e4f  feat: initial commit — Phase 1 foundation complete
-Remote:  (none — add with: git remote add origin <url>)
-Files:   89 tracked (includes all 16 skills). .gitignore excludes *.hclic, raw/, run-reports, .agents/, .bob/, .claude/, .vscode/
-Untracked: .github/, .opencode/, .mcp.json, skills-lock.json (agent tooling and MCP config, not yet committed)
+Head:    250a4ad  feat(codification-auth-mounts): add validated auth backend and approle role generator (TASK-018)
+         23e9e44  feat(codification-policies): ... (TASK-017)
+         88c3cd8  feat(codification-root-config): ... (TASK-016)
+         75c15f1  feat(codification-namespaces): ... (TASK-015)
+         bfcb039  feat(discovery): validate TASK-007..014 ...
+Remote:  (none; TASK-032)
+Untracked: .github/, .opencode/, .mcp.json, skills-lock.json (agent tooling), discovered_terraform/terraform/ (generated),
+           discovered_terraform/.state.json, discovered_terraform/run_report.json
 ```
 
-To push when ready:
+Before the first push (TASK-032) decide what to do with `discovered_terraform/terraform/` and `discovered_terraform/.state.json`, and confirm `test/terraform/**/terraform.tfstate*` and `*.hclic` are ignored. Then:
 
 ```bash
-git remote add origin git@github.com:<org>/terraform-vault-vault-codifier.git
+gh auth login
+gh repo create <owner>/terraform-vault-vault-codifier --private --source=. --remote=origin
 git push -u origin main
 ```
 
 ---
 
-*Generated by vault-brownfield-codifier project — 2026-11-24*
+*Updated 2026-11-24 after TASK-018.*

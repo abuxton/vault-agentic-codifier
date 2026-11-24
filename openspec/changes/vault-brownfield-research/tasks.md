@@ -33,14 +33,14 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-004 | Provenance headers and secret-scrubbing guard | 1 | N/A | implementation | M | **Done** |
 | TASK-005 | Read-only Vault API client and run report | 1 | N/A | implementation | M | **Superseded** |
 | TASK-006 | Resolve specs open items | 1 | N/A | research | M | **Done** |
-| TASK-007 | Namespace discovery | 2 | CAP-005 | implementation | M | Skill authored, awaiting validation |
-| TASK-008 | Root-config discovery | 2 | CAP-001 | implementation | M | Skill authored, awaiting validation |
-| TASK-009 | Policy discovery | 2 | CAP-006 | implementation | M | Skill authored, awaiting validation |
-| TASK-010 | Auth-mount discovery | 2 | CAP-003 | implementation | L | Skill authored, awaiting validation |
-| TASK-011 | Secrets-engine discovery | 2 | CAP-004 | implementation | L | Skill authored, awaiting validation |
-| TASK-012 | Identity and teams discovery | 2 | CAP-007 | implementation | L | Skill authored, awaiting validation |
-| TASK-013 | Admin-namespace discovery | 2 | CAP-002 | implementation | M | Skill authored, awaiting validation |
-| TASK-014 | Discovery orchestrator and raw payload store | 2 | N/A | implementation | M | Skill authored, awaiting validation |
+| TASK-007 | Namespace discovery | 2 | CAP-005 | implementation | M | Done — validated |
+| TASK-008 | Root-config discovery | 2 | CAP-001 | implementation | M | Done — validated |
+| TASK-009 | Policy discovery | 2 | CAP-006 | implementation | M | Done — validated |
+| TASK-010 | Auth-mount discovery | 2 | CAP-003 | implementation | L | Done — validated |
+| TASK-011 | Secrets-engine discovery | 2 | CAP-004 | implementation | L | Done — validated |
+| TASK-012 | Identity and teams discovery | 2 | CAP-007 | implementation | L | Done — validated |
+| TASK-013 | Admin-namespace discovery | 2 | CAP-002 | implementation | M | Done — validated |
+| TASK-014 | Discovery orchestrator and raw payload store | 2 | N/A | implementation | M | Done — validated |
 | TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Done — validated |
 | TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Done — validated |
 | TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Done — validated |
@@ -58,6 +58,9 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-029 | README and usage guide | 5 | N/A | documentation | M | Blocked |
 | TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | Blocked |
 | TASK-031 | Exporter identity: policy, entity, group, and agent skill | 1 | N/A | implementation | M | **Done** |
+| TASK-032 | Create GitHub repository and publish | 5 | N/A | delivery | S | Ready to start |
+| TASK-033 | Waza review of skills TASK-007..021 and fixes | 4 | N/A | test | L | Baseline captured, fixes pending |
+| TASK-034 | Terraform MCP availability or documented fallback | 3 | N/A | implementation | S | Ready to start |
 
 ---
 
@@ -543,6 +546,69 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 
 ---
 
+### TASK-032: Create GitHub repository and publish
+**Capability**: N/A
+**Type**: delivery
+**Effort**: S
+**Depends on**: TASK-033 (so the first push carries the reviewed skills); TASK-025 for the final read-only and no-secrets sign-off
+**Status**: Ready to start (`gh` was not authenticated in the session that wrote this task; run `gh auth login` first)
+**Description**: Create the GitHub repository for `terraform-vault-vault-codifier`, add it as `origin`, and push `main`. Decide the owner (`abuxton` or an organisation) and visibility before creating it. Before the first push, confirm that nothing sensitive is tracked: `*.hclic`, `discovered_terraform/raw/`, `.state.json`, `run_report.json`, any `terraform.tfstate*` under `test/terraform/`, and the untracked agent tooling (`.github/`, `.mcp.json`, `.opencode/`, `skills-lock.json`). Decide for each whether it is committed or ignored.
+**Acceptance Criteria**:
+- AC: `git remote -v` shows `origin`; `git ls-remote origin main` equals local `main`.
+- AC: `git ls-files | grep -E '\.hclic$|terraform\.tfstate|/raw/|\.state\.json|run_report\.json'` returns nothing (the harness `terraform.tfstate` files are ignored or removed from the index).
+- AC: A secret scan of the pushed history (for example `gitleaks detect`) reports no findings; the harness root token `root` is documented as harness-only.
+- AC: The repository has a description, topics (`vault`, `terraform`, `agent-skills`), and a licence decision recorded in the README.
+- AC: `HANDOFF.md` §10 records the remote URL.
+
+### TASK-033: Waza review of skills TASK-007..021 and fixes
+**Capability**: N/A
+**Type**: test
+**Effort**: L
+**Depends on**: TASK-007..018 (validated); TASK-019..021 for their three skills
+**Status**: Baseline captured (waza 0.38.7, `waza check`, 2026-11-24); fixes pending
+**Tool**: [microsoft/waza](https://github.com/microsoft/waza) (`waza check`, `waza tokens`, `waza suggest`, `waza spec verify`). Installed at `~/bin/waza`, version 0.38.7; the current published release is v0.42.0, so run `waza update` first. Disable the update check and product telemetry in scripted runs: `WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1`. Waza is a Go CLI and is a review tool only; it adds no runtime dependency to the skills.
+**Scope**: the 17 skills under `skills/`: `vault-codifier-conventions`, `vault-exporter-setup`, the 8 `discovery-*` skills (TASK-007..014), and the 7 `codification-*` skills (TASK-015..021). TASK-022 and TASK-023..027 skills are reviewed when authored.
+**Baseline (`waza check`, 17 skills)**:
+
+| Finding | Count | Meaning |
+|---|---|---|
+| Token budget exceeded | 17 of 17 | Every `SKILL.md` is 1,909 to 3,391 tokens against a default 500 limit; the total is 45,367 tokens |
+| `spec-allowed-fields` | 17 of 17 | Frontmatter fields `triggers`, `capability`, `task`, `depends_on`, `role` are not in the agentskills.io spec (`name`, `description`, `license`, `allowed-tools`, `metadata`, `compatibility`) |
+| `body-structure` | 17 of 17 | No examples section and no troubleshooting section as waza defines them |
+| `complexity` | 17 of 17 | Rated "comprehensive" |
+| `over-specificity` | 16 of 17 | Absolute paths such as `/opt/homebrew/bin/...` and hard-coded URLs |
+| `procedural-content` | 11 of 17 | The description lacks procedural lead words |
+| `negative-delta-risk` | 9 of 17 | Patterns that can make an agent perform worse than without the skill |
+| Compliance level | 16 Low, 1 Medium (`vault-exporter-setup`) | |
+| Eval suite | none | No `eval.yaml` for any skill |
+
+**Description**: Review every skill with waza, decide each finding, and fix the real ones. Work in this order:
+1. **Config.** Add `.waza.yaml` with `tokens.limits` set deliberately. Reference-heavy operational skills are not 500-token skills; set a limit per glob (for example `skills/discovery-*/SKILL.md` and `skills/codification-*/SKILL.md`) from the measured sizes and record the reason. Do not raise it to hide the problem.
+2. **Frontmatter.** Move `triggers`, `capability`, `task`, `depends_on`, `role` under `metadata:` (the spec permits it), keep `name` and `description`, and fold the trigger phrases into the description as "USE FOR" and "DO NOT USE FOR" text. Confirm Bob and Claude Code still load the skills.
+3. **Token reduction.** Move the long "Example HCL output", "Reference implementation" and acceptance-criteria tables into `references/*.md` beside each `SKILL.md` and link them (progressive disclosure). Keep process, governance and stop conditions in `SKILL.md`. `waza tokens suggest skills/` gives candidates.
+4. **Over-specificity.** Replace absolute tool paths with a prerequisite check (`command -v vault terraform jq`), and keep harness-only values (token `root`, `127.0.0.1:8200`) in a clearly marked harness section.
+5. **Negative-delta risks.** Read each flagged skill's finding, and fix or record why it is kept.
+6. **Evals.** Create `waza new eval` scaffolds for the validated skills. Use `executor: mock` for the offline harness check only; a mock pass is not evidence of agent quality. Real executor runs may incur provider cost and need explicit approval.
+7. **Spec coverage.** Run `waza spec verify` for each skill that has an eval.
+**Acceptance Criteria**:
+- AC: `waza check --format json` reports `ready: true` for all 17 skills, or each remaining finding is recorded in `docs/waza-review.md` with a reason and an owner.
+- AC: Frontmatter reports no `spec-allowed-fields` warning for any of the 17 skills.
+- AC: Every `SKILL.md` is within its configured token limit, and moving content into `references/` loses no acceptance criterion (a diff of the section headings and the acceptance-criteria lists shows only moves).
+- AC: The generator scripts still pass their validation: re-run `generate.sh` for TASK-015..018 and confirm `terraform plan` shows `0 to add, 0 to change, 0 to destroy` and the output is byte-identical.
+- AC: `docs/waza-review.md` records the waza version, the command lines, the before and after table, and any deviation.
+- AC: No secret, token or licence content appears in any eval fixture.
+
+### TASK-034: Terraform MCP availability or documented fallback
+**Capability**: N/A
+**Type**: implementation
+**Effort**: S
+**Depends on**: none
+**Status**: Ready to start. Partly mitigated: every codification `SKILL.md` for TASK-015..018 now carries a docs-URL fallback note
+**Description**: The codification skills tell the agent to call the Terraform MCP (`search_providers`, `get_provider_details`) for schema and import syntax. `.mcp.json` and `.bob/mcp.json` configure `terraform-mcp-server`, but the binary is not installed on the development machine, so TASK-015..018 used `terraform providers schema -json` and the provider docs at `raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`. Either install the server (and record the version) or make the fallback the documented primary path.
+**Acceptance Criteria**:
+- AC: `terraform-mcp-server` is installed and a `get_provider_details` call for `vault_namespace` agrees with `task-006-decision.md`, or `vault-codifier-conventions` documents the schema and docs fallback and the remaining codification skills (TASK-019..021) carry the same note.
+- AC: Any MCP lookup that disagrees with `task-006-decision.md` is reported and stops the run.
+
 ## Critical path
 
 `TASK-031` → `TASK-005` → `TASK-007` → `TASK-009`/`TASK-010` → `TASK-012` → `TASK-014` → `TASK-017` → `TASK-018` → `TASK-020` → `TASK-021` → `TASK-022` → `TASK-024` → `TASK-027` → `TASK-030`.
@@ -556,3 +622,4 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 - After `TASK-031` and `TASK-007` are complete, discovery tasks `TASK-008`, `TASK-009`, `TASK-010` and `TASK-011` run in parallel.
 - After their discovery inputs, generators `TASK-015`, `TASK-016` and `TASK-019` run in parallel; `TASK-017`, `TASK-018`, `TASK-020`, `TASK-021` follow the ownership order.
 - `TASK-023` and `TASK-025` run in parallel once `TASK-022` completes.
+- `TASK-033` (waza review) can start on the 14 validated skills now, but rerun it on `codification-secrets-engines`, `codification-teams` and `codification-admin-config` after TASK-019..021. `TASK-034` has no dependencies. `TASK-032` follows `TASK-033`.
