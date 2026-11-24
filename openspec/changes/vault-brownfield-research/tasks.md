@@ -44,7 +44,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-015 | Namespaces generator | 3 | CAP-005 | implementation | M | Done — validated |
 | TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Done — validated |
 | TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Done — validated |
-| TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Skill authored, awaiting validation |
+| TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Done — validated (approle; other types backend-only) |
 | TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Skill authored, awaiting validation |
 | TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Skill authored, awaiting validation |
 | TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Skill authored, awaiting validation |
@@ -359,7 +359,7 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Effort**: XL
 **Skill**: [`skills/codification-auth-mounts/SKILL.md`](../../../skills/codification-auth-mounts/SKILL.md)
 **Depends on**: TASK-010, TASK-017, TASK-003, TASK-004, TASK-002, TASK-006
-**Status**: Blocked
+**Status**: Done — validated for approle; other method types are backend-only until TASK-026 variants
 **Description**: Generate `vault_auth_backend` (with `tune {}`) per non-builtin mount and the method-specific resources by type (AppRole, jwt/oidc, ldap, kubernetes, aws, cert), one file per namespace and mount (for example `namespaces/admin_platform/auth_approle.tf`). Use `vault_generic_endpoint` for unsupported types with a documented fallback and never emit credentials. `token_policies` cross-reference `vault_policy` resources owned by TASK-017 when the policy exists in the same namespace, otherwise keep the literal and warn. Generate `auth-mounts/coverage.md` and `import {}` blocks. Top-level OIDC/LDAP in the `admin` namespace is left to TASK-021 (ownership table).
 **Acceptance Criteria**:
 - AC: Exactly five `vault_auth_backend` (`type = "approle"`, `path = "approle"`), one per namespace, and no `token/` mount (CAP-003 AC1).

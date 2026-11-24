@@ -52,6 +52,9 @@ Output: one file per namespace and mount, for example
   `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
   returns in the file header. If it disagrees with `task-006-decision.md`, stop
   and report it (see `vault-codifier-conventions` section 1).
+  If the Terraform MCP binary is not installed, fall back to
+  `https://raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`
+  and record the fallback in the run notes.
 
 ## 3. Prerequisites
 
@@ -167,18 +170,18 @@ string (`tune {}`), in which case the generator converts and documents it.
 - 5 `vault_auth_backend` resources, all `type = "approle"`, `path = "approle"`:
   root, `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`;
   `token/` not emitted.
-- 5 `vault_approle_auth_backend_role`: `terraform-admin` (root),
+- 6 `vault_approle_auth_backend_role` (harness drift: includes root `exporter`): `terraform-admin` (root),
   `namespace-provisioner` (`admin`), `platform-ci`, `billing-service`,
   `identity-service`.
 - Each role: `token_ttl = 3600`, `token_max_ttl = 14400`,
   `secret_id_num_uses = 1`; `secret_id_ttl` = 900, 900, 1800, 900, 900
   respectively (integers).
-- `grep -rE 'role_id|secret_id\s*=' discovered_terraform/terraform` returns 0
-  (the attribute names `secret_id_ttl` and `secret_id_num_uses` excluded).
-- `coverage.md` lists 5 mounts and 5 roles, none "unsupported".
+- `grep -rEn '(^|[^A-Za-z0-9_])(role_id|secret_id|secret_id_accessor)([^A-Za-z0-9_]|$)' discovered_terraform/terraform --exclude-dir=.terraform` returns 0
+  (a bare `role_id` also matches inside labels such as `approle_identity`; the word boundaries avoid that).
+- `coverage.md` lists 5 mounts and 6 roles, none "unsupported".
 - With `userpass` enabled in `admin/app-billing`, a fallback is emitted and
   documented.
-- 10 `import {}` blocks; fmt and validate pass.
+- 11 `import {}` blocks (5 backends, 6 roles: the harness now includes the root `exporter` role); fmt and validate pass.
 
 ## 8. Stop conditions
 
@@ -187,3 +190,29 @@ string (`tune {}`), in which case the generator converts and documents it.
 - A role references a mount not in `auth_mounts.json`.
 - Label collision within a layer.
 - Mount type unknown **and** no fallback payload is available to document.
+
+## 9. Reference implementation (validated against the harness)
+
+Run `skills/codification-auth-mounts/scripts/generate.sh [raw] [out-root]`.
+
+- Layout: `admin/<ns>_auth_mounts.tf` + `admin/imports_auth_mounts.tf` (root and `admin`),
+  `seed/...` (tenants), `auth-mounts/coverage.md`.
+- Fully codified: `vault_auth_backend` and `vault_approle_auth_backend_role`. Any other mount type
+  gets `vault_auth_backend` only; `coverage.md` flags it "review manually". Method resources for
+  OIDC/JWT, LDAP, Kubernetes, AWS and cert are not generated yet (variant fixtures, TASK-026).
+- Roles reference `vault_policy.<label>.name` when the policy is in the same namespace's
+  `policies.json`; otherwise a literal and a note in `coverage.md`.
+- `tune {}` is emitted only when it deviates from the untuned default (32 days = 2764800 s, type
+  `default-service`). Durations are `"<n>s"` strings; role TTLs are integer seconds.
+- **Provider 4.8.0 import gotchas.** After import, `disable_remount` is unset and `tune` is
+  empty in state, so the plan shows an in-place change. The generator adds
+  `lifecycle { ignore_changes = [disable_remount, tune] }` for untuned mounts and
+  `[disable_remount]` when a `tune {}` block is emitted. Result: `0 to change`.
+- Credential guard: the generator exits 2 if the payload has a key exactly named `role_id`,
+  `secret_id` or `secret_id_accessor`. Names such as `secret_id_ttl` and `bind_secret_id` are
+  configuration and pass.
+
+Validated: `fmt -check` and `validate` pass; `terraform plan` shows `12 to import, 0 to change`
+in each of `admin/` and `seed/` (mounts, roles, and the earlier policies, namespace, audit and
+quota); second run byte-identical; a `userpass` mount with a tuned config is emitted as the
+backend with `tune {}` and flagged in `coverage.md`; a `role_id` key in a payload exits 2.
