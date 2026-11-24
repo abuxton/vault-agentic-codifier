@@ -1,0 +1,100 @@
+[
+  {
+    "auth_roles": [
+      "approle/exporter"
+    ],
+    "dangling": false,
+    "entities": [
+      "exporter-agent"
+    ],
+    "groups": [],
+    "namespace": "",
+    "policy": "exporter"
+  },
+  {
+    "auth_roles": [
+      "approle/terraform-admin"
+    ],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "",
+    "policy": "operator"
+  },
+  {
+    "auth_roles": [],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "admin",
+    "policy": "admin"
+  },
+  {
+    "auth_roles": [
+      "approle/namespace-provisioner"
+    ],
+    "dangling": false,
+    "entities": [],
+    "groups": [
+      "vault-app-billing-admin",
+      "vault-app-identity-admin",
+      "vault-platform-admin"
+    ],
+    "namespace": "admin",
+    "policy": "namespace-admin"
+  },
+  {
+    "auth_roles": [
+      "approle/billing-service"
+    ],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "admin/app-billing",
+    "policy": "billing-developers-read"
+  },
+  {
+    "auth_roles": [],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "admin/app-billing",
+    "policy": "billing-owners-write"
+  },
+  {
+    "auth_roles": [
+      "approle/identity-service"
+    ],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "admin/app-identity",
+    "policy": "identity-developers-read"
+  },
+  {
+    "auth_roles": [],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "admin/app-identity",
+    "policy": "identity-owners-write"
+  },
+  {
+    "auth_roles": [
+      "approle/platform-ci"
+    ],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "admin/platform",
+    "policy": "platform-devops-write"
+  },
+  {
+    "auth_roles": [],
+    "dangling": false,
+    "entities": [],
+    "groups": [],
+    "namespace": "admin/platform",
+    "policy": "platform-sre-read"
+  }
+]

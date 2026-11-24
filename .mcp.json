@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "terraform": {
+      "type": "stdio",
+      "command": "terraform-mcp-server",
+      "args": ["stdio"],
+      "env": {
+        "TFE_ADDRESS": "${TFE_ADDRESS:-https://app.terraform.io}",
+        "TFE_TOKEN": "${TFE_TOKEN:-}"
+      }
+    },
+    "vault": {
+      "type": "stdio",
+      "command": "vault-mcp-server",
+      "args": ["stdio"],
+      "env": {
+        "VAULT_ADDR": "${VAULT_ADDR:-http://127.0.0.1:8200}",
+        "VAULT_TOKEN": "${VAULT_TOKEN:-}",
+        "VAULT_NAMESPACE": "${VAULT_NAMESPACE:-}"
+      }
+    }
+  }
+}

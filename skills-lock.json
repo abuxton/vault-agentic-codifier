@@ -1,0 +1,229 @@
+{
+  "version": 2,
+  "skills": {
+    "acquire-codebase-knowledge": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/acquire-codebase-knowledge/SKILL.md",
+      "computedHash": "70d25e06e176bd7010562256ecb752f7aaa777d65cec3776c66ccc762847b8f2"
+    },
+    "agent-governance": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/agent-governance/SKILL.md",
+      "computedHash": "9ea9cd3a10d9c022ba12888a8cfb6acb11b5183f22f48f7f19c8728db0ecf280"
+    },
+    "agent-skill-stack": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/agent-skill-stack/SKILL.md",
+      "computedHash": "5f119e1f7c5815baf1bae71734b285d585a0fa327ca26bc63d8df5316bb31348"
+    },
+    "agentic-eval": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/agentic-eval/SKILL.md",
+      "computedHash": "8fe607ac6e6fec428a9752b520646b6bfe9454938cd3541a9289b7cdaa0f1f96"
+    },
+    "agentic-workflows": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": ".github/skills/agentic-workflows/SKILL.md",
+      "computedHash": "3dd7656628924edb1effddef06d12bd2aef91da7ff89583ae008e9bb8f633a43"
+    },
+    "ai-prompt-engineering-safety-review": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/ai-prompt-engineering-safety-review/SKILL.md",
+      "computedHash": "ddd4b034c77151f5e470bb97a492564efbc2e19d01410afe3ac599f7c1c35a19"
+    },
+    "ai-ready": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/ai-ready/SKILL.md",
+      "computedHash": "5b12d391935810260b1078c76831dc38fbaf1b6fcaa0dfa9e7b251bb26e2929e"
+    },
+    "ai-team-orchestration": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/ai-team-orchestration/SKILL.md",
+      "computedHash": "ad022f9544e4f6689cf5f612f1ec7661b15c4b8fa7af0f2e1b70d9381789747e"
+    },
+    "autoresearch": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/autoresearch/SKILL.md",
+      "computedHash": "55d79b86f105e36a62cfe8e168a73bc6901feea13636089436a88bb4d0151a66"
+    },
+    "boost-prompt": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/boost-prompt/SKILL.md",
+      "computedHash": "dde6b355a44f363664d87bc1ba356a2ebab2576f3f6a27ff94ac7b15e3e2bbe8"
+    },
+    "code-exemplars-blueprint-generator": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/code-exemplars-blueprint-generator/SKILL.md",
+      "computedHash": "27f422ae0138cb3cab8a88a68cb3ad830441a367af3c5a723bc8bae52b270c8d"
+    },
+    "code-review": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": ".github/skills/code-review/SKILL.md",
+      "computedHash": "760e03b431f5debb83d370b80245b53efa5834b861f586e6683999ab7b0ddcc2"
+    },
+    "code-tour": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/code-tour/SKILL.md",
+      "computedHash": "d26f49daa8aca3019d3a3466bdd1591556057ea4f9612a8403def7a5ae81763e"
+    },
+    "commit-message-storyteller": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/commit-message-storyteller/SKILL.md",
+      "computedHash": "1317f7dca20c853cab58f9f5f46cff316487035c45c994fa5dd24843043c8c8d"
+    },
+    "context-map": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/context-map/SKILL.md",
+      "computedHash": "71353664b0a0e252f45f88df7fa3805de7e4ee78cf49471cc69835f8e3faeb62"
+    },
+    "conventional-branch": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/conventional-branch/SKILL.md",
+      "computedHash": "98a117b3ab49baad3767a576e3e8efa4f68d0ebc2d9ff396235d0263d5235d0e"
+    },
+    "conventional-commit": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/conventional-commit/SKILL.md",
+      "computedHash": "03c0c972e8d881f8d369f3bd4205761109feba7b770523c50bcba6f3c83e685f"
+    },
+    "create-agentsmd": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/create-agentsmd/SKILL.md",
+      "computedHash": "f10ebeba6ba37b0c8028e73cfb5f4708bc39fd247f3430f3cc4092cab66b2f28"
+    },
+    "create-readme": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/create-readme/SKILL.md",
+      "computedHash": "59e7a20cc6e183f31c0161a619b66f96d05656378c1cef886522b6845d33c953"
+    },
+    "create-specification": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/create-specification/SKILL.md",
+      "computedHash": "da0751df33311d022bc046885a1b3200bed582b19454bec8f135e1fb5facc807"
+    },
+    "dependabot": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/dependabot/SKILL.md",
+      "computedHash": "e7dcdefae4267b43969c776e1837e7a597d9a3c1842bf49f0e5fa76fc6352f3c"
+    },
+    "documentation-writer": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/documentation-writer/SKILL.md",
+      "computedHash": "b2de0a266264b7a994d9bf1b771d3b35ab3780d16ccd658ffceb2936d3df1db6"
+    },
+    "doublecheck": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/doublecheck/SKILL.md",
+      "computedHash": "f97a564ea5d67201b4753426c2e77968a10ca201ed3fd641f8e27eb034c53d18"
+    },
+    "first-ask": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/first-ask/SKILL.md",
+      "computedHash": "db92b040f3e7dd682c0e9190eb57572f4b7beb3f258cbbcfd2bd819a90427683"
+    },
+    "generate-custom-instructions-from-codebase": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/generate-custom-instructions-from-codebase/SKILL.md",
+      "computedHash": "84556bb099201224f99a073b9fe20f26ea500dc85a2a46a970ec7683c7de1488"
+    },
+    "harness-engineering": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/harness-engineering/SKILL.md",
+      "computedHash": "e6d95c6e1681a71ab3a91df0d48a1c26a0239b54cc083747a391898b1b949e89"
+    },
+    "prompt-optimizer": {
+      "source": "github/awesome-copilot",
+      "commit": "f10fdb8b2660ce85c98f220b2f1ca24653768a5c",
+      "sourceType": "github",
+      "skillPath": "skills/prompt-optimizer/SKILL.md",
+      "computedHash": "a84e585092c3aa76dd91a7c2286a79bb186309df3a05d667ab049208a1bdba63"
+    },
+    "refactor-module": {
+      "source": "hashicorp/agent-skills",
+      "commit": "5e30fa5c867ba6777c37e4206babfd08049c396f",
+      "sourceType": "github",
+      "skillPath": "plugins/terraform/skills/refactor-module/SKILL.md",
+      "computedHash": "64ebe229f5556a162308cbdf7c240d36de58dd2a0106734fa23f946a2c83864d"
+    },
+    "run-acceptance-tests": {
+      "source": "hashicorp/agent-skills",
+      "commit": "5e30fa5c867ba6777c37e4206babfd08049c396f",
+      "sourceType": "github",
+      "skillPath": "plugins/terraform/skills/run-acceptance-tests/SKILL.md",
+      "computedHash": "ebce49cf51359a21748ad19145e0bb84f2e5a08fb304e16f0cfcf07d0d5c53e6"
+    },
+    "terraform-search-import": {
+      "source": "hashicorp/agent-skills",
+      "commit": "5e30fa5c867ba6777c37e4206babfd08049c396f",
+      "sourceType": "github",
+      "skillPath": "plugins/terraform/skills/terraform-search-import/SKILL.md",
+      "computedHash": "7108fbb27c4cf308b4b01c1ca00d20d10c61a0efb9b2d0d4eeea24f0b3255a0e"
+    },
+    "terraform-style-guide": {
+      "source": "hashicorp/agent-skills",
+      "commit": "5e30fa5c867ba6777c37e4206babfd08049c396f",
+      "sourceType": "github",
+      "skillPath": "plugins/terraform/skills/terraform-style-guide/SKILL.md",
+      "computedHash": "39a686ad7d71d99e5fbead0a5cbd666c096af8d38d152f7597eb314e5b2b622c"
+    },
+    "terraform-test": {
+      "source": "hashicorp/agent-skills",
+      "commit": "5e30fa5c867ba6777c37e4206babfd08049c396f",
+      "sourceType": "github",
+      "skillPath": "plugins/terraform/skills/terraform-test/SKILL.md",
+      "computedHash": "8c66c1856320d5b74eb54b89f9c2553ff7e5733bfc08135edd922830287d0c0f"
+    }
+  }
+}
