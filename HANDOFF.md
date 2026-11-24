@@ -107,7 +107,7 @@ Latest plan (harness root token, `terraform plan`): `admin/` 12 import, `namespa
 |---|---|---|
 | TASK-023..027 | Static gate, zero-diff plan, read-only and no-secrets check, variant fixtures, idempotence | No skills yet |
 | TASK-028..030 | AGENTS.md, README, traceability | Not started |
-| **TASK-032** | Create the GitHub repository and publish | New. Needs `gh auth login`; check ignored files first |
+| **TASK-032** | update github repo, publish to main https://github.com/abuxton/vault-agentic-codifier |
 | **TASK-033** | Waza review of skills TASK-007..021 and fixes | New. Baseline captured, no skill edited yet |
 | **TASK-034** | Terraform MCP installed, or fallback documented | New. Fallback note already in the TASK-015..018 skills |
 
