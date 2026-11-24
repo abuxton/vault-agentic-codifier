@@ -57,9 +57,8 @@ HVD reference:
 
 ## Terraform Resources
 
-All resources live in `test/terraform/admin/` alongside the existing admin-layer
-configuration.  Add the following blocks to `test/terraform/admin/main.tf` (or a
-dedicated `exporter.tf` within that module):
+All resources live in `test/terraform/admin/exporter.tf`, with the policy in
+`test/terraform/admin/policies/exporter.hcl`:
 
 ### 1. Policy — `exporter`
 
@@ -71,14 +70,23 @@ resource "vault_policy" "exporter" {
 ```
 
 The policy file is at `test/terraform/admin/policies/exporter.hcl`.  
-Key design points:
-- `list` on all structural paths (namespaces, auth, mounts, policies, identity, quotas).
-- `read` on health/config paths that carry no secret values.
-- **Explicit `deny`** on `secret/data/*`, `+/secret/data/*`, `+/+/secret/data/*`,
-  `+/+/+/secret/data/*` and all `+/.../data/*` wildcard depths — these override
-  any `read` capability the `admin` group policy grants.
-- No `create`, `update`, `delete`, or `sudo` anywhere.
-- AppRole `role-id` and `secret-id` endpoints explicitly denied.
+Key design points (verified against the harness, Vault Enterprise 2.2.2):
+- The token lives in the **root** namespace and reaches children through path
+  prefixes (`admin/sys/auth`). `+` matches exactly one segment, so every
+  structural grant is repeated for namespace depths 0..3. Add a depth if the
+  cluster nests deeper.
+- `list` / `read` on structural paths (namespaces, auth, mounts, policies,
+  identity, quotas) and `read` on health/config paths with no secret values.
+- Secrets-engine config reads are granted as `<mount>/config`, `config/urls`,
+  `config/crl`, `roles`, `roles/*`. `config/root` (cloud credentials) and key
+  material paths are **not** granted.
+- **`sys/audit` needs `sudo`.** Vault requires sudo to *read* it
+  ([API docs](https://developer.hashicorp.com/vault/api-docs/system/audit)).
+  The grant is `read` + `sudo` on that one root path only. Without it,
+  `discovery-root-config` gets a 403 on its mandatory audit-device read.
+- **Explicit `deny`** on `<mount>/data/*` and `<mount>/metadata/*` at every
+  depth, and on AppRole `role-id` / `secret-id` endpoints.
+- No `create`, `update` or `delete` anywhere.
 
 ### 2. Identity Entity — `exporter-agent`
 
@@ -94,39 +102,25 @@ resource "vault_identity_entity" "exporter_agent" {
 }
 ```
 
-### 3. Identity Group — `exporters`
+### 3. Identity Group — not used
 
-```hcl
-resource "vault_identity_group" "exporters" {
-  name     = "exporters"
-  type     = "internal"
-  policies = ["admin", "exporter"]
+An earlier draft attached an `exporters` group carrying the `admin` policy. The
+harness has no root-namespace `admin` policy, and the exporter must not hold
+broader access than its own policy, so the identity is entity + policy only.
 
-  member_entity_ids = [vault_identity_entity.exporter_agent.id]
-
-  metadata = {
-    purpose = "vault-brownfield-codifier export operations"
-  }
-}
-```
-
-The group carries both `admin` (for broad list/read access) and `exporter`
-(for the explicit secret-data denies on top).  Policy union means both apply;
-deny always wins.
-
-### 4. AppRole Role — `exporter`
+### 3. AppRole Role — `exporter`
 
 ```hcl
 resource "vault_approle_auth_backend_role" "exporter" {
-  backend        = vault_auth_backend.approle.path   # existing root AppRole mount
-  role_name      = "exporter"
-  token_policies = ["admin", "exporter"]
-
-  token_ttl         = 3600   # 1 hour — enough for a full scan run
-  token_max_ttl     = 14400  # 4 hours hard cap
-  token_num_uses    = 0      # unlimited uses within TTL (scan may make 100s of calls)
-  secret_id_num_uses = 1     # one-time secret-id; rotate after each login
-  bind_secret_id    = true
+  backend            = vault_auth_backend.approle_root.path
+  role_name          = "exporter"
+  token_policies     = [vault_policy.exporter.name]
+  token_ttl          = 3600   # 1 hour — enough for a full scan run
+  token_max_ttl      = 14400  # 4 hours hard cap
+  token_num_uses     = 0      # unlimited uses within TTL
+  secret_id_num_uses = 1      # one-time secret-id
+  secret_id_ttl      = 900    # 15 minutes
+  bind_secret_id     = true
 }
 ```
 
@@ -135,12 +129,13 @@ resource "vault_approle_auth_backend_role" "exporter" {
 > `secret_id_num_uses = 1` means each secret-id can only be used to log in once
 > (must rotate before the next run).
 
-### 5. Entity Alias — bind entity to AppRole accessor
+### 4. Entity Alias — bind entity to AppRole accessor
 
 ```hcl
 resource "vault_identity_entity_alias" "exporter_approle" {
-  name           = vault_approle_auth_backend_role.exporter.role_name
-  mount_accessor = vault_auth_backend.approle.accessor
+  # AppRole aliases are keyed on the role ID, not the role name.
+  name           = vault_approle_auth_backend_role.exporter.role_id
+  mount_accessor = vault_auth_backend.approle_root.accessor
   canonical_id   = vault_identity_entity.exporter_agent.id
 }
 ```
@@ -171,7 +166,7 @@ export VAULT_CONFIG_PATH=/dev/null
 export VAULT_ADDR=http://127.0.0.1:8200
 export VAULT_TOKEN=root   # bootstrap token for secret-id generation only
 
-SECRET_ID=$(/opt/homebrew/bin/vault write -field=secret_id \
+SECRET_ID=$(/opt/homebrew/bin/vault write -f -field=secret_id \
   auth/approle/role/exporter/secret-id)
 ```
 
@@ -238,7 +233,8 @@ harness (`make -C test up && make -C test seed`):
 - [ ] The exporter AppRole token can run `vault auth list` and `vault namespace list` from root (exit 0).
 - [ ] The exporter AppRole token receives HTTP 403 on `vault kv get -mount=secret billing-service/checkout -namespace=admin/app-billing`.
 - [ ] `vault identity entity list` shows `exporter-agent`.
-- [ ] `vault identity group list` shows `exporters`; `vault identity group lookup -format=json` shows `policies: ["admin","exporter"]` and `member_entity_ids` containing the `exporter-agent` ID.
+- [ ] The exporter token can `vault read sys/audit` (needs sudo) and `vault read -namespace=admin/platform secret/config`.
+- [ ] It gets 403 on `vault read -namespace=admin/platform secret/data/x`, on `.../role-id`, and on any write.
 - [ ] After a scan run, the audit log contains entries with `auth.display_name` matching `exporter-agent`.
 - [ ] No `secret/data/` path appears in the audit log `request.path` for the exporter token's calls.
 
@@ -260,7 +256,7 @@ harness (`make -C test up && make -C test seed`):
 ## Related Tasks
 
 - **TASK-031** — provisions this identity; this skill IS the documentation for TASK-031.
-- **TASK-005** — the read-only Vault API client must accept `VAULT_TOKEN` from the environment and must refuse `POST`/`PUT`/`DELETE`.  It does not manage authentication; this skill does.
+- **TASK-005** — superseded. Discovery runs with the `vault` CLI, `curl` and `jq`, so read-only is enforced here by the exporter policy, not by client code.
 - **TASK-007 through TASK-013** — all depend on TASK-031 being complete before they run against a live cluster.
 - **TASK-025** — read-only and no-secrets verification; uses the exporter token to confirm zero writes and zero secret-data reads.
 - **TASK-028** (`AGENTS.md`) — will reference this skill as the standard authentication bootstrap for any agent that connects to Vault.
