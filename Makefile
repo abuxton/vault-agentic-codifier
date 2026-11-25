@@ -6,7 +6,7 @@ RAW ?= discovered_terraform/raw
 OUT ?= discovered_terraform/terraform
 
 .DEFAULT_GOAL := help
-.PHONY: help assemble ownership static-gate
+.PHONY: help assemble ownership static-gate zero-diff
 
 help: ## Show targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-16s %s\n", $$1, $$2}'
@@ -19,3 +19,6 @@ ownership: ## Check ownership, labels, imports and provenance of the generated l
 
 static-gate: ## terraform validate, fmt -check and tflint in every layer (TASK-023)
 	bash skills/validation-static-gate/scripts/gate.sh $(OUT)
+
+zero-diff: ## Import into a scratch state and require plan exit 0 per layer; needs VAULT_TOKEN, harness only (TASK-024)
+	bash skills/validation-zero-diff/scripts/zero-diff.sh $(OUT)

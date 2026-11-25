@@ -50,7 +50,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Done — validated (harness; OIDC and LDAP checked on scratch payloads) |
 | TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Done — validated |
 | TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Done — validated |
-| TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Blocked |
+| TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Done — validated |
 | TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | Blocked |
 | TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | Blocked |
 | TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | Blocked |
@@ -451,11 +451,12 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 - AC: The gate is invokable with one `make` target and returns a non-zero exit code on failure.
 
 ### TASK-024: Zero-diff import and plan against the harness
+**Skill**: [`skills/validation-zero-diff/SKILL.md`](../../../skills/validation-zero-diff/SKILL.md)
 **Capability**: N/A
 **Type**: test
 **Effort**: L
 **Depends on**: TASK-022, TASK-023, TASK-006
-**Status**: Blocked
+**Status**: Done — validated (`bash skills/validation-zero-diff/scripts/zero-diff.sh`)
 **Description**: Run `make -C test all`, run the codifier against the harness, then, in a scratch state for each layer in apply order (`admin/`, `namespaces/`, `seed/`), run `terraform init`, apply the generated `import {}` blocks with `terraform apply` (imports only, no resource changes), and follow with `terraform plan -detailed-exitcode`. Record every attribute that needs `lifecycle { ignore_changes = [...] }` (for example values Vault does not return) in the run report.
 **Acceptance Criteria**:
 - AC: After import, `terraform plan -detailed-exitcode` exits `0` for each layer (CAC2; CAP-003 AC8).

@@ -1,0 +1,134 @@
+{
+  "summary": {
+    "layers": [
+      {
+        "layer": "admin",
+        "resources": 31,
+        "pass": true
+      },
+      {
+        "layer": "namespaces",
+        "resources": 3,
+        "pass": true
+      },
+      {
+        "layer": "seed",
+        "resources": 18,
+        "pass": true
+      }
+    ],
+    "capabilities": [
+      {
+        "capability": "admin-config",
+        "resources": 0,
+        "result": "none declared"
+      },
+      {
+        "capability": "auth-mounts",
+        "resources": 11,
+        "result": "pass"
+      },
+      {
+        "capability": "namespaces",
+        "resources": 4,
+        "result": "pass"
+      },
+      {
+        "capability": "policies",
+        "resources": 10,
+        "result": "pass"
+      },
+      {
+        "capability": "root-config",
+        "resources": 2,
+        "result": "pass"
+      },
+      {
+        "capability": "secrets-engines",
+        "resources": 8,
+        "result": "pass"
+      },
+      {
+        "capability": "teams",
+        "resources": 17,
+        "result": "pass"
+      }
+    ],
+    "passes": [
+      {
+        "layer": "admin",
+        "pass": "import",
+        "exit": 0
+      },
+      {
+        "layer": "admin",
+        "pass": "reimport",
+        "exit": 0
+      },
+      {
+        "layer": "namespaces",
+        "pass": "import",
+        "exit": 0
+      },
+      {
+        "layer": "namespaces",
+        "pass": "reimport",
+        "exit": 0
+      },
+      {
+        "layer": "seed",
+        "pass": "import",
+        "exit": 0
+      },
+      {
+        "layer": "seed",
+        "pass": "reimport",
+        "exit": 0
+      }
+    ]
+  },
+  "ignore_changes": [
+    {
+      "layer": "admin",
+      "file": "admin_auth_mounts.tf",
+      "resource": "vault_auth_backend.admin_approle",
+      "attributes": "disable_remount,tune",
+      "reason": "provider 4.8.0 imports disable_remount (and an untuned tune) as unset; ignoring them avoids a no-op diff"
+    },
+    {
+      "layer": "admin",
+      "file": "root_auth_mounts.tf",
+      "resource": "vault_auth_backend.approle",
+      "attributes": "disable_remount,tune",
+      "reason": "provider 4.8.0 imports disable_remount (and an untuned tune) as unset; ignoring them avoids a no-op diff"
+    },
+    {
+      "layer": "admin",
+      "file": "root_identity_aliases.tf",
+      "resource": "vault_identity_entity_alias.exporter_agent_approle",
+      "attributes": "name",
+      "reason": "a sensitive name is imported unmarked; ignoring it avoids a no-op in-place change"
+    },
+    {
+      "layer": "seed",
+      "file": "admin_app_billing_auth_mounts.tf",
+      "resource": "vault_auth_backend.admin_app_billing_approle",
+      "attributes": "disable_remount,tune",
+      "reason": "provider 4.8.0 imports disable_remount (and an untuned tune) as unset; ignoring them avoids a no-op diff"
+    },
+    {
+      "layer": "seed",
+      "file": "admin_app_identity_auth_mounts.tf",
+      "resource": "vault_auth_backend.admin_app_identity_approle",
+      "attributes": "disable_remount,tune",
+      "reason": "provider 4.8.0 imports disable_remount (and an untuned tune) as unset; ignoring them avoids a no-op diff"
+    },
+    {
+      "layer": "seed",
+      "file": "admin_platform_auth_mounts.tf",
+      "resource": "vault_auth_backend.admin_platform_approle",
+      "attributes": "disable_remount,tune",
+      "reason": "provider 4.8.0 imports disable_remount (and an untuned tune) as unset; ignoring them avoids a no-op diff"
+    }
+  ]
+}
