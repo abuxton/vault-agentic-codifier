@@ -48,7 +48,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Done — validated (KV v2 config; other engine types mount-only) |
 | TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Done — validated (harness; OIDC external group checked on a scratch payload) |
 | TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Done — validated (harness; OIDC and LDAP checked on scratch payloads) |
-| TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Blocked |
+| TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Done — validated |
 | TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Blocked |
 | TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Blocked |
 | TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | Blocked |
@@ -417,11 +417,12 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 - AC: With an `oidc` variant, one `vault_jwt_auth_backend` with `type = "oidc"` and the matching `oidc_discovery_url` is emitted, with no client secret literal (CAP-002 AC4, CAC3).
 
 ### TASK-022: Layer assembly, imports and ownership check
+**Skill**: [`skills/codification-layer-assembly/SKILL.md`](../../../skills/codification-layer-assembly/SKILL.md)
 **Capability**: N/A
 **Type**: implementation
 **Effort**: L
 **Depends on**: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021
-**Status**: Blocked
+**Status**: Done — validated; variables stay in `versions.tf`, `outputs.tf` only in `admin/`
 **Description**: Assemble generator output into the three state layers decided in TASK-001 (`admin/`, `namespaces/`, `seed/`), each with `providers.tf`, `versions.tf`, `variables.tf` and `outputs.tf`. Consolidate `import {}` blocks into per-layer `imports.tf` using the import ID formats from TASK-006. Add an ownership checker that fails the run if a resource type appears outside its owning capability (ownership table in `specs.md`) or if two resources in a directory share a label (CAC6). Run in the dependency order from `specs.md`.
 **Acceptance Criteria**:
 - AC: Output tree follows the layout note from TASK-001; each layer is independently `terraform init`-able.
