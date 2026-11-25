@@ -51,7 +51,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Done — validated |
 | TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Done — validated |
 | TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Done — validated |
-| TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | Blocked |
+| TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | **Done** |
 | TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | Blocked |
 | TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | Blocked |
 | TASK-028 | Write AGENTS.md | 5 | N/A | documentation | M | Blocked |
@@ -469,8 +469,9 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Capability**: N/A
 **Type**: test
 **Effort**: M
+**Skill**: [`skills/validation-readonly-secrets/SKILL.md`](../../../skills/validation-readonly-secrets/SKILL.md)
 **Depends on**: TASK-014, TASK-022
-**Status**: Blocked
+**Status**: Done — validated (verify.sh; 12 checks pass, self-test catches 10 injected faults, live denied write caught)
 **Description**: Verify CAC3 and CAC4. Run the codifier with its own dedicated token, then parse the Vault audit log (`/vault/logs/audit.log` in the harness container) and assert no request attributable to that token has an operation other than `read` or `list`. Scan all generated output and stored raw payloads for forbidden content: the root token, AppRole `secret_id`, KV data, `SYNTHETIC-` markers, UUID literals in `*.tf` outside `imports.tf`, and sensitive provider arguments.
 **Acceptance Criteria**:
 - AC: The audit-log check reports zero non-`read`/`list` operations for the codifier token (CAC4).

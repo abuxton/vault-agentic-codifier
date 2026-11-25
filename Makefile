@@ -6,7 +6,7 @@ RAW ?= discovered_terraform/raw
 OUT ?= discovered_terraform/terraform
 
 .DEFAULT_GOAL := help
-.PHONY: help assemble ownership static-gate zero-diff
+.PHONY: help assemble ownership static-gate zero-diff verify verify-selftest
 
 help: ## Show targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-16s %s\n", $$1, $$2}'
@@ -22,3 +22,9 @@ static-gate: ## terraform validate, fmt -check and tflint in every layer (TASK-0
 
 zero-diff: ## Import into a scratch state and require plan exit 0 per layer; needs VAULT_TOKEN, harness only (TASK-024)
 	bash skills/validation-zero-diff/scripts/zero-diff.sh $(OUT)
+
+verify: ## Audit log is read-only for the discovery window and no secret is in the output (TASK-025)
+	bash skills/validation-readonly-secrets/scripts/verify.sh $(OUT) $(RAW)
+
+verify-selftest: ## Inject faults; the verifier must catch every one (TASK-025)
+	bash skills/validation-readonly-secrets/scripts/verify.sh --selftest
