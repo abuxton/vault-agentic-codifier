@@ -1,0 +1,108 @@
+{
+  "capabilities": [
+    {
+      "capability": "admin-config",
+      "resources": 0,
+      "result": "none declared"
+    },
+    {
+      "capability": "auth-mounts",
+      "resources": 11,
+      "result": "pass"
+    },
+    {
+      "capability": "namespaces",
+      "resources": 4,
+      "result": "pass"
+    },
+    {
+      "capability": "policies",
+      "resources": 10,
+      "result": "pass"
+    },
+    {
+      "capability": "root-config",
+      "resources": 2,
+      "result": "pass"
+    },
+    {
+      "capability": "secrets-engines",
+      "resources": 8,
+      "result": "pass"
+    },
+    {
+      "capability": "teams",
+      "resources": 17,
+      "result": "pass"
+    }
+  ],
+  "stages": [
+    {
+      "cac": "-",
+      "description": "harness reachable at http://127.0.0.1:8200 (starts and seeds it if not)",
+      "stage": "harness-up",
+      "status": "PASS"
+    },
+    {
+      "cac": "-",
+      "description": "make -C test smoke-test",
+      "stage": "smoke-before",
+      "status": "PASS"
+    },
+    {
+      "cac": "-",
+      "description": "discover with a fresh exporter token and generate",
+      "stage": "codify-run-1",
+      "status": "PASS"
+    },
+    {
+      "cac": "-",
+      "description": "second run against the unchanged cluster",
+      "stage": "codify-run-2",
+      "status": "PASS"
+    },
+    {
+      "cac": "CAC5",
+      "description": "two runs give byte-identical output and raw trees",
+      "stage": "idempotence",
+      "status": "PASS"
+    },
+    {
+      "cac": "CAC6,CAC7",
+      "description": "labels unique and deterministic; provenance header on every file",
+      "stage": "ownership",
+      "status": "PASS"
+    },
+    {
+      "cac": "CAC1",
+      "description": "validate, fmt -check and tflint in every layer",
+      "stage": "static-gate",
+      "status": "PASS"
+    },
+    {
+      "cac": "CAC2",
+      "description": "import into a scratch state; plan exits 0 in every layer",
+      "stage": "zero-diff",
+      "status": "PASS"
+    },
+    {
+      "cac": "CAC3,CAC4",
+      "description": "audit log read-only and no secrets in output or raw",
+      "stage": "readonly-secrets",
+      "status": "PASS"
+    },
+    {
+      "cac": "-",
+      "description": "make -C test smoke-test, after the codifier ran",
+      "stage": "smoke-after",
+      "status": "PASS"
+    },
+    {
+      "cac": "-",
+      "description": "harness state identical before and after",
+      "stage": "harness-unchanged",
+      "status": "PASS"
+    }
+  ],
+  "verdict": "PASS"
+}

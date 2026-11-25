@@ -53,7 +53,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Done — validated |
 | TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | **Done** |
 | TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | **Done** |
-| TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | Blocked |
+| TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | **Done** |
 | TASK-028 | Write AGENTS.md | 5 | N/A | documentation | M | Blocked |
 | TASK-029 | README and usage guide | 5 | N/A | documentation | M | Blocked |
 | TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | Blocked |
@@ -497,8 +497,9 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Capability**: N/A
 **Type**: test
 **Effort**: M
+**Skill**: [`skills/validation-codify-test/SKILL.md`](../../../skills/validation-codify-test/SKILL.md)
 **Depends on**: TASK-023, TASK-024, TASK-025, TASK-026
-**Status**: Blocked
+**Status**: Done — validated (make codify-test: 11 stages PASS, CAC1-CAC7 PASS, smoke-test before and after, harness unchanged; self-test catches 3 faults)
 **Description**: Add the CAC5 check (run the codifier twice against an unchanged cluster and diff output byte-for-byte) and wire all Phase 4 checks into a single repeatable target (for example `make codify-test`) alongside the existing `make smoke-test`. Confirm `make smoke-test` still passes after the codifier runs, since the codifier must leave the harness unchanged.
 **Acceptance Criteria**:
 - AC: Two consecutive runs produce byte-identical output trees (CAC5).

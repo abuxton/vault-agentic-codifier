@@ -6,7 +6,7 @@ RAW ?= discovered_terraform/raw
 OUT ?= discovered_terraform/terraform
 
 .DEFAULT_GOAL := help
-.PHONY: help assemble ownership static-gate zero-diff verify verify-selftest variants
+.PHONY: help assemble ownership static-gate zero-diff verify verify-selftest variants codify-test
 
 help: ## Show targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-16s %s\n", $$1, $$2}'
@@ -31,3 +31,6 @@ verify-selftest: ## Inject faults; the verifier must catch every one (TASK-025)
 
 variants: ## Edge-case fixtures on throwaway containers; the real harness is not touched (TASK-026)
 	bash skills/validation-variants/scripts/run-variants.sh
+
+codify-test: ## One command: harness up, codify twice, idempotence, gate, zero-diff, read-only, smoke before and after (TASK-027). VARIANTS=1 adds the edge-case fixtures
+	bash skills/validation-codify-test/scripts/codify-test.sh
