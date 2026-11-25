@@ -60,7 +60,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-031 | Exporter identity: policy, entity, group, and agent skill | 1 | N/A | implementation | M | **Done** |
 | TASK-032 | Create GitHub repository and publish | 5 | N/A | delivery | S | Ready to start |
 | TASK-033 | Waza review of skills TASK-007..021 and fixes | 4 | N/A | test | L | Baseline captured, fixes pending |
-| TASK-034 | Terraform MCP availability or documented fallback | 3 | N/A | implementation | S | Ready to start |
+| TASK-034 | Terraform MCP availability or documented fallback | 3 | N/A | implementation | S | Done — fallback documented |
 
 ---
 
@@ -604,7 +604,7 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Type**: implementation
 **Effort**: S
 **Depends on**: none
-**Status**: Ready to start. Partly mitigated: every codification `SKILL.md` for TASK-015..018 now carries a docs-URL fallback note
+**Status**: Done — fallback documented as the supported path (no `brew`, `go` or `docker` on the machine to install the server)
 **Description**: The codification skills tell the agent to call the Terraform MCP (`search_providers`, `get_provider_details`) for schema and import syntax. `.mcp.json` and `.bob/mcp.json` configure `terraform-mcp-server`, but the binary is not installed on the development machine, so TASK-015..018 used `terraform providers schema -json` and the provider docs at `raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`. Either install the server (and record the version) or make the fallback the documented primary path.
 **Acceptance Criteria**:
 - AC: `terraform-mcp-server` is installed and a `get_provider_details` call for `vault_namespace` agrees with `task-006-decision.md`, or `vault-codifier-conventions` documents the schema and docs fallback and the remaining codification skills (TASK-019..021) carry the same note.

@@ -46,6 +46,21 @@ Terraform MCP rules:
 - If a lookup disagrees with `task-006-decision.md`, stop and report it. Do not
   silently pick one.
 
+Fallback when `terraform-mcp-server` is not installed (the state on the harness machine, TASK-034). This is
+a supported path, not an error:
+
+1. Read the resource page at
+   `https://raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`
+   for arguments and the import syntax. Use the registry URL
+   `https://registry.terraform.io/providers/hashicorp/vault/4.8.0/docs/resources/<resource>` in the file header.
+2. Confirm argument names against the installed provider:
+   `terraform -chdir=<layer> providers schema -json | jq '.provider_schemas | to_entries[0].value.resource_schemas.<type>.block.attributes | keys'`.
+3. If either source disagrees with `task-006-decision.md`, stop and report it, exactly as for an MCP lookup.
+4. Record "Terraform MCP not installed; docs and schema fallback used" in the run notes.
+
+Checked on the harness: the docs URL for `vault_namespace` returns 200 and the provider schema lists `path`,
+`path_fq`, `custom_metadata`, which agrees with the import ID in `task-006-decision.md`.
+
 ## 2. Hard rules
 
 1. **Read-only.** Only `GET` and `LIST`. Use the `exporter` token from

@@ -52,6 +52,9 @@ Output: `discovered_terraform/terraform/admin/` - `main.tf`, `human_auth.tf`
   `4.8.0`) to confirm argument names and the import syntax. Use the doc URL it
   returns in the file header. If it disagrees with `task-006-decision.md`, stop
   and report it (see `vault-codifier-conventions` section 1).
+  If the Terraform MCP binary is not installed, fall back to the provider docs at
+  `https://raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`
+  and record the fallback in the run notes.
 
 ## 3. Prerequisites
 
