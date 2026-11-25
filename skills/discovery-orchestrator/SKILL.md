@@ -1,8 +1,9 @@
 ---
 name: discovery-orchestrator
 description: >
-  Use when you need to single entry point that runs all discovery skills (. Run after exporter setup, then codify.
-  USE FOR: run discovery; run all discovery. DO NOT USE FOR: writing Terraform (use the matching codification-*
+  Use when you need to run all discovery skills in dependency order against a live Vault Enterprise cluster. It
+  produces the full raw payload tree and a consolidated run report. Run after exporter setup, then codify. USE
+  FOR: run discovery; run all discovery. DO NOT USE FOR: writing Terraform (use the matching codification-*
   skill), or any write to Vault.
 metadata:
   task: "TASK-014"

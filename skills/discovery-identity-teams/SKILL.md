@@ -1,10 +1,10 @@
 ---
 name: discovery-identity-teams
 description: >
-  Use when you need to enumerate identity groups, entities, and aliases in every namespace and map alias mount
-  accessors to auth mount paths using Never persists tokens or secret values. Run after exporter setup, then
-  codify. USE FOR: identity discovery; teams discovery. DO NOT USE FOR: writing Terraform (use the matching
-  codification-* skill), or any write to Vault.
+  Use when you need to enumerate identity groups, entities and aliases in every namespace and map alias mount
+  accessors to auth mount paths. It never persists tokens or secret values. Run after exporter setup, then codify.
+  USE FOR: identity discovery; teams discovery. DO NOT USE FOR: writing Terraform (use the matching codification-*
+  skill), or any write to Vault.
 metadata:
   task: "TASK-012"
   capability: "CAP-007"

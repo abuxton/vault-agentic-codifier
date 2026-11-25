@@ -1,9 +1,9 @@
 ---
 name: discovery-admin-config
 description: >
-  Use when you need to org-level discovery for the admin namespace per HVD layering: namespace metadata, human vs
-  machine auth methods, and operator policy/group classification reusing earlier payloads. Run after exporter
-  setup, then codify. USE FOR: admin config discovery; admin namespace discovery. DO NOT USE FOR: writing
+  Use when you need org-level discovery for the admin namespace per HVD layering: namespace metadata, human versus
+  machine auth methods, and operator policy and group classification that reuses earlier payloads. Run after
+  exporter setup, then codify. USE FOR: admin config discovery; admin namespace discovery. DO NOT USE FOR: writing
   Terraform (use the matching codification-* skill), or any write to Vault.
 metadata:
   task: "TASK-013"

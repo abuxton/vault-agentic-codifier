@@ -1,11 +1,11 @@
 ---
 name: vault-exporter-setup
 description: >
-  Provision the vault-brownfield-codifier exporter identity in a target Vault Enterprise cluster and authenticate
-  as the exporter before any discovery run. Use this skill as the mandatory first step before any task that reads
-  live Vault state ( The exporter identity is a purpose-built, least-privilege, audit-traced identity — never use
-  a root token or an operator token for discovery. USE FOR: set up exporter; provision exporter identity. DO NOT
-  USE FOR: a production cluster without review, or anything but creating the read-only exporter.
+  Use when you need to provision the vault-brownfield-codifier exporter identity in a target Vault Enterprise
+  cluster and authenticate as it before any discovery run. This is the mandatory first step before reading live
+  Vault state. The exporter is a purpose-built, least-privilege, audit-traced identity; never use a root or
+  operator token for discovery. USE FOR: set up exporter; provision exporter identity. DO NOT USE FOR: a
+  production cluster without review, or anything but creating the read-only exporter.
 metadata:
   version: "1.0"
 ---
