@@ -1,12 +1,12 @@
 # Status report — terraform-vault-vault-codifier
 
 **Date**: 2026-11-25
-**Branch / head**: `main` at `08e35f9` (no remote yet)
+**Branch / head**: `main` at `965cc07` (no remote yet)
 **Scope**: agent skills that survey a live Vault Enterprise cluster read-only and generate Terraform HCL (`hashicorp/vault` 4.8.0, `import {}` blocks) with a zero-diff plan.
 
 ## Summary
 
-Phase 1 (foundation) and Phase 2 (discovery, TASK-007..014) are validated against the harness. Phase 3 (codification) is validated for all seven generators: namespaces, root-config, policies, auth-mounts, secrets-engines, teams and admin-config (TASK-015..021). Layer assembly (TASK-022) and the validation and documentation phases (TASK-023..030) have no deliverables yet.
+Phase 1 (foundation) and Phase 2 (discovery, TASK-007..014) are validated against the harness. Phase 3 (codification) is complete: seven generators (TASK-015..021), the layer-assembly runner and ownership checker (TASK-022) and the documented Terraform MCP fallback (TASK-034). The validation and documentation phases (TASK-023..030) have no deliverables yet.
 
 A first waza review of the 17 skills found no `ready: true`. The main causes are size (every `SKILL.md` is 4 to 7 times the default 500-token limit) and non-standard frontmatter. See TASK-033.
 
@@ -14,10 +14,10 @@ A first waza review of the 17 skills found no `ready: true`. The main causes are
 |---|---|---|---|
 | 1 Foundation | 001–006, 031 | 7 of 7 (TASK-005 superseded) | — |
 | 2 Discovery | 007–014 | 8 of 8 | — |
-| 3 Codification | 015–022, 034 | 7 of 9 | 022, 034 |
+| 3 Codification | 015–022, 034 | 9 of 9 | — |
 | 4 Validation | 023–027, 033 | 0 of 6 | 023..027; 033 baseline captured |
 | 5 Docs and delivery | 028–030, 032 | 0 of 4 | all |
-| **Total** | 34 | **22** | **12** |
+| **Total** | 34 | **24** | **10** |
 
 ## Evidence from the harness (Vault 2.2.2+ent)
 
@@ -28,7 +28,8 @@ A first waza review of the 17 skills found no `ready: true`. The main causes are
 | `terraform fmt -check -recursive` | pass in `admin/`, `namespaces/`, `seed/` |
 | `terraform validate` | pass in all three layers |
 | `terraform plan` (import blocks) | `admin/` 31 import, `namespaces/` 3 import, `seed/` 18 import; **0 add, 0 change, 0 destroy** in each |
-| Generator idempotence | second run byte-identical for all seven generators |
+| Generator idempotence | second run byte-identical for all seven generators and for `assemble.sh` |
+| Ownership check (`check.sh`) | 0 violations: 31, 3 and 18 resources each with exactly one import; eight injected faults (duplicate policy, wrong owner, missing import, missing header, UUID literal, forbidden type, inline secret, no layer) each exit 1 |
 | Credential check | no `role_id`, `secret_id` or `secret_id_accessor` token in the generated HCL (word-bounded grep); no UUID in any `.tf` other than `imports*.tf`; no `vault_kv_secret*` or `vault_generic_secret` |
 | Negative fixtures | orphan namespace exits 2; secret-like audit option exits 2; `role_id` key in a payload exits 2; depth-3 namespace gets `provider = vault.admin_platform` and `depends_on`; dangling policy reference reported; credential key in a secrets-engines, identity or admin-config payload exits 2; unresolved alias accessor exits 2; missing upstream resource for admin-config exits 2; scratch `pki` mount, OIDC external group with group alias, and OIDC and LDAP human auth validate; tab-bearing and newline-less policy bodies written verbatim |
 
@@ -49,12 +50,12 @@ The plans were run with the harness root token. Discovery used the exporter AppR
 | 019 | Secrets-engines generator | Done — validated (KV v2 config; other engine types are mount-only) |
 | 020 | Teams generator | Done — validated |
 | 021 | Admin-config generator | Done — validated; OIDC and LDAP checked on scratch payloads only |
-| 022 | Layer assembly and ownership check | Not started (no skill) |
+| 022 | Layer assembly and ownership check | Done — validated (`codification-layer-assembly`) |
 | 023–027 | Static gate, zero-diff plan, read-only check, variant fixtures, idempotence | Not started (no skills) |
 | 028–030 | AGENTS.md, README, traceability | Not started |
 | 032 | Create GitHub repository and publish | New, ready to start |
 | 033 | Waza review of skills TASK-007..021 | New, baseline captured |
-| 034 | Terraform MCP availability or fallback | New, ready to start |
+| 034 | Terraform MCP availability or fallback | Done — fallback documented as a supported path |
 
 ## Findings that changed the skills
 
@@ -93,7 +94,7 @@ The 500-token default is a poor fit for operational skills that carry acceptance
 
 | Item | Owner role | Note |
 |---|---|---|
-| Terraform MCP not installed | Solution architect | TASK-034. Docs-URL and `terraform providers schema` fallback used so far |
+| Terraform MCP not installed | Solution architect | Fallback (provider docs URL and `terraform providers schema -json`) is documented in `vault-codifier-conventions` and used throughout |
 | Variant branches (EGP, RGP, MFA, OIDC, LDAP, group aliases, PKI, database, AWS) untested against Vault | Test engineer | The harness has none of them; scratch payloads were validated with `terraform validate` only; TASK-026 |
 | Auth mounts other than AppRole, and secrets engines other than KV v2, are mount-only | Solution architect | Listed in `auth-mounts/coverage.md` and `secrets-engines/coverage.md` as "review manually" |
 | The plan for `admin/` needs `TF_VAR_exporter_agent_approle_name` | Maintainer | The exporter alias name is a sensitive variable; set it from the role id at plan time |
@@ -104,8 +105,6 @@ The 500-token default is a poor fit for operational skills that carry acceptance
 
 ## Next steps, in order
 
-1. TASK-022: author the layer-assembly and ownership-check skill.
-2. TASK-034: install the Terraform MCP or document the fallback in the conventions skill.
-3. TASK-033: waza fixes, then re-run `waza check` and the generator validations.
-4. TASK-023..027, then TASK-028..030.
-5. TASK-032: authenticate `gh`, create the repository and push.
+1. TASK-033: waza fixes on the 19 skills, then re-run `waza check` and `assemble.sh`.
+2. TASK-023..027 (static gate, zero-diff plan, read-only check, variant fixtures, idempotence), then TASK-028..030.
+3. TASK-032: authenticate `gh`, create the repository and push.

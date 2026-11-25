@@ -1,8 +1,8 @@
 # Handoff Document — terraform-vault-vault-codifier
 
 **Date**: 2026-11-25
-**Commit**: `08e35f9` on `main` (no remote yet; see TASK-032), plus this handoff and `STATUS_REPORT.md` update
-**Status**: Phase 1 and Phase 2 **done and validated**. Phase 3 generators TASK-015..021 are all **done and validated**. Next step: TASK-022 (layer assembly, imports, ownership check; no skill yet), then TASK-034. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
+**Commit**: `965cc07` on `main` (no remote yet; see TASK-032), plus this handoff and `STATUS_REPORT.md` update
+**Status**: Phase 1 and Phase 2 **done and validated**. **Phase 3 is complete** (TASK-015..022 and TASK-034). Next step: Phase 4, starting with TASK-023 (static gate) or TASK-033 (waza fixes). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
@@ -95,7 +95,7 @@ Read-only is enforced by the exporter policy and the audit log (TASK-025), not b
 | TASK-019 | `codification-secrets-engines` | **Validated** for KV v2; other engine types are mount-only | `scripts/generate.sh` |
 | TASK-020 | `codification-teams` | **Validated** (entities, groups, aliases) | `scripts/generate.sh` |
 | TASK-021 | `codification-admin-config` | **Validated**; OIDC and LDAP on scratch payloads only | `scripts/generate.sh` |
-| TASK-022 | layer assembly, imports, ownership check | **No skill yet** | — |
+| TASK-022 | layer assembly, imports, ownership check | **Validated** (`codification-layer-assembly`) | `scripts/assemble.sh`, `scripts/check.sh` |
 
 All seven generators run from the repo root, read `discovered_terraform/raw/`, write `discovered_terraform/terraform/`, and are idempotent. Generate in this order: namespaces, root-config, policies, auth-mounts, secrets-engines, teams, admin-config. They share the `admin/` and `seed/` layers, and `vault-codifier-conventions/scripts/scaffold-layer.sh` merges provider aliases through `<layer>/.namespaces`.
 
@@ -109,7 +109,7 @@ Latest plan (harness root token, `terraform plan`): `admin/` 31 import, `namespa
 | TASK-028..030 | AGENTS.md, README, traceability | Not started |
 | **TASK-032** | update github repo, publish to main https://github.com/abuxton/vault-agentic-codifier |
 | **TASK-033** | Waza review of skills TASK-007..021 and fixes | New. Baseline captured, no skill edited yet |
-| **TASK-034** | Terraform MCP installed, or fallback documented | New. Fallback note already in the TASK-015..018 skills |
+| **TASK-034** | Terraform MCP installed, or fallback documented | **Done**. Fallback documented in `vault-codifier-conventions` and every codification skill |
 
 ### Waza review (TASK-033), baseline
 
@@ -233,10 +233,8 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 
 1. ~~TASK-006~~, ~~Phase 2 (TASK-007..014)~~, ~~TASK-015..018~~: done and validated.
 2. ~~TASK-019 secrets-engines, TASK-020 teams, TASK-021 admin-config~~: done and validated, one commit each.
-3. **TASK-022** layer assembly and ownership check, then **TASK-023..027** validation skills. Commit after each task.
-4. **TASK-034** Terraform MCP or documented fallback (small, no dependencies).
-5. **TASK-033** waza review and fixes, once the generators are stable.
-6. **TASK-028..030** documentation, then **TASK-032** create the GitHub repository and push.
+3. ~~TASK-022 layer assembly~~ and ~~TASK-034 MCP fallback~~: done.
+4. **TASK-023..027** validation skills, **TASK-033** waza fixes, **TASK-028..030** docs, **TASK-032** publish. Commit after each task.
 
 Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
 
@@ -272,7 +270,10 @@ Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude
 
 ```
 Branch:  main
-Head:    08e35f9  feat(codification-admin-config): ... (TASK-021)
+Head:    965cc07  docs(conventions): ... (TASK-034)
+         a0be155  feat(codification-layer-assembly): ... (TASK-022)
+         3bb9c0f  docs: update status report and handoff after TASK-019..021
+         08e35f9  feat(codification-admin-config): ... (TASK-021)
          f9ad41b  feat(codification-teams): ... (TASK-020)
          de99452  feat(codification-secrets-engines): ... (TASK-019)
          250a4ad  feat(codification-auth-mounts): ... (TASK-018)
@@ -294,4 +295,4 @@ git push -u origin main
 
 ---
 
-*Updated 2026-11-25 after TASK-021. Convention: one commit per task.*
+*Updated 2026-11-25 after TASK-022 and TASK-034. Convention: one commit per task.*
