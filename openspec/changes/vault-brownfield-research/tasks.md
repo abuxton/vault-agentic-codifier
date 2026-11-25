@@ -45,7 +45,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-016 | Root-config generator | 3 | CAP-001 | implementation | L | Done — validated |
 | TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Done — validated |
 | TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Done — validated (approle; other types backend-only) |
-| TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Skill authored, awaiting validation |
+| TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Done — validated (KV v2 config; other engine types mount-only) |
 | TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Skill authored, awaiting validation |
 | TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Skill authored, awaiting validation |
 | TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Blocked |
@@ -377,7 +377,7 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Effort**: XL
 **Skill**: [`skills/codification-secrets-engines/SKILL.md`](../../../skills/codification-secrets-engines/SKILL.md)
 **Depends on**: TASK-011, TASK-003, TASK-004, TASK-002, TASK-006
-**Status**: Blocked
+**Status**: Done — validated for KV v2; PKI, database, AWS, transit and SSH engine resources are mount-only until TASK-026 variants
 **Description**: Generate `vault_mount` for each non-builtin mount (retaining `options = { version = "2" }` for KV v2), omitting zero-valued lease TTLs and unpinned `plugin_version`, plus engine-specific resources (`vault_kv_secret_backend_v2`, PKI, database, AWS/Azure/GCP, Transit, SSH) where Vault returns configuration. Engine resources reference the mount (for example `mount = vault_mount.admin_platform_secret.path`). Never emit `vault_kv_secret_v2`, `vault_kv_secret`, `vault_generic_secret` or database connection passwords. Generate `secrets-engines/coverage.md` and `import {}` blocks.
 **Acceptance Criteria**:
 - AC: Exactly three `vault_mount` resources for `admin/platform`, `admin/app-billing` and `admin/app-identity`, with the types, options and descriptions in CAP-004 AC1; none for `admin` (CAP-004 AC2).
