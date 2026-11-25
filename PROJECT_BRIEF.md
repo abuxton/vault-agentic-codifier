@@ -97,7 +97,7 @@ Change: [`openspec/changes/vault-brownfield-research/`](openspec/changes/vault-b
 | [`design.md`](openspec/changes/vault-brownfield-research/design.md) | ✅ Done | Pipeline, discovery protocol, resource mapping, state layering, ADRs |
 | [`tasks.md`](openspec/changes/vault-brownfield-research/tasks.md) | ✅ Done | 30 implementation tasks in five phases: Foundation, Discovery Engine, Codification Engine, Validation & Testing, Documentation & Handoff |
 
-Implementation of the tasks has not started; `TASK-001` to `TASK-005` are ready to start.
+Implementation is in progress; see [`HANDOFF.md`](HANDOFF.md) and [`STATUS_REPORT.md`](STATUS_REPORT.md) for the current state.
 
 ## 8. Roles
 
@@ -121,7 +121,7 @@ Implementation of the tasks has not started; `TASK-001` to `TASK-005` are ready 
 
 ## 10. Contributing
 
-- **`AGENTS.md`** — contributor and agent guidelines (**not yet written**; tracked as `TASK-028` in [`tasks.md`](openspec/changes/vault-brownfield-research/tasks.md)). Until it exists, follow this brief and the OpenSpec artifacts.
+- **[`AGENTS.md`](AGENTS.md)** — contributor and agent guidelines: constraints, commands, ownership and where things are.
 - **Test harness** — use [`test/`](test/) (`make all`, `make smoke-test`, `make validate`) to verify any change; see [`test/PREREQUISITES.md`](test/PREREQUISITES.md).
 - **Documentation source** — Vault docs and validated designs come from `git@github.com:hashicorp/web-unified-docs.git` (for example `content/validated-designs/docs/docs/vault/administration-guide/authentication-for-people.mdx` and the `content/vault/` tree).
 - **Work tracking** — pick a task from [`tasks.md`](openspec/changes/vault-brownfield-research/tasks.md); acceptance criteria come from [`specs.md`](openspec/changes/vault-brownfield-research/specs.md).

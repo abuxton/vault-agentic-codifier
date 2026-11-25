@@ -54,7 +54,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | **Done** |
 | TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | **Done** |
 | TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | **Done** |
-| TASK-028 | Write AGENTS.md | 5 | N/A | documentation | M | Blocked |
+| TASK-028 | Write AGENTS.md | 5 | N/A | documentation | M | **Done** |
 | TASK-029 | README and usage guide | 5 | N/A | documentation | M | Blocked |
 | TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | Blocked |
 | TASK-031 | Exporter identity: policy, entity, group, and agent skill | 1 | N/A | implementation | M | **Done** |
@@ -516,7 +516,7 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Type**: documentation
 **Effort**: M
 **Depends on**: TASK-022, TASK-027
-**Status**: Blocked
+**Status**: **Done** ([`AGENTS.md`](../../../AGENTS.md); commands run as written on 2026-11-25)
 **Description**: Author the repository `AGENTS.md` (referenced as "not yet written" in `PROJECT_BRIEF.md`). Cover the four roles (Vault Expert, Solution Architect, SRE, Technical Writer) and their deliverables from `design.md` §3; build and test commands (`make -C test all`, `smoke-test`, the Phase 4 target); the read-only rule; the secrets rule and synthetic-data convention (`SYNTHETIC-*-REPLACE-IN-PRODUCTION`); the capability dependency order; resource ownership table; documentation source repository convention; the licence rule (`/tmp/vault.hclic`, never committed); and where research artifacts live.
 **Acceptance Criteria**:
 - AC: `AGENTS.md` exists at repo root and lists commands verified to run as written.
