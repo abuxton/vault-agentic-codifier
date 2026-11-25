@@ -47,7 +47,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Done — validated (approle; other types backend-only) |
 | TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Done — validated (KV v2 config; other engine types mount-only) |
 | TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Done — validated (harness; OIDC external group checked on a scratch payload) |
-| TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Skill authored, awaiting validation |
+| TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Done — validated (harness; OIDC and LDAP checked on scratch payloads) |
 | TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Blocked |
 | TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Blocked |
 | TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Blocked |
@@ -407,7 +407,7 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Effort**: L
 **Skill**: [`skills/codification-admin-config/SKILL.md`](../../../skills/codification-admin-config/SKILL.md)
 **Depends on**: TASK-013, TASK-015, TASK-017, TASK-018, TASK-020, TASK-003, TASK-004, TASK-002
-**Status**: Blocked
+**Status**: Done — validated; ownership split with auth-mounts and teams for human auth mounts
 **Description**: Generate the `admin/` composition: `main.tf` with the provider alias for namespace `admin` and references to resources owned by `namespaces`, `policies`, `auth-mounts` and `teams`; `human_auth.tf` only when an `oidc`/`jwt` (`vault_jwt_auth_backend`, `vault_jwt_auth_backend_role`) or `ldap` (`vault_ldap_auth_backend`, `vault_ldap_auth_backend_group`) mount exists, with `bindpass`, `client_secret` and `oidc_client_secret` as sensitive variables with no default; `variables.tf`, `outputs.tf`, `README.md` and `imports.tf`.
 **Acceptance Criteria**:
 - AC: A provider alias for `admin` is declared and every resource resolves to namespace `admin` (CAP-002 AC1).

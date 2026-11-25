@@ -37,7 +37,8 @@ while IFS= read -r ns; do
   d=$(dir_of "$ns"); [ -s "$d/auth_mounts.json" ] || continue
   AMAP=$(echo "$AMAP" | jq -c --slurpfile m "$d/auth_mounts.json" --arg ns "$ns" --arg layer "$(layer_of "$ns")" "$LIB"'
     . + ( [ $m[0].mounts[] | select(.path != "token" and .path != "token/" and (.accessor // "") != "")
-            | (.path|sub("/$";"")) as $p | {key:.accessor, value:{label:(nsjoin($ns;$p)|lbl), p:$p, layer:$layer}} ] | from_entries )')
+            | (.path|sub("/$";"")) as $p | {key:.accessor, value:{label:(nsjoin($ns;$p)|lbl), p:$p, layer:$layer,
+              ref:((if $ns == "admin" and (.type|IN("oidc","jwt")) then "vault_jwt_auth_backend" elif $ns == "admin" and .type == "ldap" then "vault_ldap_auth_backend" else "vault_auth_backend" end) + "." + (nsjoin($ns;$p)|lbl))}} ] | from_entries )')
 done <<< "$nss"
 
 # ---- load: one record per namespace that has identity objects ------------------------------
@@ -58,7 +59,7 @@ while IFS= read -r ns; do
       ($amap[.mount_accessor] // error("unresolved mount_accessor")) as $m
       | if $m.layer != $layer then error("alias mount is in another layer") else . end
       | ($cmap[.canonical_id] // error("unresolved canonical_id")) as $c
-      | {id:.id, name:.name, namevar:(.name|uuid), label:($c + "_" + ($m.p|lbl)), canonical:$c, mount:$m.label, mpath:$m.p};
+      | {id:.id, name:.name, namevar:(.name|uuid), label:($c + "_" + ($m.p|lbl)), canonical:$c, mount:$m.ref, mpath:$m.p};
     ($pols | map({key:.name, value:(nsjoin($ns; .name)|lbl)}) | from_entries) as $pmap
     | ($i[0].entities // []) as $E | ($i[0].groups // []) as $G
     | ($E | map({key:.id, value:(nsjoin($ns; .name)|lbl)}) | from_entries) as $emap
@@ -108,7 +109,7 @@ def one($res; $ctype): . as $a
   | (if $a.namevar then "variable \"\($a.label)_name\" {\n  description = \("Alias name for \($a.label) (a role_id or other identifier; supply at plan time)"|tojson)\n  type        = string\n  sensitive   = true\n}\n\n" else "" end)
   + "resource \"\($res)\" \"\($a.label)\" {\n" + prov
   + "  name           = " + (if $a.namevar then "var.\($a.label)_name" else ($a.name|tojson) end) + "\n"
-  + "  mount_accessor = vault_auth_backend.\($a.mount).accessor\n"
+  + "  mount_accessor = \($a.mount).accessor\n"
   + "  canonical_id   = \($ctype).\($a.canonical).id\n"
   + (if $a.namevar then "\n  # a sensitive name is imported unmarked; ignoring it avoids a no-op in-place change\n  lifecycle {\n    ignore_changes = [name]\n  }\n" else "" end)
   + "}\n";

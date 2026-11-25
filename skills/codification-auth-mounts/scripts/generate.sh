@@ -45,6 +45,7 @@ while IFS= read -r ns; do
     ($pols | map({key:.name, value:(nsjoin($ns; .name)|lbl)}) | from_entries) as $pmap
     | . + [ $m[0].mounts[]
         | select(.path != "token" and .path != "token/")
+        | select(($ns != "admin") or ((.type | IN("oidc","jwt","ldap")) | not))   # owned by codification-admin-config
         | (.path|sub("/$";"")) as $p
         | {ns:$ns, layer:$layer, nsl:(if $ns=="" then "root" else ($ns|lbl) end), p:$p,
            label:(nsjoin($ns;$p)|lbl), type:.type, description:(.description // ""),
