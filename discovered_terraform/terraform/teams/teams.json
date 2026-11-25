@@ -1,0 +1,119 @@
+[
+  {
+    "auth_roles": [],
+    "entities": [],
+    "group": "vault-app-billing-admin",
+    "inferred_policies": [],
+    "namespace": "admin/app-billing",
+    "recorded_policies": [
+      "namespace-admin"
+    ],
+    "team": "(tenant admin)"
+  },
+  {
+    "auth_roles": [
+      "approle/billing-service"
+    ],
+    "entities": [
+      "synthetic-user-app-billing-developers"
+    ],
+    "group": "vault-app-billing-developers",
+    "inferred_policies": [
+      "billing-developers-read"
+    ],
+    "namespace": "admin/app-billing",
+    "recorded_policies": [],
+    "team": "developers"
+  },
+  {
+    "auth_roles": [],
+    "entities": [
+      "synthetic-user-app-billing-owners"
+    ],
+    "group": "vault-app-billing-owners",
+    "inferred_policies": [
+      "billing-owners-write"
+    ],
+    "namespace": "admin/app-billing",
+    "recorded_policies": [],
+    "team": "owners"
+  },
+  {
+    "auth_roles": [],
+    "entities": [],
+    "group": "vault-app-identity-admin",
+    "inferred_policies": [],
+    "namespace": "admin/app-identity",
+    "recorded_policies": [
+      "namespace-admin"
+    ],
+    "team": "(tenant admin)"
+  },
+  {
+    "auth_roles": [
+      "approle/identity-service"
+    ],
+    "entities": [
+      "synthetic-user-app-identity-developers"
+    ],
+    "group": "vault-app-identity-developers",
+    "inferred_policies": [
+      "identity-developers-read"
+    ],
+    "namespace": "admin/app-identity",
+    "recorded_policies": [],
+    "team": "developers"
+  },
+  {
+    "auth_roles": [],
+    "entities": [
+      "synthetic-user-app-identity-owners"
+    ],
+    "group": "vault-app-identity-owners",
+    "inferred_policies": [
+      "identity-owners-write"
+    ],
+    "namespace": "admin/app-identity",
+    "recorded_policies": [],
+    "team": "owners"
+  },
+  {
+    "auth_roles": [],
+    "entities": [],
+    "group": "vault-platform-admin",
+    "inferred_policies": [],
+    "namespace": "admin/platform",
+    "recorded_policies": [
+      "namespace-admin"
+    ],
+    "team": "(tenant admin)"
+  },
+  {
+    "auth_roles": [
+      "approle/platform-ci"
+    ],
+    "entities": [
+      "synthetic-user-platform-devops"
+    ],
+    "group": "vault-platform-devops",
+    "inferred_policies": [
+      "platform-devops-write"
+    ],
+    "namespace": "admin/platform",
+    "recorded_policies": [],
+    "team": "devops"
+  },
+  {
+    "auth_roles": [],
+    "entities": [
+      "synthetic-user-platform-sre"
+    ],
+    "group": "vault-platform-sre",
+    "inferred_policies": [
+      "platform-sre-read"
+    ],
+    "namespace": "admin/platform",
+    "recorded_policies": [],
+    "team": "sre"
+  }
+]

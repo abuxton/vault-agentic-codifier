@@ -83,8 +83,8 @@ Run in `admin` and every child namespace from `namespaces.json`. Send `X-Vault-N
 
 1. **Groups**: `LIST /v1/identity/group/name`. For each name: `GET /v1/identity/group/name/<name>`; keep `name`, `type`, `policies`, `member_entity_ids`, `member_group_ids`, `metadata`. Add `namespace`.
 2. **Entities**: `LIST /v1/identity/entity/name`. For each: `GET /v1/identity/entity/name/<name>`; keep `name`, `policies`, `metadata`, `disabled`. Add `namespace`.
-3. **Group aliases**: `LIST /v1/identity/group-alias/id`. For each id: `GET /v1/identity/group-alias/id/<id>`; keep `name`, `mount_accessor`, `canonical_id`.
-4. **Entity aliases**: `LIST /v1/identity/entity-alias/id`. For each id: `GET /v1/identity/entity-alias/id/<id>`; keep `name`, `mount_accessor`, `canonical_id`.
+3. **Group aliases**: `LIST /v1/identity/group-alias/id`. For each id: `GET /v1/identity/group-alias/id/<id>`; keep `id` (the import ID), `name`, `mount_accessor`, `canonical_id`.
+4. **Entity aliases**: `LIST /v1/identity/entity-alias/id`. For each id: `GET /v1/identity/entity-alias/id/<id>`; keep `id` (the import ID), `name`, `mount_accessor`, `canonical_id`.
 5. **Accessor resolution**: load every `discovered_terraform/raw/*/auth_mounts.json`; build `accessor_map = {accessor: {namespace, path, type}}`. Annotate each alias with `mount_path`, `mount_type` from that map.
 6. **ID to name resolution**: replace `member_entity_ids` / `member_group_ids` / `canonical_id` with sibling names in a parallel field (`member_entity_names`, `member_group_names`, `canonical_name`); keep raw ids only for `imports.tf` generation.
 7. Strip volatile keys, `jq -S`, write `discovered_terraform/raw/<NS>/identity.json` only if at least one object exists.
@@ -134,10 +134,10 @@ Never echo `VAULT_TOKEN`. Names containing spaces or `/` must be URL-encoded (`j
     {"name": "", "policies": [], "metadata": {}, "disabled": false, "namespace": "admin"}
   ],
   "group_aliases": [
-    {"name": "", "mount_accessor": "", "mount_path": "", "mount_type": "", "canonical_id": ""}
+    {"id": "", "name": "", "mount_accessor": "", "mount_path": "", "mount_type": "", "canonical_id": ""}
   ],
   "entity_aliases": [
-    {"name": "", "mount_accessor": "", "mount_path": "", "mount_type": "", "canonical_id": ""}
+    {"id": "", "name": "", "mount_accessor": "", "mount_path": "", "mount_type": "", "canonical_id": ""}
   ],
   "accessor_map": {"auth_approle_xxxx": {"namespace": "admin", "path": "approle/", "type": "approle"}}
 }

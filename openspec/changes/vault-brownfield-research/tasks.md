@@ -46,7 +46,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-017 | Policies generator and correlation matrix | 3 | CAP-006 | implementation | L | Done — validated |
 | TASK-018 | Auth-mounts generator | 3 | CAP-003 | implementation | XL | Done — validated (approle; other types backend-only) |
 | TASK-019 | Secrets-engines generator | 3 | CAP-004 | implementation | XL | Done — validated (KV v2 config; other engine types mount-only) |
-| TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Skill authored, awaiting validation |
+| TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Done — validated (harness; OIDC external group checked on a scratch payload) |
 | TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Skill authored, awaiting validation |
 | TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Blocked |
 | TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Blocked |
@@ -392,7 +392,7 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 **Effort**: XL
 **Skill**: [`skills/codification-teams/SKILL.md`](../../../skills/codification-teams/SKILL.md)
 **Depends on**: TASK-012, TASK-017, TASK-018, TASK-003, TASK-004, TASK-002, TASK-006
-**Status**: Blocked
+**Status**: Done — validated; alias id added to discovery payloads (import ID)
 **Description**: Generate `vault_identity_group`, `vault_identity_entity`, `vault_identity_group_alias` and `vault_identity_entity_alias`, with `member_entity_ids` expressed as resource references and `mount_accessor` as `vault_auth_backend.<label>.accessor`. Choose the exclusive versus non-exclusive membership pattern and record it in the README. Generate `teams/teams.md` (team → namespace → group → entities → auth roles → policies), `teams/teams.json`, and `import {}` blocks. Inferred policy links (for example `platform-sre-read` for `vault-platform-sre`) are marked "inferred" versus Vault-recorded. Create no empty files when no aliases exist.
 **Acceptance Criteria**:
 - AC: Nine `vault_identity_group` resources in `admin`, all `type = "internal"`, with the policies and metadata in CAP-007 AC1.

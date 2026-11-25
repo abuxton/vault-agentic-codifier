@@ -19,10 +19,10 @@ all_namespaces | while IFS= read -r ns; do
       '.data | {name,policies,metadata:(.metadata // {}),disabled,namespace:$ns,id}' >> "$TMP/e.nd"
   done
   vget LIST "$ns" identity/group-alias/id | jq -r '.data.keys[]?' | while IFS= read -r a; do
-    vget GET "$ns" "identity/group-alias/id/$a" | jq -S -c '.data | {name,mount_accessor,canonical_id}' >> "$TMP/ga.nd"
+    vget GET "$ns" "identity/group-alias/id/$a" | jq -S -c '.data | {id,name,mount_accessor,canonical_id}' >> "$TMP/ga.nd"
   done
   vget LIST "$ns" identity/entity-alias/id | jq -r '.data.keys[]?' | while IFS= read -r a; do
-    vget GET "$ns" "identity/entity-alias/id/$a" | jq -S -c '.data | {name,mount_accessor,canonical_id}' >> "$TMP/ea.nd"
+    vget GET "$ns" "identity/entity-alias/id/$a" | jq -S -c '.data | {id,name,mount_accessor,canonical_id}' >> "$TMP/ea.nd"
   done
   cnt=$(cat "$TMP/g.nd" "$TMP/e.nd" "$TMP/ga.nd" "$TMP/ea.nd" | wc -l | tr -d ' ')
   if [ "$cnt" = 0 ]; then rm -f "$d/identity.json"; continue; fi
