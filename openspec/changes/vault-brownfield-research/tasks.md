@@ -49,7 +49,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-020 | Teams generator | 3 | CAP-007 | implementation | XL | Done — validated (harness; OIDC external group checked on a scratch payload) |
 | TASK-021 | Admin-config generator (composition) | 3 | CAP-002 | implementation | L | Done — validated (harness; OIDC and LDAP checked on scratch payloads) |
 | TASK-022 | Layer assembly, imports and ownership check | 3 | N/A | implementation | L | Done — validated |
-| TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Blocked |
+| TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Done — validated |
 | TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Blocked |
 | TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | Blocked |
 | TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | Blocked |
@@ -437,11 +437,12 @@ Per-capability generators that turn raw payloads into Terraform HCL. Each genera
 Verification against the synthetic harness in `test/` and scratch variant fixtures. Phase 4 maps to the SRE role in `design.md` §2.4 and §11.
 
 ### TASK-023: Static validation gate (fmt, validate, tflint)
+**Skill**: [`skills/validation-static-gate/SKILL.md`](../../../skills/validation-static-gate/SKILL.md)
 **Capability**: N/A
 **Type**: test
 **Effort**: M
 **Depends on**: TASK-022
-**Status**: Blocked
+**Status**: Done — validated (`make static-gate`)
 **Description**: Add a validation script/target that runs `terraform fmt -check -recursive`, `terraform init -backend=false`, `terraform validate` and `tflint` in every generated layer directory, mirroring `make -C test fmt validate`. Failures surface file, line and capability owner.
 **Acceptance Criteria**:
 - AC: All generated layers pass `terraform fmt -check -recursive` and `terraform validate` (CAC1).

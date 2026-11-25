@@ -13,6 +13,11 @@ output "operator_policy_names" {
   value       = local.operator_policies
 }
 
+output "operator_group_names" {
+  description = "Names of the identity groups that hold an operator policy."
+  value       = local.operator_groups
+}
+
 output "auth_mount_accessors" {
   description = "Accessors of the auth mounts in the admin namespace."
   value = {

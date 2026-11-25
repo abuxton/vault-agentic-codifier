@@ -62,6 +62,7 @@ PMAP=$(jq -c "$LIB"' map({key:.name, value:("admin/"+.name|lbl)}) | from_entries
     ([.machine_auth_mounts[]?, .human_auth_mounts[]?] | sort_by(.path)) as $m
     | "output \"namespace_paths\" {\n  description = \"Namespace path of the admin layer.\"\n  value       = { admin = vault_namespace.admin.path }\n}\n\n"
     + "output \"operator_policy_names\" {\n  description = \"Names of the operator policies in the admin namespace.\"\n  value       = local.operator_policies\n}\n"
+    + "\noutput \"operator_group_names\" {\n  description = \"Names of the identity groups that hold an operator policy.\"\n  value       = local.operator_groups\n}\n"
     + (if ($m|length) > 0 then "\noutput \"auth_mount_accessors\" {\n  description = \"Accessors of the auth mounts in the admin namespace.\"\n  value = {\n"
         + ([$m[] | "    \(.path|sub("/$";"")|tojson) = \(mref(.type; ("admin/"+(.path|sub("/$";""))|lbl))).accessor\n"] | join("")) + "  }\n}\n" else "" end)' "$CFG"
 } > "$L/outputs.tf"
