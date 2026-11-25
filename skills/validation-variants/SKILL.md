@@ -1,21 +1,16 @@
 ---
 name: validation-variants
 description: >
-  Run the edge-case fixtures the base harness cannot reach (oidc in admin, userpass, pki and database, a nested
-  namespace, duplicate policy names, a dangling policy, a 403 token, an empty cluster) on throwaway Vault
-  containers, assert the expected output, and run CAC1 to CAC4 on each. Harness only. TASK-026.
-triggers:
-  - "variant fixtures"
-  - "edge cases"
-  - "empty cluster"
-  - "403 token"
-  - "TASK-026"
-task: TASK-026
-depends_on:
-  - codification-layer-assembly (TASK-022)
-  - validation-zero-diff (TASK-024)
-  - validation-readonly-secrets (TASK-025)
-role: sre
+  Use when you need to run the edge-case fixtures the base harness cannot reach (oidc in admin, userpass, pki and
+  database, a nested namespace, duplicate policy names, a dangling policy, a 403 token, an empty cluster) on
+  throwaway Vault containers, assert the expected output, and run CAC1 to CAC4 on each. Harness only. Run after
+  codification, then read the report. USE FOR: variant fixtures; edge cases. DO NOT USE FOR: a production cluster
+  (harness only), or changing the generated output.
+metadata:
+  task: "TASK-026"
+  role: "sre"
+  depends_on: "codification-layer-assembly (TASK-022), validation-zero-diff (TASK-024), validation-readonly-secrets (TASK-025)"
+  version: "1.0"
 ---
 
 # Validation: variant fixtures
@@ -52,22 +47,8 @@ Two scenario details. The empty cluster has no audit device by definition, so th
 `NO_AUDIT_DEVICE=1`: the three audit checks report `SKIP` and every content scan still runs. The empty cluster is
 collected with the dev root token because the orchestrator, correctly, refuses it; this is fixture-only.
 
-## 4. Reference implementation (validated against the harness)
+## References
 
-All checks PASS, and the real harness digest is identical before and after.
+Load these when you need the detail; each is moved verbatim from this file.
 
-**Gaps the variants exposed, both fixed.**
-
-1. `discovery-orchestrator/scripts/admin-config.sh` wrote `config:{}` and `roles_or_groups:[]` for every human auth
-   mount, so an `oidc` mount produced a `vault_jwt_auth_backend` with no `oidc_discovery_url` and `terraform plan`
-   failed ("exactly one of oidc_discovery_url, jwks_url or jwt_validation_pubkeys"). It now reads
-   `auth/<path>/config` and the roles (oidc, jwt) or groups (ldap), with `client_secret`, `bindpass`, `api_token`
-   and `password` keys masked to `REDACTED` before they reach disk. The base harness has no human mount, so its
-   output is byte-identical.
-2. On a cluster without an `admin` namespace both admin-config stages stopped with an error. They now skip
-   cleanly (discovery exits 0, codification removes its own files and exits 0), as CAP-002 AC3 and CAP-001 AC6
-   require.
-
-**A wrong assertion, not a generator fault.** The first run failed `CAP-005-AC5` because the test expected five
-`vault_namespace` resources in `namespaces/namespaces.tf`. The `admin` namespace belongs to the `admin` layer, so the
-file holds four. The test was corrected.
+- [Reference implementation (validated against the harness)](references/reference-implementation-validated-against-the-harness.md)

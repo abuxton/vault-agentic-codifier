@@ -1,23 +1,16 @@
 ---
 name: validation-codify-test
 description: >
-  Run the whole codifier test in one command: harness up, smoke test, discover and codify twice, check
-  idempotence (CAC5), ownership (CAC6, CAC7), static gate (CAC1), zero-diff (CAC2), read-only and secrets
-  (CAC3, CAC4), smoke test again, and confirm the harness is unchanged. Prints per-CAC and per-capability results.
-  Harness only. TASK-027.
-triggers:
-  - "codify-test"
-  - "idempotence"
-  - "CAC5"
-  - "end to end test"
-  - "TASK-027"
-task: TASK-027
-depends_on:
-  - validation-static-gate (TASK-023)
-  - validation-zero-diff (TASK-024)
-  - validation-readonly-secrets (TASK-025)
-  - validation-variants (TASK-026)
-role: sre
+  Use when you need to run the whole codifier test in one command: harness up, smoke test, discover and codify
+  twice, check idempotence (CAC5), ownership (CAC6, CAC7), static gate (CAC1), zero-diff (CAC2), read-only and
+  secrets (CAC3, CAC4), smoke test again, and confirm the harness is unchanged. Prints per-CAC and per-capability
+  results. Harness only. Run after codification, then read the report. USE FOR: codify-test; idempotence. DO NOT
+  USE FOR: a production cluster (harness only), or changing the generated output.
+metadata:
+  task: "TASK-027"
+  role: "sre"
+  depends_on: "validation-static-gate (TASK-023), validation-zero-diff (TASK-024), validation-readonly-secrets (TASK-025), validation-variants (TASK-026)"
+  version: "1.0"
 ---
 
 # Validation: codify-test
@@ -52,12 +45,8 @@ Both runs write to a scratch directory, so the committed `discovered_terraform/t
 the test. Hashing ignores `.terraform/`, the lock file, `run_report*` (timestamps) and `.state.json`. Everything
 else, including the raw payloads, must match.
 
-## 3. Reference implementation (validated against the harness)
+## References
 
-`make codify-test`: all 11 stages PASS. Per CAC: CAC1 to CAC7 PASS. Per capability: `auth-mounts`, `namespaces`,
-`policies`, `root-config`, `secrets-engines` and `teams` pass zero-diff; `admin-config` reports "none declared" (the
-harness has no human auth mount, and the variants cover it). `make -C test smoke-test` passes before and after, and
-the harness digest is unchanged.
+Load these when you need the detail; each is moved verbatim from this file.
 
-`--selftest` copies the committed output and raw trees twice, confirms identical trees pass, then requires
-`idempotent` to fail on a changed byte, a missing file and an extra raw payload. All three are detected.
+- [Reference implementation (validated against the harness)](references/reference-implementation-validated-against-the-harness.md)

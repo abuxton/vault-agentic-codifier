@@ -1,21 +1,16 @@
 ---
 name: validation-readonly-secrets
 description: >
-  Verify CAC3 and CAC4. Parse the Vault audit log for the discovery window and require that the exporter
-  token made only read and list requests, then scan generated output and raw payloads for secrets.
-  Includes a self-test that injects faults and requires each to be caught. Harness. TASK-025.
-triggers:
-  - "read-only check"
-  - "audit log"
-  - "no secrets"
-  - "CAC3"
-  - "CAC4"
-  - "TASK-025"
-task: TASK-025
-depends_on:
-  - discovery-orchestrator (TASK-014)
-  - codification-layer-assembly (TASK-022)
-role: sre
+  Use when you need to verify CAC3 and CAC4. Parse the Vault audit log for the discovery window and require that
+  the exporter token made only read and list requests, then scan generated output and raw payloads for secrets.
+  Includes a self-test that injects faults and requires each to be caught. Harness. Run after codification, then
+  read the report. USE FOR: read-only check; audit log. DO NOT USE FOR: a production cluster (harness only), or
+  changing the generated output.
+metadata:
+  task: "TASK-025"
+  role: "sre"
+  depends_on: "discovery-orchestrator (TASK-014), codification-layer-assembly (TASK-022)"
+  version: "1.0"
 ---
 
 # Validation: read-only and no secrets
@@ -60,17 +55,8 @@ Over `*.tf` excluding `imports*.tf`: no UUID literal, and no quoted literal on a
 (`bindpass`, `client_secret`, `private_key` and similar). Matches are reported by file and line, not by value.
 Config keys such as `secret_id_ttl` and `secret_id_num_uses` are not values and do not match.
 
-## 4. Reference implementation (validated against the harness)
+## References
 
-Discovery window `08:40:42` to `08:40:48`: 121 exporter requests (47 list, 74 read), 0 other, no secret path.
-All 12 checks PASS. The only other requests in the window were the `secret-id` mint and the AppRole login.
+Load these when you need the detail; each is moved verbatim from this file.
 
-`--selftest` copies the inputs to a scratch directory, confirms they pass, then injects 10 faults, each of which
-must fail on the named check: a write, a delete and a KV data read by the exporter token (rewritten audit
-lines), an empty window, a `secret_id` value, a `SYNTHETIC` marker and a KV v2 payload in raw, a UUID literal,
-a token literal and a sensitive literal in `.tf`, and a state file. All are caught.
-
-Live check, with the harness changed in no way: a real exporter token (AppRole login) listed namespaces, read a
-policy, then tried `vault write sys/policies/acl/zz-injected`. Vault returned 403 and the policy list was
-identical before and after. With `WINDOW_START` and `WINDOW_END` set round those three calls, `audit-read-only`
-reported `FAIL: 1 non-read operations ... update sys/policies/acl/zz-injected`.
+- [Reference implementation (validated against the harness)](references/reference-implementation-validated-against-the-harness.md)

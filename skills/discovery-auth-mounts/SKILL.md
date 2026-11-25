@@ -1,19 +1,16 @@
 ---
 name: discovery-auth-mounts
 description: >
-  Enumerate all authentication method mounts across all namespaces, capture mount
-  metadata, tuning, and method-specific role and group configurations, strictly avoiding
-  credential and secret paths. TASK-010 — covers CAP-003 (auth-mounts).
-triggers:
-  - "discover auth mounts"
-  - "auth mount discovery"
-  - "TASK-010"
-capability: CAP-003
-task: TASK-010
-depends_on:
-  - vault-exporter-setup (TASK-031)
-  - discovery-namespaces (TASK-007)
-role: vault-expert
+  Use when you need to enumerate all authentication method mounts across all namespaces, capture mount metadata,
+  tuning, and method-specific role and group configurations, strictly avoiding credential and secret paths. Run
+  after exporter setup, then codify. USE FOR: discover auth mounts; auth mount discovery. DO NOT USE FOR: writing
+  Terraform (use the matching codification-* skill), or any write to Vault.
+metadata:
+  task: "TASK-010"
+  capability: "CAP-003"
+  role: "vault-expert"
+  depends_on: "vault-exporter-setup (TASK-031), discovery-namespaces (TASK-007)"
+  version: "1.0"
 ---
 
 # Auth Mounts Discovery Skill (`discovery-auth-mounts`)
@@ -48,7 +45,7 @@ The following non-negotiable governance rules apply:
 | Exporter Token | `test -n "${EXPORTER_TOKEN}"` | Authentication token with auth read permissions |
 | Namespace Catalog | `test -f discovered_terraform/raw/namespaces.json` | List of discovered namespaces from TASK-007 |
 | Output Directory | `mkdir -p discovered_terraform/raw/root` | Destination directories per namespace |
-| CLI Binaries | `/opt/homebrew/bin/vault version`, `jq --version` | CLI utilities |
+| CLI Binaries | `vault version`, `jq --version` | CLI utilities |
 | Config Override | `export VAULT_CONFIG_PATH=/dev/null` | Ensure clean environment |
 
 ## 4. Discovery Process
@@ -84,152 +81,6 @@ The following non-negotiable governance rules apply:
        ▼
 [4. Record coverage into coverage.json & non-200s into run_report.jsonl]
 ```
-
-### Detailed Steps
-
-1. **Step 1: Iterate Namespaces**  
-   Load root (`""`) and all tenant namespaces from `namespaces.json`.
-2. **Step 2: List Auth Mounts (`GET /v1/sys/auth`)**  
-   Fetch all auth backends. Filter out the default `token/` mount.
-3. **Step 3: Capture Mount Tuning (`GET /v1/sys/auth/<path>/tune`)**  
-   Fetch default and max lease TTLs for each mount.
-4. **Step 4: Method-Specific Role/Config Extraction**  
-   - **AppRole**: Call `LIST /v1/auth/<path>/role`. For each role name, call `GET /v1/auth/<path>/role/<name>` to retrieve `token_policies`, `token_ttl`, `token_max_ttl`, `secret_id_num_uses`, and `secret_id_ttl`. DO NOT query `role-id` or `secret-id`.
-   - **OIDC/JWT**: Read `GET /v1/auth/<path>/config` and list/read roles. Strip any client secrets.
-   - **LDAP**: Read `GET /v1/auth/<path>/config` (strip `bindpass`), list groups and users.
-   - **Kubernetes / AWS / Cert**: Read respective config and roles.
-   - **Other/Generic**: Capture mount metadata and tuning; mark role management as generic fallback.
-5. **Step 5: Write Per-Namespace Payloads**  
-   Output structured JSON to `discovered_terraform/raw/<namespace>/auth_mounts.json`.
-
-## 5. Exact API & CLI Calls
-
-> **Validated notes (harness, Vault 2.2.2+ent).**
-> - `GET sys/auth/<path>` and `GET sys/auth/<path>/tune` require **`sudo`**
->   ([API docs](https://developer.hashicorp.com/vault/api-docs/system/auth)). The exporter policy grants
->   `read`+`sudo` on `sys/auth/+` and `sys/auth/+/tune` at every namespace depth. Without it the tune read is
->   403 in every namespace. The endpoint accepts no writes with that grant.
-> - Fetch `sys/auth` once per namespace; do not re-read it per mount.
-> - The tune payload keeps `default_lease_ttl`, `max_lease_ttl`, `token_type`, `listing_visibility`,
->   `audit_non_hmac_*_keys`, `passthrough_request_headers`, `allowed_response_headers`. A mount that was never
->   tuned reports the system default (`2764800`), not `0`.
-> - Role payload keeps config keys only (`bind_secret_id`, `secret_id_*`, `token_*`). The key names contain
->   `secret_id` but hold no secret values; a credential check must match values, not key names.
-
-### 1. AppRole Discovery (Harness Oracle)
-```bash
-# List auth mounts in namespace admin/platform
-curl -s -S \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin/platform" \
-  "${VAULT_ADDR}/v1/sys/auth" | jq -S .data
-
-# Get mount tuning
-curl -s -S \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin/platform" \
-  "${VAULT_ADDR}/v1/sys/auth/approle/tune" | jq -S .data
-
-# List AppRole roles
-curl -s -S \
-  --request LIST \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin/platform" \
-  "${VAULT_ADDR}/v1/auth/approle/role" | jq -S .data.keys
-
-# Read AppRole role definition (NEVER query role-id or secret-id)
-curl -s -S \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin/platform" \
-  "${VAULT_ADDR}/v1/auth/approle/role/platform-ci" | jq -S .data
-```
-
-### 2. OIDC / JWT Discovery
-```bash
-# Read OIDC configuration
-curl -s -S \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin" \
-  "${VAULT_ADDR}/v1/auth/oidc/config" | jq -S 'del(.client_secret, .oidc_client_secret)'
-```
-
-### 3. LDAP Discovery
-```bash
-# Read LDAP configuration
-curl -s -S \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin" \
-  "${VAULT_ADDR}/v1/auth/ldap/config" | jq -S 'del(.bindpass)'
-```
-
-## 6. Output Schema
-
-The output payload is written to `discovered_terraform/raw/<namespace>/auth_mounts.json`:
-
-```json
-{
-  "mounts": [
-    {
-      "path": "approle",
-      "type": "approle",
-      "accessor": "auth_approle_d1a2b3c4",
-      "description": "AppRole auth backend for platform namespace",
-      "local": false,
-      "seal_wrap": false,
-      "tune": {
-        "default_lease_ttl": 0,
-        "max_lease_ttl": 0
-      },
-      "roles": [
-        {
-          "name": "platform-ci",
-          "token_policies": ["platform-devops-write"],
-          "token_ttl": 3600,
-          "token_max_ttl": 14400,
-          "secret_id_num_uses": 1,
-          "secret_id_ttl": 1800,
-          "token_type": "default"
-        }
-      ]
-    }
-  ],
-  "coverage": [
-    {
-      "path": "approle",
-      "type": "approle",
-      "resource_type": "vault_auth_backend",
-      "role_resource_type": "vault_approle_auth_backend_role"
-    }
-  ]
-}
-```
-
-## 7. Sensitive Field Stripping Table
-
-| Endpoint / Backend | Sensitive Field Name | Handling Strategy |
-|---|---|---|
-| AppRole (`auth/approle/role/*`) | `role_id` | **NEVER QUERY** endpoint; omit unless user-pinned |
-| AppRole (`auth/approle/role/*`) | `secret_id` | **NEVER QUERY** endpoint; never write to disk |
-| LDAP (`auth/ldap/config`) | `bindpass` | Strip via `jq 'del(.bindpass)'`; emit variable ref |
-| OIDC / JWT (`auth/oidc/config`) | `client_secret` | Strip via `jq 'del(.client_secret)'`; emit variable ref |
-| Kubernetes (`auth/kubernetes/config`) | `token_reviewer_jwt` | Strip from raw json; emit variable ref |
-
-## 8. Coding & Naming Standards
-
-- **Terraform Resource Label Helper**: Normalise `<namespace>_<path>`:
-  - `admin/platform` + `approle` mount → `vault_auth_backend.admin_platform_approle`
-  - `admin/platform` + `platform-ci` role → `vault_approle_auth_backend_role.admin_platform_platform_ci`
-- **Accessor Retention**: Keep exact `accessor` strings in the raw JSON payload so identity alias discovery (TASK-012) can resolve backend accessors without making extra API calls.
-
-## 9. Acceptance Criteria Checklist
-
-- [ ] **AC-1 (CAP-003 AC1)**: Discovers exactly 5 `approle` mounts (one per namespace: root, `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`). `token/` is skipped.
-- [ ] **AC-2 (CAP-003 AC2)**: Discovers exactly 6 roles: `terraform-admin` and `exporter` (root), `namespace-provisioner` (`admin`), `platform-ci` (`admin/platform`), `billing-service` (`admin/app-billing`), `identity-service` (`admin/app-identity`). `exporter` is the discovery identity itself; it is present once `vault-exporter-setup` has run.
-- [ ] **AC-3 (CAP-003 AC3)**: Roles capture `token_ttl = 3600`, `token_max_ttl = 14400`, `secret_id_num_uses = 1`, and correct `secret_id_ttl` (900s for root/admin/billing/identity, 1800s for platform-ci). The `exporter` role has `secret_id_ttl = 900`, `secret_id_num_uses = 1`.
-- [ ] **AC-4 (CAP-003 AC5)**: Zero `role_id` or `secret_id` values appear in raw payloads.
-- [ ] **AC-5 (CAP-003 AC6)**: `coverage` records all 5 mounts with `vault_auth_backend` and roles with `vault_approle_auth_backend_role`.
-- [ ] **AC-6 (CAP-003 AC7)**: Unhandled auth types (e.g. `userpass`) are captured with mount metadata and flagged for fallback.
-
 ## 10. Stop Conditions & Failure Recovery
 
 - **Warning - Accessor Missing**: If `accessor` is empty on a mount, issue a warning to the run report but continue.
@@ -238,7 +89,18 @@ The output payload is written to `discovered_terraform/raw/<namespace>/auth_moun
 
 ## 11. Related Skills
 
-- [`vault-exporter-setup`](../vault-exporter-setup/SKILL.md) (TASK-031) — Configures exporter permissions for auth endpoints.
-- [`discovery-namespaces`](../discovery-namespaces/SKILL.md) (TASK-007) — Supplies namespace list.
-- [`discovery-identity-teams`](../discovery-identity-teams/SKILL.md) (TASK-012) — Uses mount accessors to map group and entity aliases.
-- [`codification-auth-mounts`](../codification-auth-mounts/SKILL.md) (TASK-018) — Generates Terraform HCL for auth mounts and roles.
+- `vault-exporter-setup` (TASK-031) — Configures exporter permissions for auth endpoints.
+- `discovery-namespaces` (TASK-007) — Supplies namespace list.
+- `discovery-identity-teams` (TASK-012) — Uses mount accessors to map group and entity aliases.
+- `codification-auth-mounts` (TASK-018) — Generates Terraform HCL for auth mounts and roles.
+
+## References
+
+Load these when you need the detail; each is moved verbatim from this file.
+
+- [Exact API & CLI Calls](references/exact-api-cli-calls.md)
+- [Output Schema](references/output-schema.md)
+- [Sensitive Field Stripping Table](references/sensitive-field-stripping-table.md)
+- [Coding & Naming Standards](references/coding-naming-standards.md)
+- [Acceptance Criteria Checklist](references/acceptance-criteria-checklist.md)
+- [Detailed Steps](references/detailed-steps.md)

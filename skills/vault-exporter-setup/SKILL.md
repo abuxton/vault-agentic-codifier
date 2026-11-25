@@ -1,18 +1,13 @@
 ---
 name: vault-exporter-setup
 description: >
-  Provision the vault-brownfield-codifier exporter identity in a target Vault
-  Enterprise cluster and authenticate as the exporter before any discovery run.
-  Use this skill as the mandatory first step before any task that reads live
-  Vault state (TASK-007 through TASK-014).  The exporter identity is a
-  purpose-built, least-privilege, audit-traced identity — never use a root
-  token or an operator token for discovery.
-triggers:
-  - "set up exporter"
-  - "provision exporter identity"
-  - "authenticate for discovery"
-  - "before running discovery"
-  - "TASK-031"
+  Provision the vault-brownfield-codifier exporter identity in a target Vault Enterprise cluster and authenticate
+  as the exporter before any discovery run. Use this skill as the mandatory first step before any task that reads
+  live Vault state ( The exporter identity is a purpose-built, least-privilege, audit-traced identity — never use
+  a root token or an operator token for discovery. USE FOR: set up exporter; provision exporter identity. DO NOT
+  USE FOR: a production cluster without review, or anything but creating the read-only exporter.
+metadata:
+  version: "1.0"
 ---
 
 # Vault Exporter Setup Skill
@@ -46,205 +41,12 @@ HVD reference:
 | Requirement | Check |
 |---|---|
 | Vault Enterprise ≥ 1.17 | `vault version` |
-| Vault CLI at `/opt/homebrew/bin/vault` | `ls /opt/homebrew/bin/vault` |
-| Terraform ≥ 1.9 at `/opt/homebrew/bin/terraform` | `/opt/homebrew/bin/terraform version` |
+| Vault CLI at `vault` | `ls vault` |
+| Terraform ≥ 1.9 at `terraform` | `terraform version` |
 | `VAULT_ADDR` set to target cluster | `echo $VAULT_ADDR` |
 | Initial `VAULT_TOKEN` with admin rights (bootstrap only) | `vault token lookup` |
 | `test/terraform/admin/` Terraform layer already initialised | `ls test/terraform/admin/.terraform` |
 | Vault audit logging enabled (file or syslog device) | `vault audit list` |
-
----
-
-## Terraform Resources
-
-All resources live in `test/terraform/admin/exporter.tf`, with the policy in
-`test/terraform/admin/policies/exporter.hcl`:
-
-### 1. Policy — `exporter`
-
-```hcl
-resource "vault_policy" "exporter" {
-  name   = "exporter"
-  policy = file("${path.module}/policies/exporter.hcl")
-}
-```
-
-The policy file is at `test/terraform/admin/policies/exporter.hcl`.  
-Key design points (verified against the harness, Vault Enterprise 2.2.2):
-- The token lives in the **root** namespace and reaches children through path
-  prefixes (`admin/sys/auth`). `+` matches exactly one segment, so every
-  structural grant is repeated for namespace depths 0..3. Add a depth if the
-  cluster nests deeper.
-- `list` / `read` on structural paths (namespaces, auth, mounts, policies,
-  identity, quotas) and `read` on health/config paths with no secret values.
-- Secrets-engine config reads are granted as `<mount>/config`, `config/urls`,
-  `config/crl`, `roles`, `roles/*`. `config/root` (cloud credentials) and key
-  material paths are **not** granted.
-- **`sys/audit` needs `sudo`.** Vault requires sudo to *read* it
-  ([API docs](https://developer.hashicorp.com/vault/api-docs/system/audit)).
-  The grant is `read` + `sudo` on that one root path only. Without it,
-  `discovery-root-config` gets a 403 on its mandatory audit-device read.
-- **`sys/auth/<path>` and `sys/auth/<path>/tune` also need `sudo`**
-  ([API docs](https://developer.hashicorp.com/vault/api-docs/system/auth)). Grant `read`+`sudo` on
-  `sys/auth/+` and `sys/auth/+/tune` at every depth. `discovery-auth-mounts` gets a 403 on tuning without it.
-- **`sys/config/ui/headers` also needs `sudo`**
-  ([API docs](https://developer.hashicorp.com/vault/api-docs/system/config-ui-headers)),
-  and only `LIST` is valid on the bare path. Grant `list`, `read`, `sudo` on
-  `sys/config/ui/headers` and `sys/config/ui/headers/*`. Without `sudo` the
-  exporter gets 403 even though `vault token capabilities` reports `list, read`.
-- **Explicit `deny`** on `<mount>/data/*` and `<mount>/metadata/*` at every
-  depth, and on AppRole `role-id` / `secret-id` endpoints.
-- No `create`, `update` or `delete` anywhere.
-
-### 2. Identity Entity — `exporter-agent`
-
-```hcl
-resource "vault_identity_entity" "exporter_agent" {
-  name     = "exporter-agent"
-  policies = ["exporter"]
-
-  metadata = {
-    role       = "exporter"
-    managed_by = "terraform"
-  }
-}
-```
-
-### 3. Identity Group — not used
-
-An earlier draft attached an `exporters` group carrying the `admin` policy. The
-harness has no root-namespace `admin` policy, and the exporter must not hold
-broader access than its own policy, so the identity is entity + policy only.
-
-### 3. AppRole Role — `exporter`
-
-```hcl
-resource "vault_approle_auth_backend_role" "exporter" {
-  backend            = vault_auth_backend.approle_root.path
-  role_name          = "exporter"
-  token_policies     = [vault_policy.exporter.name]
-  token_ttl          = 3600   # 1 hour — enough for a full scan run
-  token_max_ttl      = 14400  # 4 hours hard cap
-  token_num_uses     = 0      # unlimited uses within TTL
-  secret_id_num_uses = 1      # one-time secret-id
-  secret_id_ttl      = 900    # 15 minutes
-  bind_secret_id     = true
-}
-```
-
-> **Note:** `token_num_uses = 0` means the token is usable for the full TTL.
-> This is correct for a scan that makes many sequential API calls.  
-> `secret_id_num_uses = 1` means each secret-id can only be used to log in once
-> (must rotate before the next run).
-
-### 4. Entity Alias — bind entity to AppRole accessor
-
-```hcl
-resource "vault_identity_entity_alias" "exporter_approle" {
-  # AppRole aliases are keyed on the role ID, not the role name.
-  name           = vault_approle_auth_backend_role.exporter.role_id
-  mount_accessor = vault_auth_backend.approle_root.accessor
-  canonical_id   = vault_identity_entity.exporter_agent.id
-}
-```
-
-This alias is what causes audit log entries to show `exporter-agent` as the
-display name when the AppRole token is used.
-
----
-
-## Per-Run Workflow
-
-Run these steps **before** starting any Phase 2 discovery task.
-
-### Step 1 — Apply the Terraform resources (first time, or after changes)
-
-```bash
-cd test/terraform/admin
-VAULT_ADDR=http://127.0.0.1:8200 \
-VAULT_TOKEN=root \
-VAULT_CONFIG_PATH=/dev/null \
-  /opt/homebrew/bin/terraform apply -auto-approve
-```
-
-### Step 2 — Generate a one-time secret-id
-
-```bash
-export VAULT_CONFIG_PATH=/dev/null
-export VAULT_ADDR=http://127.0.0.1:8200
-export VAULT_TOKEN=root   # bootstrap token for secret-id generation only
-
-SECRET_ID=$(/opt/homebrew/bin/vault write -f -field=secret_id \
-  auth/approle/role/exporter/secret-id)
-```
-
-### Step 3 — Read the role-id
-
-```bash
-ROLE_ID=$(/opt/homebrew/bin/vault read -field=role_id \
-  auth/approle/role/exporter/role-id)
-```
-
-### Step 4 — Log in as the exporter
-
-```bash
-EXPORTER_TOKEN=$(/opt/homebrew/bin/vault write -field=token \
-  auth/approle/login \
-  role_id="${ROLE_ID}" \
-  secret_id="${SECRET_ID}")
-
-export VAULT_TOKEN="${EXPORTER_TOKEN}"
-unset ROLE_ID SECRET_ID   # do not leave credentials in environment
-```
-
-The `root` token is now **out of scope**.  All subsequent discovery calls use
-`VAULT_TOKEN` set to the exporter token.
-
-### Step 5 — Run discovery
-
-```bash
-# Example: list namespaces with the exporter token
-/opt/homebrew/bin/vault namespace list -format=json
-```
-
-### Step 6 — Verify audit trail (optional but recommended)
-
-```bash
-# Requires docker exec or volume mount access to the audit log
-docker exec vault-enterprise \
-  sh -c "cat /vault/logs/audit.log | jq -c 'select(.auth.display_name | strings | contains(\"exporter\"))' | tail -20"
-```
-
-Each line is one API call.  Confirm the `exporter-agent` alias appears as
-`auth.display_name` and that no `secret/data/` paths appear in `request.path`.
-
-### Step 7 — Rotate secret-id after the run
-
-```bash
-# Using a fresh admin token (or the exporter token cannot rotate its own secret-id)
-VAULT_TOKEN=root \
-  /opt/homebrew/bin/vault write -f auth/approle/role/exporter/secret-id-accessor/destroy \
-  secret_id_accessor="<accessor from step 2 if stored>"
-```
-
-Or simply let the used secret-id expire naturally (it has `num_uses=1`).
-
----
-
-## Acceptance Criteria Checklist
-
-Before marking TASK-031 complete, verify all of the following against the test
-harness (`make -C test up && make -C test seed`):
-
-- [ ] `test/terraform/admin/policies/exporter.hcl` exists and `terraform validate` returns no errors.
-- [ ] `terraform apply` in `test/terraform/admin/` succeeds with zero diff on a second run (idempotent).
-- [ ] The exporter AppRole token can run `vault auth list` and `vault namespace list` from root (exit 0).
-- [ ] The exporter AppRole token receives HTTP 403 on `vault kv get -mount=secret billing-service/checkout -namespace=admin/app-billing`.
-- [ ] `vault identity entity list` shows `exporter-agent`.
-- [ ] The exporter token can `vault read sys/audit` (needs sudo) and `vault read -namespace=admin/platform secret/config`.
-- [ ] It gets 403 on `vault read -namespace=admin/platform secret/data/x`, on `.../role-id`, and on any write.
-- [ ] After a scan run, the audit log contains entries with `auth.display_name` matching `exporter-agent`.
-- [ ] No `secret/data/` path appears in the audit log `request.path` for the exporter token's calls.
 
 ---
 
@@ -268,3 +70,11 @@ harness (`make -C test up && make -C test seed`):
 - **TASK-007 through TASK-013** — all depend on TASK-031 being complete before they run against a live cluster.
 - **TASK-025** — read-only and no-secrets verification; uses the exporter token to confirm zero writes and zero secret-data reads.
 - **TASK-028** (`AGENTS.md`) — will reference this skill as the standard authentication bootstrap for any agent that connects to Vault.
+
+## References
+
+Load these when you need the detail; each is moved verbatim from this file.
+
+- [Terraform Resources](references/terraform-resources.md)
+- [Per-Run Workflow](references/per-run-workflow.md)
+- [Acceptance Criteria Checklist](references/acceptance-criteria-checklist.md)

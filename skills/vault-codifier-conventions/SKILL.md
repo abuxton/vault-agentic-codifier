@@ -1,65 +1,19 @@
 ---
 name: vault-codifier-conventions
 description: >
-  Shared rules for every discovery-* and codification-* skill: tool selection
-  (what runs through MCP and what runs through the CLI), read-only and secret
-  guards, naming, provenance header, provider template, state layers, builtin
-  and forbidden objects. Read this first. TASK-002, TASK-003, TASK-004.
-triggers:
-  - "codifier conventions"
-  - "naming rules"
-  - "secret guard"
-  - "provider template"
-  - "TASK-002"
-  - "TASK-003"
-  - "TASK-004"
-role: solution-architect
+  Shared rules for every discovery-* and codification-* skill: tool selection (what runs through MCP and what runs
+  through the CLI), read-only and secret guards, naming, provenance header, provider template, state layers,
+  builtin and forbidden objects. Read this first. USE FOR: codifier conventions; naming rules. DO NOT USE FOR:
+  running discovery or generating a resource (use the discovery-* and codification-* skills).
+metadata:
+  role: "solution-architect"
+  version: "1.0"
 ---
 
 # Vault codifier: shared conventions
 
 Every `discovery-*` and `codification-*` skill refers to this file instead of
 carrying its own copy. If a rule here conflicts with a skill, this file wins.
-
-## 1. Tool selection
-
-| Phase | Primary tool | Why |
-|---|---|---|
-| Discovery | `vault` CLI, `curl`, `jq` with the exporter token | The Vault MCP server only exposes mount, KV and PKI tools. It has none for namespaces, auth mounts, policies, identity, quotas, audit or other `sys/*` reads. |
-| Discovery (optional cross-check) | Vault MCP `list_mounts` | Compare against `sys/mounts`. Use only on a harness or with the exporter token. |
-| Codification | Terraform MCP (`search_providers`, `get_provider_details`, `search_provider_docs`) | Look up the resource schema and import syntax for the pinned provider before writing HCL. Do not rely on memory. |
-| Validation | `terraform` CLI (`fmt`, `validate`, `plan`) | The Terraform MCP does not run these. |
-
-Vault MCP rules:
-
-- It exposes write and delete tools (`create_mount`, `delete_mount`,
-  `write_secret`, `delete_secret`, `create_pki_*`, `issue_pki_certificate`).
-  Never call them. Discovery is `GET` / `LIST` only.
-- Never call `read_secret`. Secret values must not reach the model.
-- Point it at the harness only, never production.
-
-Terraform MCP rules:
-
-- Pin lookups to provider `hashicorp/vault` version `4.8.0`, the version the
-  import IDs were verified against (`task-006-decision.md`).
-- Record the doc URL returned by the lookup in the file header (section 4).
-- If a lookup disagrees with `task-006-decision.md`, stop and report it. Do not
-  silently pick one.
-
-Fallback when `terraform-mcp-server` is not installed (the state on the harness machine, TASK-034). This is
-a supported path, not an error:
-
-1. Read the resource page at
-   `https://raw.githubusercontent.com/hashicorp/terraform-provider-vault/v4.8.0/website/docs/r/<resource>.html.md`
-   for arguments and the import syntax. Use the registry URL
-   `https://registry.terraform.io/providers/hashicorp/vault/4.8.0/docs/resources/<resource>` in the file header.
-2. Confirm argument names against the installed provider:
-   `terraform -chdir=<layer> providers schema -json | jq '.provider_schemas | to_entries[0].value.resource_schemas.<type>.block.attributes | keys'`.
-3. If either source disagrees with `task-006-decision.md`, stop and report it, exactly as for an MCP lookup.
-4. Record "Terraform MCP not installed; docs and schema fallback used" in the run notes.
-
-Checked on the harness: the docs URL for `vault_namespace` returns 200 and the provider schema lists `path`,
-`path_fq`, `custom_metadata`, which agrees with the import ID in `task-006-decision.md`.
 
 ## 2. Hard rules
 
@@ -131,90 +85,6 @@ The slug is one of `namespaces`, `root-config`, `policies`, `auth-mounts`,
 must be byte-identical across runs (CAC5). Policy `.hcl` files that must match
 Vault byte-for-byte are the exception and carry no header.
 
-## 5. Naming
-
-Terraform labels are deterministic and unique per directory.
-
-1. Build `<namespace>_<name>`; omit the namespace for root.
-2. Lowercase. Replace every run of `/`, `-`, `+`, `.` or space with `_`. Collapse
-   repeated `_`. Strip leading and trailing `_`.
-3. If the first character is a digit, prefix `r_`. An empty result is `_empty`.
-4. If two objects produce the same label in one directory, stop and report both
-   (CAC6). Never append a counter.
-
-Examples: `secret` in `admin/platform` becomes `admin_platform_secret`;
-`synthetic-user-platform-sre` in `admin` becomes
-`admin_synthetic_user_platform_sre`.
-
-File names: `<namespace_normalised>_<capability>.tf`, for example
-`admin_platform_auth_mounts.tf`.
-
-Policy documents longer than 10 lines go to
-`policies/<namespace>/<name>.hcl` with `/` replaced by `__` in both parts and
-`root` for the root namespace, for example
-`policies/admin__platform/platform-sre-read.hcl`.
-
-## 6. Namespace targeting and imports
-
-Default style is `aliased` (ratified by TASK-006). Each namespace gets
-`provider "vault" { alias = "<label>" namespace = "<full path>" }` and each
-resource sets `provider = vault.<label>`.
-
-`resource` style (`namespace = "..."` on the resource) is allowed only for a
-single-namespace layer. With it, `import {}` plans a replacement unless
-`TERRAFORM_VAULT_NAMESPACE_IMPORT` is set, which allows one namespace per plan.
-
-Import IDs are relative to the provider's namespace and never namespace
-prefixed. Full table: `openspec/changes/vault-brownfield-research/task-006-decision.md`.
-
-## 7. Provider template
-
-`versions.tf` per layer:
-
-```hcl
-terraform {
-  required_version = ">= 1.9"
-
-  required_providers {
-    vault = {
-      source  = "hashicorp/vault"
-      version = "~> 4"
-    }
-  }
-}
-
-variable "vault_address" {
-  description = "Vault cluster address. Falls back to VAULT_ADDR."
-  type        = string
-  default     = null
-}
-
-variable "vault_token" {
-  description = "Vault token for this layer. Falls back to VAULT_TOKEN."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-```
-
-`providers.tf` per layer: one block per namespace alias, each with
-`skip_child_token = true` (layers `admin` and `namespaces`; layer `seed` leaves
-it unset), `address = var.vault_address`, `token = var.vault_token`. Credentials
-are never literals.
-
-## 8. State layers
-
-| Layer | Holds |
-|---|---|
-| `admin/` | root namespace objects, the `admin` namespace itself, root and `admin` policies, root and `admin` auth mounts, `root-config`, `admin-config` |
-| `namespaces/` | child `vault_namespace` resources, identity objects in `admin` |
-| `seed/<ns>/` | tenant namespace policies, auth mounts and secrets engines |
-
-Output root: `discovered_terraform/terraform/<layer>/`. Raw payloads:
-`discovered_terraform/raw/<namespace>/` (git-ignored). Run report:
-`discovered_terraform/run-report.json` (endpoint, namespace, status only, never
-tokens).
-
 ## 9. Validation
 
 After generating a layer:
@@ -228,3 +98,13 @@ terraform -chdir=discovered_terraform/terraform/<layer> validate
 All three must exit 0. Zero-diff import checks (CAC2) run against the harness
 only: `terraform plan -detailed-exitcode` must exit 0 after the `import {}`
 blocks apply.
+
+## References
+
+Load these when you need the detail; each is moved verbatim from this file.
+
+- [Tool selection](references/tool-selection.md)
+- [Naming](references/naming.md)
+- [Namespace targeting and imports](references/namespace-targeting-and-imports.md)
+- [Provider template](references/provider-template.md)
+- [State layers](references/state-layers.md)

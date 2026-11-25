@@ -1,0 +1,8 @@
+# waza configuration for the vault-brownfield-codifier skills (TASK-033).
+# Limit chosen from measured sizes: process, governance and stop conditions fit in 1500 tokens; examples, schemas,
+# API tables and the reference implementation live in references/ and are linked from SKILL.md.
+tokens:
+  fallbackLimit: 1500
+  limits:
+    defaults:
+      "skills/*/SKILL.md": 1500

@@ -59,7 +59,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | Blocked |
 | TASK-031 | Exporter identity: policy, entity, group, and agent skill | 1 | N/A | implementation | M | **Done** |
 | TASK-032 | Create GitHub repository and publish | 5 | N/A | delivery | S | Ready to start |
-| TASK-033 | Waza review of skills TASK-007..021 and fixes | 4 | N/A | test | L | Baseline captured, fixes pending |
+| TASK-033 | Waza review of skills TASK-007..021 and fixes | 4 | N/A | test | L | **Done** |
 | TASK-034 | Terraform MCP availability or documented fallback | 3 | N/A | implementation | S | Done — fallback documented |
 
 ---
@@ -571,7 +571,7 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Type**: test
 **Effort**: L
 **Depends on**: TASK-007..018 (validated); TASK-019..021 for their three skills
-**Status**: Baseline captured (waza 0.38.7, `waza check`, 2026-11-24); fixes pending
+**Status**: **Done** (waza 0.42.0; all 23 skills `ready: true`, 0 `spec-allowed-fields`, 0 broken links; retained advisories and the skipped eval suite recorded in [`docs/waza-review.md`](../../../docs/waza-review.md))
 **Tool**: [microsoft/waza](https://github.com/microsoft/waza) (`waza check`, `waza tokens`, `waza suggest`, `waza spec verify`). Installed at `~/bin/waza`, version 0.38.7; the current published release is v0.42.0, so run `waza update` first. Disable the update check and product telemetry in scripted runs: `WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1`. Waza is a Go CLI and is a review tool only; it adds no runtime dependency to the skills.
 **Scope**: the 17 skills under `skills/`: `vault-codifier-conventions`, `vault-exporter-setup`, the 8 `discovery-*` skills (TASK-007..014), and the 7 `codification-*` skills (TASK-015..021). TASK-022 and TASK-023..027 skills are reviewed when authored.
 **Baseline (`waza check`, 17 skills)**:

@@ -1,18 +1,15 @@
 ---
 name: validation-static-gate
 description: >
-  Run terraform init, validate, fmt -check and tflint in every generated layer
-  and report each failure with file, line and owning capability. Use after any
-  generator run or hand edit. TASK-023.
-triggers:
-  - "static gate"
-  - "tflint generated terraform"
-  - "validate generated layers"
-  - "TASK-023"
-task: TASK-023
-depends_on:
-  - codification-layer-assembly (TASK-022)
-role: sre
+  Use when you need to run terraform init, validate, fmt -check and tflint in every generated layer and report
+  each failure with file, line and owning capability. Use after any generator run or hand edit. Run after
+  codification, then read the report. USE FOR: static gate; tflint generated terraform. DO NOT USE FOR: a
+  production cluster (harness only), or changing the generated output.
+metadata:
+  task: "TASK-023"
+  role: "sre"
+  depends_on: "codification-layer-assembly (TASK-022)"
+  version: "1.0"
 ---
 
 # Validation: static gate
@@ -57,14 +54,8 @@ unzip tflint_darwin_arm64.zip && install -m 0755 tflint ~/.local/bin/tflint
 
 The Makefile adds `~/.local/bin` to `PATH`.
 
-## 5. Reference implementation (validated against the harness)
+## References
 
-Harness: `static gate: ok` for `admin/`, `namespaces/` and `seed/`; `make static-gate` exits 0.
+Load these when you need the detail; each is moved verbatim from this file.
 
-The first run found one real issue: `local.operator_groups` in the admin-config output was declared and never
-used (`terraform_unused_declarations`). The generator now exposes it as `output "operator_group_names"`;
-nothing is suppressed.
-
-Injected faults, each exit 1 with the owner named: a syntax error (`seed/admin_platform_policies.tf:33
-[policies]`), an unformatted file (`admin/root_policies.tf [policies]`), a reference to an undeclared policy
-(`admin/root_auth_mounts.tf:20 [auth-mounts]`), and an unused variable (`admin/audit.tf:15 [root-config]`).
+- [Reference implementation (validated against the harness)](references/reference-implementation-validated-against-the-harness.md)

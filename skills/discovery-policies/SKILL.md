@@ -1,19 +1,16 @@
 ---
 name: discovery-policies
 description: >
-  Enumerate all ACL policies across root and all discovered namespaces, store verbatim
-  HCL policy documents, and check Enterprise Sentinel EGP/RGP policies for coverage.
-  TASK-009 — covers CAP-006 (policies).
-triggers:
-  - "discover policies"
-  - "policy discovery"
-  - "TASK-009"
-capability: CAP-006
-task: TASK-009
-depends_on:
-  - vault-exporter-setup (TASK-031)
-  - discovery-namespaces (TASK-007)
-role: vault-expert
+  Use when you need to enumerate all ACL policies across root and all discovered namespaces, store verbatim HCL
+  policy documents, and check Enterprise Sentinel EGP/RGP policies for coverage. Run after exporter setup, then
+  codify. USE FOR: discover policies; policy discovery. DO NOT USE FOR: writing Terraform (use the matching
+  codification-* skill), or any write to Vault.
+metadata:
+  task: "TASK-009"
+  capability: "CAP-006"
+  role: "vault-expert"
+  depends_on: "vault-exporter-setup (TASK-031), discovery-namespaces (TASK-007)"
+  version: "1.0"
 ---
 
 # Policy Discovery Skill (`discovery-policies`)
@@ -48,7 +45,7 @@ The following non-negotiable governance rules apply:
 | Exporter Token | `test -n "${EXPORTER_TOKEN}"` | Authentication token with policy read access |
 | Namespace Catalog | `test -f discovered_terraform/raw/namespaces.json` | Input list of namespaces from TASK-007 |
 | Output Dirs | `mkdir -p discovered_terraform/raw/root` | Output directories per namespace |
-| CLI Binaries | `/opt/homebrew/bin/vault version`, `jq --version` | CLI utilities for querying and formatting |
+| CLI Binaries | `vault version`, `jq --version` | CLI utilities for querying and formatting |
 | Config Override | `export VAULT_CONFIG_PATH=/dev/null` | Ensure clean environment |
 
 ## 4. Discovery Process
@@ -81,140 +78,6 @@ The following non-negotiable governance rules apply:
        ▼
 [5. Log non-200 responses to discovered_terraform/raw/run_report.jsonl]
 ```
-
-### Detailed Steps
-
-1. **Step 1: Iterate Namespaces**  
-   Load root (`""`) and all namespace paths from `discovered_terraform/raw/namespaces.json` (`admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`).
-2. **Step 2: List ACL Policies**  
-   Issue `LIST /v1/sys/policies/acl` with `X-Vault-Namespace` set to the current namespace.
-3. **Step 3: Fetch Policy Contents**  
-   For each policy name returned, check if it is `default`, `root` or `default-ceiling`. If so, skip. Otherwise, execute `GET /v1/sys/policies/acl/<name>` and retrieve the raw `policy` string.
-4. **Step 4: Check Sentinel Policies (Enterprise)**  
-   Execute `LIST /v1/sys/policies/egp` and `LIST /v1/sys/policies/rgp`. If empty or 403, record status as "none" or "unavailable".
-5. **Step 5: Write Per-Namespace Payloads**  
-   Write `discovered_terraform/raw/<namespace_path>/policies.json` with sorted keys. (For root, write to `discovered_terraform/raw/root/policies.json`).
-6. **Step 6: Update Coverage & Run Report**  
-   Log any Sentinel capabilities to `discovered_terraform/raw/coverage.json` and non-200 responses to `discovered_terraform/raw/run_report.jsonl`.
-
-## 5. Exact API & CLI Calls
-
-### List Policies at Root
-```bash
-curl -s -S \
-  --request LIST \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  "${VAULT_ADDR}/v1/sys/policies/acl" | jq -S .data.keys
-```
-
-### Read Policy at Root (e.g., `operator`)
-```bash
-curl -s -S \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  "${VAULT_ADDR}/v1/sys/policies/acl/operator" | jq -S .data
-```
-
-### List Policies in Namespace (e.g., `admin`)
-```bash
-curl -s -S \
-  --request LIST \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin" \
-  "${VAULT_ADDR}/v1/sys/policies/acl" | jq -S .data.keys
-```
-
-### Read Policy in Namespace (e.g., `platform-sre-read` in `admin/platform`)
-```bash
-curl -s -S \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin/platform" \
-  "${VAULT_ADDR}/v1/sys/policies/acl/platform-sre-read" | jq -S .data
-```
-
-### List Sentinel EGP/RGP Policies
-```bash
-curl -s -S \
-  --request LIST \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin" \
-  "${VAULT_ADDR}/v1/sys/policies/egp" | jq -S .
-
-curl -s -S \
-  --request LIST \
-  --header "X-Vault-Token: ${EXPORTER_TOKEN}" \
-  --header "X-Vault-Namespace: admin" \
-  "${VAULT_ADDR}/v1/sys/policies/rgp" | jq -S .
-```
-
-## 6. Output Schema
-
-### Per-Namespace `policies.json`
-Saved to `discovered_terraform/raw/<namespace>/policies.json` (or `root/policies.json` for root):
-
-```json
-[
-  {
-    "name": "platform-sre-read",
-    "namespace": "admin/platform",
-    "policy_text": "path \"secret/data/platform/sre/*\" {\n  capabilities = [\"read\", \"list\"]\n}\n",
-    "type": "acl"
-  },
-  {
-    "name": "platform-devops-write",
-    "namespace": "admin/platform",
-    "policy_text": "path \"secret/data/platform/*\" {\n  capabilities = [\"create\", \"read\", \"update\", \"delete\", \"list\"]\n}\n",
-    "type": "acl"
-  }
-]
-```
-
-### Coverage Record (`coverage.json`)
-`LIST` on an empty EGP/RGP set returns 404, which is recorded as an empty list, not a failure.
-```json
-{
-  "policies": {
-    "acl_total": 10,
-    "egp_policies": [],
-    "rgp_policies": []
-  }
-}
-```
-
-### Reference implementation (validated against the harness)
-Per namespace: `LIST sys/policies/acl`, drop built-ins, `GET` each, emit `{name, namespace, policy_text: .data.policy, type}`
-sorted by name. Compare with `jq -j` (no trailing newline) when checking byte-for-byte against the API.
-```bash
-vget LIST "$ns" sys/policies/acl | jq -r '.data.keys[]? | select(. != "default" and . != "root" and . != "default-ceiling")' | LC_ALL=C sort
-vget GET  "$ns" "sys/policies/acl/$n" | jq -c --arg ns "$ns" '.data | {name:.name,namespace:$ns,policy_text:.policy,type:"acl"}'
-```
-
-## 7. Deduplication & Namespace Scoping
-
-- Policies are strictly scoped to their namespace. A policy named `read-only` in `admin/platform` and a policy named `read-only` in `admin/app-billing` are distinct objects.
-- In downstream codification, resource labels are derived from both the namespace and policy name:
-  - `admin/platform` + `platform-sre-read` → `vault_policy.admin_platform_platform_sre_read`
-  - Root + `operator` → `vault_policy.root_operator`
-
-## 8. Coding & Naming Standards
-
-- **File Naming**: When codified into HCL files, policies over 10 lines will be emitted to `policies/<namespace>/<name>.hcl`.
-- **String Handling**: Preserve literal newlines `\n` in JSON payloads; do not strip or trim document formatting.
-- **Sorted Output**: Ensure all JSON files use sorted keys via `jq -S`.
-
-## 9. Acceptance Criteria Checklist
-
-- [ ] **AC-1 (CAP-006 AC1)**: Discovers exactly the 10 non-builtin ACL policies across namespaces:
-  - Root: `operator`, `exporter` (2)
-  - `admin`: `admin`, `namespace-admin` (2)
-  - `admin/platform`: `platform-sre-read`, `platform-devops-write` (2)
-  - `admin/app-billing`: `billing-developers-read`, `billing-owners-write` (2)
-  - `admin/app-identity`: `identity-developers-read`, `identity-owners-write` (2)
-- [ ] **AC-2 (CAP-006 AC1)**: Built-in policies `default`, `root` and `default-ceiling` are excluded from all output payloads.
-- [ ] **AC-3 (CAP-006 AC2)**: Stored `policy_text` matches the live cluster API output byte-for-byte.
-- [ ] **AC-4 (CAP-006 AC7)**: Path stanzas with namespace-relative paths (e.g. `secret/data/*`) are preserved without alterations.
-- [ ] **AC-5 (CAP-006 AC8)**: EGP/RGP checks return "none" for the harness without causing errors.
-- [ ] **AC-6 (CAC5)**: Two consecutive discovery runs produce byte-identical JSON payloads.
-
 ## 10. Stop Conditions & Failure Recovery
 
 - **Fatal - Token Revocation**: If policy listing fails with HTTP 401 across all namespaces, abort and alert the operator.
@@ -223,7 +86,18 @@ vget GET  "$ns" "sys/policies/acl/$n" | jq -c --arg ns "$ns" '.data | {name:.nam
 
 ## 11. Related Skills
 
-- [`vault-exporter-setup`](../vault-exporter-setup/SKILL.md) (TASK-031) — Grants policy read privileges.
-- [`discovery-namespaces`](../discovery-namespaces/SKILL.md) (TASK-007) — Provides the namespace iteration list.
-- [`discovery-identity-teams`](../discovery-identity-teams/SKILL.md) (TASK-012) — Correlates discovered policies to identity groups and entities.
-- [`codification-policies`](../codification-policies/SKILL.md) (TASK-017) — Generates `vault_policy` HCL from these raw payloads.
+- `vault-exporter-setup` (TASK-031) — Grants policy read privileges.
+- `discovery-namespaces` (TASK-007) — Provides the namespace iteration list.
+- `discovery-identity-teams` (TASK-012) — Correlates discovered policies to identity groups and entities.
+- `codification-policies` (TASK-017) — Generates `vault_policy` HCL from these raw payloads.
+
+## References
+
+Load these when you need the detail; each is moved verbatim from this file.
+
+- [Exact API & CLI Calls](references/exact-api-cli-calls.md)
+- [Output Schema](references/output-schema.md)
+- [Deduplication & Namespace Scoping](references/deduplication-namespace-scoping.md)
+- [Coding & Naming Standards](references/coding-naming-standards.md)
+- [Acceptance Criteria Checklist](references/acceptance-criteria-checklist.md)
+- [Detailed Steps](references/detailed-steps.md)

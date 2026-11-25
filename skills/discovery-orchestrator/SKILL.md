@@ -1,26 +1,15 @@
 ---
 name: discovery-orchestrator
 description: >
-  Single entry point that runs all discovery skills (TASK-007 through TASK-013)
-  in dependency order against a live Vault Enterprise cluster, producing the
-  full raw payload tree and a consolidated run report. TASK-014.
-triggers:
-  - "run discovery"
-  - "run all discovery"
-  - "full discovery"
-  - "TASK-014"
-task: TASK-014
-capability: cross-cutting
-depends_on:
-  - vault-exporter-setup (TASK-031)
-  - discovery-namespaces (TASK-007)
-  - discovery-root-config (TASK-008)
-  - discovery-policies (TASK-009)
-  - discovery-auth-mounts (TASK-010)
-  - discovery-secrets-engines (TASK-011)
-  - discovery-identity-teams (TASK-012)
-  - discovery-admin-config (TASK-013)
-role: vault-expert
+  Use when you need to single entry point that runs all discovery skills (. Run after exporter setup, then codify.
+  USE FOR: run discovery; run all discovery. DO NOT USE FOR: writing Terraform (use the matching codification-*
+  skill), or any write to Vault.
+metadata:
+  task: "TASK-014"
+  capability: "cross-cutting"
+  role: "vault-expert"
+  depends_on: "vault-exporter-setup (TASK-031), discovery-namespaces (TASK-007), discovery-root-config (TASK-008), discovery-policies (TASK-009), discovery-auth-mounts (TASK-010), discovery-secrets-engines (TASK-011), discovery-identity-teams (TASK-012), discovery-admin-config (TASK-013)"
+  version: "1.0"
 ---
 
 # Discovery Orchestrator (TASK-014)
@@ -71,20 +60,6 @@ export VAULT_TOKEN="${EXPORTER_TOKEN}"   # NEVER root
 
 ---
 
-## Prerequisites
-
-| Requirement | Check |
-|---|---|
-| `EXPORTER_TOKEN` set (from `vault-exporter-setup`) | `test -n "${EXPORTER_TOKEN}"` (never print it) |
-| `VAULT_ADDR` reachable | `/opt/homebrew/bin/vault status` |
-| Token valid, not root | `/opt/homebrew/bin/vault token lookup -format=json \| jq -e '(.data.policies \| index("root")) == null'` |
-| Audit device enabled | `/opt/homebrew/bin/vault audit list -format=json \| jq -e 'length > 0'` |
-| `discovered_terraform/raw/` exists | `mkdir -p discovered_terraform/raw` |
-| Prerequisites of each of the 7 skills are satisfied | each skill checks its own; orchestrator surfaces failures |
-| `jq`, `curl`, `shasum` installed | `command -v jq curl shasum` |
-
----
-
 ## Execution order (strict)
 
 | # | Skill | Task | Requires | Notes |
@@ -99,140 +74,6 @@ export VAULT_TOKEN="${EXPORTER_TOKEN}"   # NEVER root
 | 8 | `discovery-admin-config` | TASK-013 | 4, 5, 7 | Reuses policies, auth, identity payloads |
 
 Steps 3-6 may run concurrently; for deterministic logs, serial is the default. Output bytes must not depend on ordering.
-
-### Reference implementation (validated against the harness)
-
-The runnable implementation lives in [`scripts/`](scripts/): `lib.sh` (shared `vget`/`fetch` helpers), one script
-per discovery skill, and `run.sh` (the orchestrator). One command runs everything:
-
-```bash
-export VAULT_CONFIG_PATH=/dev/null VAULT_ADDR=http://127.0.0.1:8200
-export EXPORTER_TOKEN=...            # from vault-exporter-setup; never a root token, never printed
-bash skills/discovery-orchestrator/scripts/run.sh          # FROM=discovery-auth-mounts to resume
-```
-
-Validated results (Vault 2.2.2+ent harness, 4 namespaces): a clean run takes about 6 s, exits 0 with
-`non_200_responses: []`; a second run produces a byte-identical `raw/` tree; the audit log for both runs shows
-221 exporter requests, all `read` or `list`, none under `data/`, `metadata/`, `role-id`, `secret-id`, `sys/license`
-(text) or `config/root`, and no error responses. Needs macOS `/bin/bash` 3.2 or newer, `curl` and `jq`; no Python.
-
-`run.sh` also enforces the stop conditions itself: invalid or expired token, a token carrying the `root` policy and
-a missing audit device all exit 2 before any discovery call.
-
-```bash
-RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"; START="$(date -u +%FT%TZ)"
-for step in discovery-namespaces discovery-root-config discovery-policies \
-            discovery-auth-mounts discovery-secrets-engines \
-            discovery-identity-teams discovery-admin-config; do
-  /opt/homebrew/bin/vault token lookup >/dev/null 2>&1 || { echo "token expired"; exit 2; }
-  run_skill "$step" || mark_failed "$step"      # see Re-run / resume
-done
-```
-
-`run_id`, `start_time`, `end_time` appear **only** in the run report, never in raw payloads.
-
----
-
-## Idempotency
-
-Run twice into separate directories and compare:
-
-```bash
-cp -R discovered_terraform/raw /tmp/raw_run1
-# ... second run ...
-diff -r /tmp/raw_run1 discovered_terraform/raw && echo IDENTICAL
-
-# or hash the tree
-(cd discovered_terraform/raw && find . -type f | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256)
-```
-
-The run report is excluded from the comparison (it contains timestamps). Any diff means a volatile field leaked or an array is unsorted: fix the offending skill.
-
----
-
-## Run report format
-
-`discovered_terraform/run_report.json` (written by `run.sh`; per-skill non-200s go to `raw/run_report.jsonl` and are merged here):
-
-```json
-{
-  "run_id": "20250101T000000Z",
-  "vault_addr": "http://127.0.0.1:8200",
-  "start_time": "2025-01-01T00:00:00Z",
-  "end_time": "2025-01-01T00:02:10Z",
-  "namespaces_discovered": ["admin", "admin/platform", "admin/app-billing", "admin/app-identity"],
-  "non_200_responses": [
-    {"endpoint": "sys/policies/acl", "namespace": "admin/platform", "http_status": 403, "skipped": true}
-  ],
-  "exit_code": 0
-}
-```
-
-`exit_code`: `0` success (non-200s are allowed), `1` a skill failed, `2` a stop condition triggered. The token must never appear in this file.
-
----
-
-## Expected output tree (harness)
-
-```
-discovered_terraform/
-  run_report.json
-  .state.json
-  raw/
-    namespaces.json
-    coverage.json                 # policies: acl_total 10, no EGP/RGP
-    root/                         # root namespace
-      audit.json  health.json  license_status.json  replication_status.json  seal_status.json
-      quotas_config.json  quotas_rate_limit_list.json  quota_rate_limit_global_rate_limit.json
-      ui_headers.json  ui_feature_flags.json
-      policies.json  auth_mounts.json  secrets_engines.json
-      identity.json             # exporter-agent entity + its AppRole alias
-    admin/
-      policies.json  auth_mounts.json
-      secrets_engines.json      # mounts: [] (agent-registry is skipped)
-      identity.json             # 9 groups, 6 entities, 0 aliases
-      admin_config.json
-    admin/platform/  admin/app-billing/  admin/app-identity/
-      policies.json  auth_mounts.json
-      secrets_engines.json      # 1 KV v2 mount: secret/
-```
-
-There is no `root_config.json`: root-config writes one file per endpoint under `raw/root/`. No `identity.json`
-in child namespaces (empty sets create no file). Nested namespaces use `discovered_terraform/raw/<namespace>/`
-(the path keeps its slashes, e.g. `raw/admin/platform/`).
-
----
-
-## Re-run / resume
-
-- Each skill is idempotent and overwrites only its own files, so re-running is always safe.
-- The orchestrator keeps `discovered_terraform/.state.json` (`{"completed": ["discovery-namespaces", ...]}`), excluded from the idempotency comparison.
-- Resume from a step: `FROM=discovery-auth-mounts` skips every step recorded as completed and before `FROM`. Already-collected payloads are never deleted.
-- Force a step to re-run: remove it from `completed` (never `rm -rf raw/`).
-- Dependencies are re-checked on resume: if `FROM=discovery-identity-teams` and `auth_mounts.json` is absent, stop.
-- If the token expired, re-issue via `vault-exporter-setup` (new secret-id), then resume.
-
----
-
-## Coding standards
-
-- Orchestrator is thin: it invokes each skill and records status; it makes no Vault calls beyond token and audit checks.
-- Skills are invoked by name and report non-200s to a shared JSONL that the orchestrator merges, sorts, and dedupes into `non_200_responses`.
-- `set -euo pipefail`; never `set -x`; full tool paths `/opt/homebrew/bin/vault`, `/opt/homebrew/bin/terraform`.
-
----
-
-## Acceptance criteria
-
-- [ ] One command runs all discovery end to end against the harness.
-- [ ] `run_report.json` shows `non_200_responses: []` and `exit_code: 0` for the harness.
-- [ ] Output tree matches the expected tree above.
-- [ ] Two runs produce byte-identical `raw/` trees (`diff -r` clean).
-- [ ] `grep -r SYNTHETIC discovered_terraform/raw/` is empty; no tokens in any file.
-- [ ] Audit log shows only `GET`/`LIST` by the exporter alias and no `/data/` or `/metadata/` paths.
-
----
-
 ## Stop conditions
 
 - Audit log not enabled (checked before step 1): exit 2.
@@ -246,3 +87,16 @@ in child namespaces (empty sets create no file). Nested namespaces use `discover
 ## Related skills
 
 `vault-exporter-setup`, `discovery-namespaces`, `discovery-root-config`, `discovery-policies`, `discovery-auth-mounts`, `discovery-secrets-engines`, `discovery-identity-teams`, `discovery-admin-config`.
+
+## References
+
+Load these when you need the detail; each is moved verbatim from this file.
+
+- [Prerequisites](references/prerequisites.md)
+- [Idempotency](references/idempotency.md)
+- [Run report format](references/run-report-format.md)
+- [Expected output tree (harness)](references/expected-output-tree-harness.md)
+- [Re-run / resume](references/re-run-resume.md)
+- [Coding standards](references/coding-standards.md)
+- [Acceptance criteria](references/acceptance-criteria.md)
+- [Reference implementation (validated against the harness)](references/reference-implementation-validated-against-the-harness.md)

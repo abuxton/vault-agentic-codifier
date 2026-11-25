@@ -1,21 +1,16 @@
 ---
 name: discovery-admin-config
 description: >
-  Org-level discovery for the admin namespace per HVD layering: namespace
-  metadata, human vs machine auth methods, and operator policy/group
-  classification reusing earlier payloads. TASK-013.
-triggers:
-  - "admin config discovery"
-  - "admin namespace discovery"
-  - "TASK-013"
-capability: CAP-002
-task: TASK-013
-depends_on:
-  - vault-exporter-setup (TASK-031)
-  - discovery-namespaces (TASK-007)
-  - discovery-auth-mounts (TASK-010)
-  - discovery-identity-teams (TASK-012)
-role: vault-expert
+  Use when you need to org-level discovery for the admin namespace per HVD layering: namespace metadata, human vs
+  machine auth methods, and operator policy/group classification reusing earlier payloads. Run after exporter
+  setup, then codify. USE FOR: admin config discovery; admin namespace discovery. DO NOT USE FOR: writing
+  Terraform (use the matching codification-* skill), or any write to Vault.
+metadata:
+  task: "TASK-013"
+  capability: "CAP-002"
+  role: "vault-expert"
+  depends_on: "vault-exporter-setup (TASK-031), discovery-namespaces (TASK-007), discovery-auth-mounts (TASK-010), discovery-identity-teams (TASK-012)"
+  version: "1.0"
 ---
 
 # Discovery: Admin Namespace Config (TASK-013, CAP-002 `admin-config`)
@@ -70,7 +65,7 @@ export VAULT_TOKEN="${EXPORTER_TOKEN}"   # NEVER root
 
 | Requirement | Check |
 |---|---|
-| Exporter token active | `/opt/homebrew/bin/vault token lookup -format=json \| jq -r .data.display_name` |
+| Exporter token active | `vault token lookup -format=json \| jq -r .data.display_name` |
 | `discovered_terraform/raw/admin/policies.json` (TASK-009) | `test -s ...` |
 | `discovered_terraform/raw/admin/auth_mounts.json` (TASK-010) | `test -s ...` |
 | `discovered_terraform/raw/admin/identity.json` (TASK-012) | `test -s ...` |
@@ -92,113 +87,6 @@ export VAULT_TOKEN="${EXPORTER_TOKEN}"   # NEVER root
    - `operator_groups`: identity groups whose `policies` intersect `operator_policies`.
 6. Strip volatile keys, `jq -S`, write `discovered_terraform/raw/admin/admin_config.json`.
 7. If `human_auth_mounts` is empty, emit `"no human auth method detected"` to the run report (informational, not an error).
-
-### Exact curl commands
-
-```bash
-STRIP='del(.request_id,.lease_id,.renewable,.lease_duration)'
-
-# Namespace metadata: NO X-Vault-Namespace header
-curl -sS -o /tmp/ns_admin.raw -w '%{http_code}' \
-  -H "X-Vault-Token: ${VAULT_TOKEN}" \
-  "${VAULT_ADDR}/v1/sys/namespaces/admin"
-jq -S "$STRIP" /tmp/ns_admin.raw > /tmp/ns_admin.json
-
-# Auth mount list inside admin
-curl -sS -o /tmp/auth.raw -w '%{http_code}' \
-  -H "X-Vault-Token: ${VAULT_TOKEN}" -H "X-Vault-Namespace: admin" \
-  "${VAULT_ADDR}/v1/sys/auth"
-jq -S "$STRIP" /tmp/auth.raw > /tmp/auth.json
-
-# Human mount config (example: an OIDC mount at oidc/), then redact
-curl -sS -o /tmp/oidc_cfg.raw -w '%{http_code}' \
-  -H "X-Vault-Token: ${VAULT_TOKEN}" -H "X-Vault-Namespace: admin" \
-  "${VAULT_ADDR}/v1/auth/oidc/config"
-jq -S "$STRIP | (.data | select(.) | .. | objects) |= with_entries(
-  if (.key|test(\"client_secret|bindpass\")) then .value=\"REDACTED\" else . end)" \
-  /tmp/oidc_cfg.raw > /tmp/oidc_cfg.json
-```
-
----
-
-## Human vs machine auth detection
-
-| Mount `type` | Class | Config/read endpoint | Secret fields to strip |
-|---|---|---|---|
-| `oidc` | human | `auth/<p>/config`, `LIST auth/<p>/role` | `oidc_client_secret`, `client_secret` |
-| `jwt` | human | `auth/<p>/config`, `LIST auth/<p>/role` | `jwt_validation_pubkeys` kept; `oidc_client_secret` stripped |
-| `ldap` | human | `auth/<p>/config`, `LIST auth/<p>/groups` | `bindpass` |
-| `github` | human | `auth/<p>/config`, `LIST auth/<p>/map/teams` | none expected |
-| `okta` | human | `auth/<p>/config`, `LIST auth/<p>/groups` | `api_token` |
-| `approle` | machine | none (roles covered by TASK-010) | - |
-| `kubernetes` | machine | none | - |
-| `aws` | machine | none | - |
-| `cert` | machine | none | - |
-| `token`, other | skipped / `unknown` | mount metadata only | - |
-
----
-
-## Output schema
-
-`discovered_terraform/raw/admin/admin_config.json`:
-
-```json
-{
-  "namespace_meta": {"id": "", "path": "admin/", "custom_metadata": {}},
-  "human_auth_mounts": [
-    {"path": "", "type": "", "accessor": "", "config": {}, "roles_or_groups": []}
-  ],
-  "machine_auth_mounts": [{"path": "", "type": "", "accessor": ""}],
-  "operator_policies": ["admin"],
-  "operator_groups": [{"name": "", "policies": []}]
-}
-```
-
-All arrays sorted by `path` or `name`. `namespace_meta.id` is a Vault-assigned lookup value; do not emit it as a literal in generated HCL (use only in `imports.tf`).
-
----
-
-## Sensitive field strip
-
-| Field | Replacement |
-|---|---|
-| `client_secret` | `"REDACTED"` |
-| `oidc_client_secret` | `"REDACTED"` |
-| `bindpass` | `"REDACTED"` |
-
-The generator emits a `variable` with no default per redacted field (rule 9).
-
----
-
-## Harness expectation
-
-- `human_auth_mounts = []`; run report entry: `no human auth method detected`.
-- `machine_auth_mounts` contains the `approle` mount(s) of `admin` (the harness has 5 approle mounts overall; only those in `admin` appear here).
-- `operator_policies` contains the admin-type policies found in `admin/policies.json`; `operator_groups` lists the identity groups that hold them.
-
----
-
-## Coding standards
-
-- `set -euo pipefail`; per-request status check so 403/404 are logged and skipped.
-- `jq -S`, sorted arrays, no timestamps or random ids.
-- Prefer on-disk payloads to API calls; the only live calls are `sys/namespaces/admin`, `sys/auth` (if not on disk), and human-mount config.
-- Full tool paths: `/opt/homebrew/bin/vault`, `/opt/homebrew/bin/terraform`.
-- Non-200 -> run report `{"endpoint","namespace","http_status","skipped":true}`.
-
----
-
-## Acceptance criteria
-
-- [ ] `admin_config.json` exists under `discovered_terraform/raw/admin/` and validates against the schema above.
-- [ ] Harness: `human_auth_mounts` is `[]` and the informational message was emitted.
-- [ ] No `client_secret`, `oidc_client_secret`, or `bindpass` value appears anywhere in the output.
-- [ ] No live calls to `identity/` or `sys/policies/` were made (check the audit log).
-- [ ] Two consecutive runs are byte-identical.
-- [ ] `grep -r SYNTHETIC discovered_terraform/raw/` is empty.
-
----
-
 ## Stop conditions
 
 - Token is root/operator or has expired.
@@ -208,6 +96,15 @@ The generator emits a `variable` with no default per redacted field (rule 9).
 
 ---
 
-## Related skills
+## References
 
-`vault-exporter-setup` (TASK-031), `discovery-namespaces` (TASK-007), `discovery-auth-mounts` (TASK-010), `discovery-identity-teams` (TASK-012), `discovery-orchestrator` (TASK-014).
+Load these when you need the detail; each is moved verbatim from this file.
+
+- [Human vs machine auth detection](references/human-vs-machine-auth-detection.md)
+- [Output schema](references/output-schema.md)
+- [Sensitive field strip](references/sensitive-field-strip.md)
+- [Harness expectation](references/harness-expectation.md)
+- [Coding standards](references/coding-standards.md)
+- [Acceptance criteria](references/acceptance-criteria.md)
+- [Related skills](references/related-skills.md)
+- [Exact curl commands](references/exact-curl-commands.md)
