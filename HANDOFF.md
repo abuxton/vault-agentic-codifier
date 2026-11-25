@@ -2,7 +2,7 @@
 
 **Date**: 2026-11-25
 **Commit**: `965cc07` on `main` (no remote yet; see TASK-032), plus this handoff and `STATUS_REPORT.md` update
-**Status**: Phase 1 and Phase 2 **done and validated**. **Phase 3 is complete** (TASK-015..022 and TASK-034). Next step: Phase 4, starting with TASK-023 (static gate) or TASK-033 (waza fixes). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
+**Status**: Phase 1 and Phase 2 **done and validated**. **Phase 3 and Phase 4 are complete** (33 of 34 tasks; TASK-015..027, TASK-033 and TASK-034 done). Next step: Phase 5, TASK-028..030 (docs), then TASK-032 (publish). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
@@ -101,28 +101,37 @@ All seven generators run from the repo root, read `discovered_terraform/raw/`, w
 
 Latest plan (harness root token, `terraform plan`): `admin/` 31 import, `namespaces/` 3 import, `seed/` 18 import, with **0 add, 0 change, 0 destroy** in each. The `admin/` plan needs `TF_VAR_exporter_agent_approle_name` (the exporter alias name is a sensitive variable; use `vault read -field=role_id auth/approle/role/exporter/role-id` with the root token).
 
-### Phases 4–5 — Not started, plus three new tasks
+### Phase 4 — Validation (complete)
+
+| Task | Skill | Make target | Result on the harness |
+|---|---|---|---|
+| TASK-023 | `validation-static-gate` | `make static-gate` | `terraform fmt`, `validate` and `tflint` pass in every layer |
+| TASK-024 | `validation-zero-diff` | `make zero-diff` | Import into a scratch state, then plan: 0 add, 0 change, 0 destroy in every layer |
+| TASK-025 | `validation-readonly-secrets` | `make verify`, `make verify-selftest` | 12 checks pass on the run window; the self-test injects 10 faults and catches all; a live exporter write returned 403 |
+| TASK-026 | `validation-variants` | `make variants` | `variant`, `restricted-403` and `empty-cluster` scenarios on throwaway containers (ports 18200 and 18201) pass; the real harness digest is unchanged |
+| TASK-027 | `validation-codify-test` | `make codify-test` | 11 stages PASS, CAC1 to CAC7; output byte-identical on re-run; harness unchanged |
+| TASK-033 | all 23 skills | `waza check` | 23 of 23 `ready`, 27,407 tokens (from 53,723); see [`docs/waza-review.md`](docs/waza-review.md) |
+
+Reports are written to `discovered_terraform/validation/`. Run the root `Makefile` with `export PATH=$PATH:$HOME/.local/bin:/opt/homebrew/bin:$HOME/.rd/bin VAULT_CONFIG_PATH=/dev/null VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=root`. `tflint` is at `~/.local/bin`.
+
+Two real generator gaps were found by the TASK-026 variants and fixed:
+
+1. `discovery-orchestrator/scripts/admin-config.sh` never read human-auth config or roles, so an `oidc` mount produced a `vault_jwt_auth_backend` with no `oidc_discovery_url`. It now reads `auth/<p>/config` and the roles or groups, and masks `client_secret`, `bindpass`, `api_token` and `password` keys as `REDACTED`.
+2. Both admin-config stages (discovery and codification) errored when no `admin` namespace exists. They now skip cleanly.
+
+Audit-log verification is scoped to the discovery window in `run_report.json` and to tokens with the `exporter` policy and without `root`. `NO_AUDIT_DEVICE=1` marks the audit checks SKIP, for the empty-cluster variant only.
+
+### Phase 5 — Not started
 
 | Task | Title | Status |
 |---|---|---|
-| TASK-023..027 | Static gate, zero-diff plan, read-only and no-secrets check, variant fixtures, idempotence | No skills yet |
 | TASK-028..030 | AGENTS.md, README, traceability | Not started |
-| **TASK-032** | update github repo, publish to main https://github.com/abuxton/vault-agentic-codifier |
-| **TASK-033** | Waza review of skills TASK-007..021 and fixes | New. Baseline captured, no skill edited yet |
+| **TASK-032** | Create the GitHub repository and publish to `https://github.com/abuxton/vault-agentic-codifier` | Ready. Needs `gh auth login`; review the committed `discovered_terraform/` output first |
 | **TASK-034** | Terraform MCP installed, or fallback documented | **Done**. Fallback documented in `vault-codifier-conventions` and every codification skill |
 
-### Waza review (TASK-033), baseline
+### Waza review (TASK-033), done
 
-[microsoft/waza](https://github.com/microsoft/waza) is installed at `~/bin/waza` (0.38.7; the current release is v0.42.0, update first). Run it like this:
-
-```bash
-export WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1
-~/bin/waza check --format json > /tmp/waza_check.json   # all skills, JSON
-~/bin/waza tokens count skills/
-~/bin/waza tokens suggest skills/
-```
-
-`waza check` also scans `.claude/skills` (the openspec skills); ignore those entries. Result for our 17 skills: none is `ready`. All 17 exceed the default 500-token limit (1,909 to 3,391 tokens each), all 17 use frontmatter fields outside the agentskills.io spec (`triggers`, `capability`, `task`, `depends_on`, `role`), and none has an eval suite. Plan and acceptance criteria are in `tasks.md` under TASK-033. Do not edit the skills before the generators for TASK-019..021 are validated, so the review runs once.
+Waza 0.42.0 reports 23 of 23 skills `ready`, no `spec-allowed-fields` warnings and no broken links. `.waza.yaml` sets a 1,500-token limit. Detail moved verbatim to `skills/*/references/` (101 files, 0 lines lost). Retained advisories (`body-structure`, `complexity`, `module-count`, `over-specificity`, `negative-delta-risk`, `cross-model-density`) and the skipped eval suite are recorded with reasons in [`docs/waza-review.md`](docs/waza-review.md). `waza check` also scans `.claude/skills` (the openspec skills); ignore those. Run it with `WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1 waza check --format json`.
 
 ### Known discrepancies to resolve
 
@@ -131,7 +140,7 @@ export WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1
 - **Human auth in `admin`** (`oidc`, `jwt`, `ldap`) is emitted by admin-config; auth-mounts skips those mounts. admin-config's `vault_auth_backend` grep applies to its own files only.
 - The harness has 4 KV mounts (root `secret/` is imported too), 7 entities, 9 groups and 1 alias.
 - The AC-1 counts in the discovery skills and in `codification-policies` and `codification-auth-mounts` now include the `exporter` objects (10 policies, 6 roles). Skills must tolerate harness drift.
-- Variant branches (EGP, RGP, MFA, OIDC, LDAP, aliases) are untested because the harness has none of them (TASK-026).
+- Variant branches are covered by `make variants` (TASK-026) on throwaway containers; EGP, RGP and MFA are still not exercised.
 - Provider 4.8.0 import quirks handled in generators: `vault_auth_backend` needs `lifecycle { ignore_changes }` for `disable_remount` and an untuned `tune`; `vault_quota_rate_limit` does not read back `inheritable`; `vault_audit` imports by bare path.
 
 ---
@@ -198,7 +207,7 @@ make -C test smoke-test  # verify 6/6 checks pass
 | Terraform | `/opt/homebrew/bin/terraform` |
 | Docker | `~/.rd/bin/docker` (Rancher Desktop) |
 | jq, curl | on `PATH` |
-| waza | `~/bin/waza` (0.38.7; v0.42.0 is current), used by TASK-033 |
+| waza | `~/bin/waza` (0.42.0), used by TASK-033 |
 | Vault licence | `./tmp/vault.hclic` (never committed) |
 
 **Always set before any `vault` CLI call:**
@@ -234,7 +243,8 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 1. ~~TASK-006~~, ~~Phase 2 (TASK-007..014)~~, ~~TASK-015..018~~: done and validated.
 2. ~~TASK-019 secrets-engines, TASK-020 teams, TASK-021 admin-config~~: done and validated, one commit each.
 3. ~~TASK-022 layer assembly~~ and ~~TASK-034 MCP fallback~~: done.
-4. **TASK-023..027** validation skills, **TASK-033** waza fixes, **TASK-028..030** docs, **TASK-032** publish. Commit after each task.
+4. ~~TASK-023..027 validation skills~~ and ~~TASK-033 waza fixes~~: done, one commit each.
+5. **TASK-028..030** docs, then **TASK-032** publish. Commit after each task.
 
 Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
 

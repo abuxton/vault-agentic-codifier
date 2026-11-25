@@ -1,23 +1,21 @@
 # Status report — terraform-vault-vault-codifier
 
 **Date**: 2026-11-25
-**Branch / head**: `main` at `965cc07` (no remote yet)
+**Branch / head**: `main` at `2fc5e62` (no remote yet)
 **Scope**: agent skills that survey a live Vault Enterprise cluster read-only and generate Terraform HCL (`hashicorp/vault` 4.8.0, `import {}` blocks) with a zero-diff plan.
 
 ## Summary
 
-Phase 1 (foundation) and Phase 2 (discovery, TASK-007..014) are validated against the harness. Phase 3 (codification) is complete: seven generators (TASK-015..021), the layer-assembly runner and ownership checker (TASK-022) and the documented Terraform MCP fallback (TASK-034). The validation and documentation phases (TASK-023..030) have no deliverables yet.
-
-A first waza review of the 17 skills found no `ready: true`. The main causes are size (every `SKILL.md` is 4 to 7 times the default 500-token limit) and non-standard frontmatter. See TASK-033.
+Phases 1 to 4 are done and validated against the harness. Phase 3 (codification) has seven generators (TASK-015..021), the layer-assembly runner (TASK-022) and the documented Terraform MCP fallback (TASK-034). Phase 4 (validation) adds the static gate, zero-diff plan, read-only and no-secrets verification, variant fixtures and the one-command `make codify-test` (TASK-023..027), and the waza review (TASK-033: 23 of 23 skills ready, tokens halved). The documentation and delivery phase (TASK-028..030, TASK-032) remains.
 
 | Phase | Tasks | Done | Remaining |
 |---|---|---|---|
 | 1 Foundation | 001–006, 031 | 7 of 7 (TASK-005 superseded) | — |
 | 2 Discovery | 007–014 | 8 of 8 | — |
 | 3 Codification | 015–022, 034 | 9 of 9 | — |
-| 4 Validation | 023–027, 033 | 0 of 6 | 023..027; 033 baseline captured |
+| 4 Validation | 023–027, 033 | 6 of 6 | — |
 | 5 Docs and delivery | 028–030, 032 | 0 of 4 | all |
-| **Total** | 34 | **24** | **10** |
+| **Total** | 34 | **33** | **4 outstanding (028, 029, 030, 032)** |
 
 ## Evidence from the harness (Vault 2.2.2+ent)
 
@@ -51,10 +49,14 @@ The plans were run with the harness root token. Discovery used the exporter AppR
 | 020 | Teams generator | Done — validated |
 | 021 | Admin-config generator | Done — validated; OIDC and LDAP checked on scratch payloads only |
 | 022 | Layer assembly and ownership check | Done — validated (`codification-layer-assembly`) |
-| 023–027 | Static gate, zero-diff plan, read-only check, variant fixtures, idempotence | Not started (no skills) |
+| 023 | Static gate (`make static-gate`) | Done — validated |
+| 024 | Zero-diff plan (`make zero-diff`) | Done — validated |
+| 025 | Read-only and no-secrets check (`make verify`) | Done — 12 checks, 10 of 10 injected faults caught |
+| 026 | Variant fixtures (`make variants`) | Done — 3 scenarios; found and fixed 2 generator gaps |
+| 027 | One-command CAC1..CAC7 run (`make codify-test`) | Done — 11 stages PASS |
 | 028–030 | AGENTS.md, README, traceability | Not started |
-| 032 | Create GitHub repository and publish | New, ready to start |
-| 033 | Waza review of skills TASK-007..021 | New, baseline captured |
+| 032 | Create GitHub repository and publish | Ready to start (needs `gh auth login`) |
+| 033 | Waza review and fixes | Done — 23 of 23 ready; [`docs/waza-review.md`](docs/waza-review.md) |
 | 034 | Terraform MCP availability or fallback | Done — fallback documented as a supported path |
 
 ## Findings that changed the skills
@@ -72,30 +74,26 @@ The plans were run with the harness root token. Discovery used the exporter AppR
 8. **Harness has 4 KV mounts**, not 3: the preloaded root `secret/` is imported too.
 9. **Harness drift**: the `exporter` policy, AppRole role and entity are real cluster objects, so counts in older acceptance criteria rose (10 policies, 6 roles). Skills must tolerate this.
 
-## Waza review baseline (TASK-033)
+## Phase 4 results
 
-Tool: [microsoft/waza](https://github.com/microsoft/waza) 0.38.7 (`waza check --format json`); v0.42.0 is the current release. Raw output: `/tmp/waza_check.json` (not committed).
-
-| Finding | Skills affected (of 17) |
+| Check | Result |
 |---|---|
-| Over the 500-token limit (range 1,909 to 3,391; total 45,367) | 17 |
-| Frontmatter fields outside the agentskills.io spec (`triggers`, `capability`, `task`, `depends_on`, `role`) | 17 |
-| No examples and no troubleshooting section (by waza's definition) | 17 |
-| Rated "comprehensive" complexity | 17 |
-| Over-specificity (absolute paths, hard-coded URLs) | 16 |
-| Description lacks procedural language | 11 |
-| Negative-delta-risk patterns | 9 |
-| Compliance level Low / Medium | 16 / 1 |
-| Eval suites present | 0 |
+| `make static-gate` | `terraform fmt`, `validate` and `tflint` pass in every layer |
+| `make zero-diff` | 0 add, 0 change, 0 destroy in every layer |
+| `make verify` | 12 checks PASS; `make verify-selftest` catches 10 of 10 injected faults; a live exporter write returned 403 and was caught in the audit log |
+| `make variants` | `variant`, `restricted-403`, `empty-cluster` pass; real harness digest unchanged |
+| `make codify-test` | 11 stages PASS (CAC1 to CAC7); smoke test passes before and after; output byte-identical on re-run |
+| `waza check` (0.42.0) | 23 of 23 ready; 27,407 tokens (from 53,723); 0 `spec-allowed-fields`; 0 broken links |
 
-The 500-token default is a poor fit for operational skills that carry acceptance criteria and reference output. The planned fix is to set limits deliberately in `.waza.yaml`, move example and reference blocks to `references/`, and move non-spec frontmatter under `metadata:`. The skills are not edited yet; the generators have been validated against their current text.
+Two generator gaps found by the variants and fixed: `admin-config.sh` now reads human-auth config and roles (secret-like keys masked), and both admin-config stages skip cleanly when no `admin` namespace exists. Retained waza advisories and the skipped eval suite are justified in [`docs/waza-review.md`](docs/waza-review.md).
 
 ## Risks and open items
 
 | Item | Owner role | Note |
 |---|---|---|
 | Terraform MCP not installed | Solution architect | Fallback (provider docs URL and `terraform providers schema -json`) is documented in `vault-codifier-conventions` and used throughout |
-| Variant branches (EGP, RGP, MFA, OIDC, LDAP, group aliases, PKI, database, AWS) untested against Vault | Test engineer | The harness has none of them; scratch payloads were validated with `terraform validate` only; TASK-026 |
+| EGP, RGP, MFA, PKI, database and AWS variants not exercised against Vault | Test engineer | `make variants` covers OIDC and the restricted and empty clusters; the others were validated with `terraform validate` on scratch payloads only |
+| No waza eval suite | Project owner | A mock executor proves nothing about agent quality; real runs need approval and may incur cost |
 | Auth mounts other than AppRole, and secrets engines other than KV v2, are mount-only | Solution architect | Listed in `auth-mounts/coverage.md` and `secrets-engines/coverage.md` as "review manually" |
 | The plan for `admin/` needs `TF_VAR_exporter_agent_approle_name` | Maintainer | The exporter alias name is a sensitive variable; set it from the role id at plan time |
 | `design.md` §6.2 still shows Python pseudocode | Solution architect | Illustrative only; the skills are authoritative |
@@ -105,6 +103,5 @@ The 500-token default is a poor fit for operational skills that carry acceptance
 
 ## Next steps, in order
 
-1. TASK-033: waza fixes on the 19 skills, then re-run `waza check` and `assemble.sh`.
-2. TASK-023..027 (static gate, zero-diff plan, read-only check, variant fixtures, idempotence), then TASK-028..030.
-3. TASK-032: authenticate `gh`, create the repository and push.
+1. TASK-028..030: AGENTS.md, README, traceability.
+2. TASK-032: authenticate `gh`, review the committed `discovered_terraform/` output, create the repository and push.
