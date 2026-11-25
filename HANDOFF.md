@@ -1,8 +1,8 @@
 # Handoff Document — terraform-vault-vault-codifier
 
-**Date**: 2026-11-24
-**Commit**: `250a4ad` on `main` (no remote yet; see TASK-032), plus uncommitted `STATUS_REPORT.md`, `HANDOFF.md` and `tasks.md` edits
-**Status**: Phase 1 and Phase 2 **done and validated**. Phase 3 is validated for TASK-015..018 (namespaces, root-config, policies, auth-mounts). TASK-019..021 are authored, not run. Next step: TASK-019 (`codification-secrets-engines`). Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
+**Date**: 2026-11-25
+**Commit**: `08e35f9` on `main` (no remote yet; see TASK-032), plus this handoff and `STATUS_REPORT.md` update
+**Status**: Phase 1 and Phase 2 **done and validated**. Phase 3 generators TASK-015..021 are all **done and validated**. Next step: TASK-022 (layer assembly, imports, ownership check; no skill yet), then TASK-034. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
@@ -92,14 +92,14 @@ Read-only is enforced by the exporter policy and the audit log (TASK-025), not b
 | TASK-016 | `codification-root-config` | **Validated** | `scripts/generate.sh` |
 | TASK-017 | `codification-policies` | **Validated** | `scripts/generate.sh` |
 | TASK-018 | `codification-auth-mounts` | **Validated** for AppRole; other method types are backend-only | `scripts/generate.sh` |
-| TASK-019 | `codification-secrets-engines` | Authored, not run | none yet |
-| TASK-020 | `codification-teams` | Authored, not run | none yet |
-| TASK-021 | `codification-admin-config` | Authored, not run | none yet |
+| TASK-019 | `codification-secrets-engines` | **Validated** for KV v2; other engine types are mount-only | `scripts/generate.sh` |
+| TASK-020 | `codification-teams` | **Validated** (entities, groups, aliases) | `scripts/generate.sh` |
+| TASK-021 | `codification-admin-config` | **Validated**; OIDC and LDAP on scratch payloads only | `scripts/generate.sh` |
 | TASK-022 | layer assembly, imports, ownership check | **No skill yet** | — |
 
-All four generators run from the repo root, read `discovered_terraform/raw/`, write `discovered_terraform/terraform/`, and are idempotent. Generate in this order: namespaces, root-config, policies, auth-mounts. They share the `admin/` and `seed/` layers, and `vault-codifier-conventions/scripts/scaffold-layer.sh` merges provider aliases through `<layer>/.namespaces`.
+All seven generators run from the repo root, read `discovered_terraform/raw/`, write `discovered_terraform/terraform/`, and are idempotent. Generate in this order: namespaces, root-config, policies, auth-mounts, secrets-engines, teams, admin-config. They share the `admin/` and `seed/` layers, and `vault-codifier-conventions/scripts/scaffold-layer.sh` merges provider aliases through `<layer>/.namespaces`.
 
-Latest plan (harness root token, `terraform plan`): `admin/` 12 import, `namespaces/` 3 import, `seed/` 12 import, with **0 add, 0 change, 0 destroy** in each.
+Latest plan (harness root token, `terraform plan`): `admin/` 31 import, `namespaces/` 3 import, `seed/` 18 import, with **0 add, 0 change, 0 destroy** in each. The `admin/` plan needs `TF_VAR_exporter_agent_approle_name` (the exporter alias name is a sensitive variable; use `vault read -field=role_id auth/approle/role/exporter/role-id` with the root token).
 
 ### Phases 4–5 — Not started, plus three new tasks
 
@@ -127,6 +127,9 @@ export WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1
 ### Known discrepancies to resolve
 
 - `design.md` §6.2 still contains Python pseudocode. It is illustrative; the skills are authoritative.
+- **Alias id** is now kept by discovery (`identity-teams.sh`), because alias imports use it. Raw payloads were refreshed.
+- **Human auth in `admin`** (`oidc`, `jwt`, `ldap`) is emitted by admin-config; auth-mounts skips those mounts. admin-config's `vault_auth_backend` grep applies to its own files only.
+- The harness has 4 KV mounts (root `secret/` is imported too), 7 entities, 9 groups and 1 alias.
 - The AC-1 counts in the discovery skills and in `codification-policies` and `codification-auth-mounts` now include the `exporter` objects (10 policies, 6 roles). Skills must tolerate harness drift.
 - Variant branches (EGP, RGP, MFA, OIDC, LDAP, aliases) are untested because the harness has none of them (TASK-026).
 - Provider 4.8.0 import quirks handled in generators: `vault_auth_backend` needs `lifecycle { ignore_changes }` for `disable_remount` and an untuned `tune`; `vault_quota_rate_limit` does not read back `inheritable`; `vault_audit` imports by bare path.
@@ -229,13 +232,13 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 ### Recommended start order
 
 1. ~~TASK-006~~, ~~Phase 2 (TASK-007..014)~~, ~~TASK-015..018~~: done and validated.
-2. **TASK-019 secrets-engines**, then **TASK-020 teams**, then **TASK-021 admin-config**. For each: write `skills/codification-<x>/scripts/generate.sh` from the raw payloads (copy the structure of `codification-auth-mounts/scripts/generate.sh`), run fmt, validate and a zero-diff plan, then check the skill's acceptance criteria, add a "Reference implementation" section, mark the task done in `tasks.md` and commit.
-3. **TASK-022** layer assembly and ownership check, then **TASK-023..027** validation skills.
+2. ~~TASK-019 secrets-engines, TASK-020 teams, TASK-021 admin-config~~: done and validated, one commit each.
+3. **TASK-022** layer assembly and ownership check, then **TASK-023..027** validation skills. Commit after each task.
 4. **TASK-034** Terraform MCP or documented fallback (small, no dependencies).
 5. **TASK-033** waza review and fixes, once the generators are stable.
 6. **TASK-028..030** documentation, then **TASK-032** create the GitHub repository and push.
 
-Per-generator recipe that worked four times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
+Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
 
 ### Gotchas (macOS, zsh)
 
@@ -269,14 +272,16 @@ Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude
 
 ```
 Branch:  main
-Head:    250a4ad  feat(codification-auth-mounts): add validated auth backend and approle role generator (TASK-018)
+Head:    08e35f9  feat(codification-admin-config): ... (TASK-021)
+         f9ad41b  feat(codification-teams): ... (TASK-020)
+         de99452  feat(codification-secrets-engines): ... (TASK-019)
+         250a4ad  feat(codification-auth-mounts): ... (TASK-018)
          23e9e44  feat(codification-policies): ... (TASK-017)
          88c3cd8  feat(codification-root-config): ... (TASK-016)
          75c15f1  feat(codification-namespaces): ... (TASK-015)
          bfcb039  feat(discovery): validate TASK-007..014 ...
 Remote:  (none; TASK-032)
-Untracked: .github/, .opencode/, .mcp.json, skills-lock.json (agent tooling), discovered_terraform/terraform/ (generated),
-           discovered_terraform/.state.json, discovered_terraform/run_report.json
+Generated output under discovered_terraform/terraform/ and run_report.json is committed; TASK-032 decides whether it stays.
 ```
 
 Before the first push (TASK-032) decide what to do with `discovered_terraform/terraform/` and `discovered_terraform/.state.json`, and confirm `test/terraform/**/terraform.tfstate*` and `*.hclic` are ignored. Then:
@@ -289,4 +294,4 @@ git push -u origin main
 
 ---
 
-*Updated 2026-11-24 after TASK-018.*
+*Updated 2026-11-25 after TASK-021. Convention: one commit per task.*
