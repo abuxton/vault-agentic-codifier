@@ -55,7 +55,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | **Done** |
 | TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | **Done** |
 | TASK-028 | Write AGENTS.md | 5 | N/A | documentation | M | **Done** |
-| TASK-029 | README and usage guide | 5 | N/A | documentation | M | Blocked |
+| TASK-029 | README and usage guide | 5 | N/A | documentation | M | **Done** |
 | TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | Blocked |
 | TASK-031 | Exporter identity: policy, entity, group, and agent skill | 1 | N/A | implementation | M | **Done** |
 | TASK-032 | Create GitHub repository and publish | 5 | N/A | delivery | S | Ready to start |
@@ -529,7 +529,7 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Type**: documentation
 **Effort**: M
 **Depends on**: TASK-022, TASK-027
-**Status**: Blocked
+**Status**: **Done** ([`README.md`](../../../README.md), [`docs/usage-guide.md`](../../../docs/usage-guide.md); the flow was run on the harness on 2026-11-25: exporter login, discovery, `make assemble`, `make zero-diff`, `make verify`, and a seed-layer plan of 18 import, 0 add, 0 change, 0 destroy)
 **Description**: Write the top-level `README.md` and a usage guide that takes an engineer from a live cluster to reviewed HCL: prerequisites and token permissions (from `tmp/brownfield-discovery-guide.md`), running discovery and codification, reading the run report, the layer layout, applying imports against a real cluster, handling the "not managed by Terraform" items, and troubleshooting (403, leaf namespaces, token expiry). Keep the secret-handling guidance (sensitive variables, replacing synthetic values).
 **Acceptance Criteria**:
 - AC: A reader following the guide on a clean machine can reproduce a harness run and zero-diff plan.
