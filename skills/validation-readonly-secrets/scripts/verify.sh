@@ -53,6 +53,17 @@ export VAULT_CONFIG_PATH=/dev/null
 mkdir -p "$REPDIR"; tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 
 # ---- audit log -------------------------------------------------------------
+# NO_AUDIT_DEVICE=1 is for a scenario that has no audit device by definition (an empty cluster): the three
+# audit checks are reported SKIP and every content scan still runs. Never set it for a real cluster.
+results=(); failed=0; ws=; we=; total=0
+check() { # name, status(PASS|FAIL|SKIP), detail
+  results+=("$(jq -n -c --arg n "$1" --arg s "$2" --arg d "$3" '{check:$n,status:$s,detail:$d}')")
+  echo "$2 $1: $3"; [ "$2" = FAIL ] && failed=1; return 0
+}
+: > "$tmp/other.jsonl"
+if [ "${NO_AUDIT_DEVICE:-0}" = 1 ]; then
+  for c in audit-has-exporter-requests audit-read-only audit-no-secret-reads; do check "$c" SKIP "no audit device in this scenario"; done
+else
 audit=${AUDIT_FILE:-$tmp/audit}
 if [ -z "${AUDIT_FILE:-}" ]; then
   docker exec "${VAULT_CONTAINER:-vault-codifier-dev}" cat /vault/logs/audit.log > "$audit" 2>/dev/null \
@@ -73,12 +84,6 @@ jq -c --arg s "$ws" --arg e "$we" '
   | {op:.request.operation, path:.request.path, as:((.auth.policies // ["none"]) | join(","))}' "$audit" 2>/dev/null \
   | sort -u > "$tmp/other.jsonl"
 
-results=(); failed=0
-check() { # name, status(PASS|FAIL), detail
-  results+=("$(jq -n -c --arg n "$1" --arg s "$2" --arg d "$3" '{check:$n,status:$s,detail:$d}')")
-  echo "$2 $1: $3"; [ "$2" = FAIL ] && failed=1; return 0
-}
-
 total=$(wc -l < "$tmp/exp.jsonl" | tr -d ' ')
 [ "$total" -gt 0 ] && check audit-has-exporter-requests PASS "$total requests by the exporter token between $ws and $we" \
                    || check audit-has-exporter-requests FAIL "no exporter requests found in $ws..$we; the check would be vacuous"
@@ -88,6 +93,8 @@ bad=$(jq -c 'select(.op!="read" and .op!="list")' "$tmp/exp.jsonl")
 sens=$(jq -c 'select(.path|test("/data/|/creds/|/issue/|/sign/|secret-id$|^sys/raw|/kv/data|/decrypt/|/encrypt/"))' "$tmp/exp.jsonl")
 [ -z "$sens" ] && check audit-no-secret-reads PASS "no KV data, dynamic credential, secret-id or sys/raw path was read" \
                || check audit-no-secret-reads FAIL "secret-bearing path read: $(echo "$sens" | head -1)"
+
+fi
 
 # ---- content scans -----------------------------------------------------------
 UUID='[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'

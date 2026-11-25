@@ -52,7 +52,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-023 | Static validation gate (fmt, validate, tflint) | 4 | N/A | test | M | Done — validated |
 | TASK-024 | Zero-diff import and plan against the harness | 4 | N/A | test | L | Done — validated |
 | TASK-025 | Read-only and no-secrets verification | 4 | N/A | test | M | **Done** |
-| TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | Blocked |
+| TASK-026 | Variant fixtures for edge-case acceptance criteria | 4 | N/A | test | XL | **Done** |
 | TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | Blocked |
 | TASK-028 | Write AGENTS.md | 5 | N/A | documentation | M | Blocked |
 | TASK-029 | README and usage guide | 5 | N/A | documentation | M | Blocked |
@@ -483,8 +483,9 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Capability**: N/A
 **Type**: test
 **Effort**: XL
+**Skill**: [`skills/validation-variants/SKILL.md`](../../../skills/validation-variants/SKILL.md)
 **Depends on**: TASK-022, TASK-024
-**Status**: Blocked
+**Status**: Done — validated (run-variants.sh; 3 scenarios, all checks pass, real harness unchanged; two generator gaps found and fixed)
 **Description**: Create scratch fixtures that exercise the acceptance criteria the base harness cannot reach, applied out of band (CLI/Terraform in a throwaway harness copy, never modifying the committed `test/terraform/*` layers without review): `oidc` mount in `admin` with an external group and group alias; `userpass` in `admin/app-billing`; `database` or `pki` in `admin/platform`; nested namespace `admin/platform/sre-team`; a group in `admin/platform`; `default-readonly` policy in two namespaces; a role naming a policy missing from its namespace; an empty cluster (`make -C test up` without `seed`); and a restricted token that receives 403 on a `sys/` endpoint.
 **Acceptance Criteria**:
 - AC: Each scenario above has a documented fixture, an expected-output assertion, and a pass/fail result in a test report.

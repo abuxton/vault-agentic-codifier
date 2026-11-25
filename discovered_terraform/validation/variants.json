@@ -1,0 +1,231 @@
+{
+  "results": [
+    {
+      "check": "seed",
+      "detail": "harness layers applied to the throwaway cluster",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "fixture",
+      "detail": "oidc+role+external group/alias, userpass, pki, database, nested namespace, default-readonly x2, dangling role",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "discovery",
+      "detail": "orchestrator exit 0 (got 0)",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "assemble",
+      "detail": "assemble.sh exit 0 (got 0): assembly: ok",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-002-AC4",
+      "detail": "one vault_jwt_auth_backend type=oidc with oidc_discovery_url",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-002-AC4-secret",
+      "detail": "client secret is a sensitive variable with no default; the marker appears in no file",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-003-AC7",
+      "detail": "userpass emitted as vault_auth_backend and listed in coverage.md for manual review",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-004-AC6",
+      "detail": "pki and database emitted as vault_mount; coverage.md lists them for review",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-005-AC5",
+      "detail": "admin/platform/sre-team at depth 3 in hierarchy.md, after admin/platform",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-005-AC3",
+      "detail": "parent before child in namespaces.tf",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-006-AC6",
+      "detail": "default-readonly in two namespaces gives two distinct resources",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-006-AC5",
+      "detail": "does-not-exist flagged dangling in correlation.md; no vault_policy for it",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-007-AC4",
+      "detail": "external group and one group alias whose mount_accessor is a resource reference",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-007-AC8",
+      "detail": "platform-variant-group emitted with provider vault.admin_platform",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-003-AC4",
+      "detail": "ghost-role keeps literal does-not-exist and coverage.md reports it",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAC1",
+      "detail": "static gate exit 0 (got 0)",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAC2",
+      "detail": "zero-diff exit 0 in every layer (got 0); 7 capabilities pass",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAC3+CAC4",
+      "detail": "read-only and no-secrets exit 0 (got 0); 13 checks pass",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-001-AC7a",
+      "detail": "run continues and exits 0 despite 403s (got 0)",
+      "scenario": "restricted-403",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-001-AC7b",
+      "detail": "run_report.json lists sys/quotas/config and sys/config/ui/headers with status 403",
+      "scenario": "restricted-403",
+      "status": "PASS"
+    },
+    {
+      "check": "token-hygiene",
+      "detail": "the token does not appear in the run report or raw payloads",
+      "scenario": "restricted-403",
+      "status": "PASS"
+    },
+    {
+      "check": "assemble",
+      "detail": "codification still succeeds with missing optional payloads (got 0)",
+      "scenario": "restricted-403",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-001-AC7c",
+      "detail": "an audit-device 403 makes root-config codification exit non-zero (got 2)",
+      "scenario": "restricted-403",
+      "status": "PASS"
+    },
+    {
+      "check": "CAC3+CAC4",
+      "detail": "403 run: read-only and no-secrets exit 0 (got 0)",
+      "scenario": "restricted-403",
+      "status": "PASS"
+    },
+    {
+      "check": "stop-conditions",
+      "detail": "orchestrator refuses (root token, no audit device): exit 2 (got 2)",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "assemble",
+      "detail": "codification of an empty cluster exits 0 (got 0)",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-001-AC6",
+      "detail": "no vault_audit resource; README says 'No audit devices were discovered'",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-002-AC3",
+      "detail": "no human_auth.tf and no admin_config files",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-005-AC6",
+      "detail": "no vault_namespace in an empty cluster",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "CAC1",
+      "detail": "static gate exit 0 (got 0)",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "CAC2",
+      "detail": "zero-diff exit 0 (got 0)",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "CAC3",
+      "detail": "content scans exit 0; the three audit checks are SKIP (got 0)",
+      "scenario": "empty-cluster",
+      "status": "PASS"
+    },
+    {
+      "check": "containers-removed",
+      "detail": "both throwaway containers removed",
+      "scenario": "teardown",
+      "status": "PASS"
+    },
+    {
+      "check": "harness-unchanged",
+      "detail": "real harness digest 6877834785126726 before, 6877834785126726 after",
+      "scenario": "teardown",
+      "status": "PASS"
+    }
+  ],
+  "scenarios": [
+    {
+      "fail": 0,
+      "pass": 8,
+      "scenario": "empty-cluster"
+    },
+    {
+      "fail": 0,
+      "pass": 6,
+      "scenario": "restricted-403"
+    },
+    {
+      "fail": 0,
+      "pass": 2,
+      "scenario": "teardown"
+    },
+    {
+      "fail": 0,
+      "pass": 18,
+      "scenario": "variant"
+    }
+  ],
+  "verdict": "PASS"
+}

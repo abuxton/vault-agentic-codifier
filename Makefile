@@ -6,7 +6,7 @@ RAW ?= discovered_terraform/raw
 OUT ?= discovered_terraform/terraform
 
 .DEFAULT_GOAL := help
-.PHONY: help assemble ownership static-gate zero-diff verify verify-selftest
+.PHONY: help assemble ownership static-gate zero-diff verify verify-selftest variants
 
 help: ## Show targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-16s %s\n", $$1, $$2}'
@@ -28,3 +28,6 @@ verify: ## Audit log is read-only for the discovery window and no secret is in t
 
 verify-selftest: ## Inject faults; the verifier must catch every one (TASK-025)
 	bash skills/validation-readonly-secrets/scripts/verify.sh --selftest
+
+variants: ## Edge-case fixtures on throwaway containers; the real harness is not touched (TASK-026)
+	bash skills/validation-variants/scripts/run-variants.sh

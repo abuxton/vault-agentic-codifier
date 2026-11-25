@@ -48,6 +48,9 @@ Audit lines can be JSON arrays, so every filter starts with `select(type=="objec
 The window's other requests (the `secret-id` mint and the AppRole login) are listed in the report as setup,
 not as codifier activity. A request that Vault denies (403) is still logged as an attempt, so it counts.
 
+`NO_AUDIT_DEVICE=1` reports the three audit checks as `SKIP`. It is for a scenario with no audit device by
+definition (an empty cluster) and is used only by `validation-variants`.
+
 ## 3. Content scans (CAC3)
 
 Over `terraform/` and `raw/`: no state, plan or tfvars file, no `SYNTHETIC`, no `secret_id` or

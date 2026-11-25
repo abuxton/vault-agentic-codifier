@@ -20,6 +20,11 @@ DOC=https://registry.terraform.io/providers/hashicorp/vault/4.8.0/docs/resources
 scaffold=$here/../../vault-codifier-conventions/scripts/scaffold-layer.sh
 L=$OUT/admin
 CFG=$RAW/admin/admin_config.json
+# No org namespace was discovered (for example an empty cluster): nothing to emit.
+if ! jq -e 'any(.[]?; .path == "admin")' "$RAW/namespaces.json" >/dev/null 2>&1; then
+  rm -f "$L/main.tf" "$L/outputs.tf" "$L/human_auth.tf" "$L/imports_admin_config.tf" "$L/admin_config_README.md"
+  echo "admin-config: no admin namespace; nothing emitted"; exit 0
+fi
 { test -s "$CFG" && jq -e '.operator_policies|type=="array"' "$CFG" >/dev/null; } \
   || { echo "STOP: $CFG missing or unparseable" >&2; exit 2; }
 [ -s "$RAW/admin/policies.json" ] || { echo "STOP: $RAW/admin/policies.json missing" >&2; exit 2; }
