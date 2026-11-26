@@ -1,5 +1,7 @@
 # HVD Alignment Matrix — terraform-vault-vault-codifier
 
+> **Reconciled 2026-11-26 (TASK-030).** The scorecard describes the *harness*, not the codifier output, and is unchanged. Differences found while building: root also holds an `exporter` policy, role and entity with one alias, so principle 5 "0 entity aliases" is now 1 (still 0 group aliases). The codifier output follows principles 1, 3, 4, 9 and 10 (see `docs/traceability.md`); it flags but does not fix the least-privilege, audit, quota and state gaps.
+
 > Purpose: show how the codifier's design and its test harness line up with HashiCorp Validated Design (HVD) guidance for Vault Enterprise, and where they do not.
 > Harness: Vault Enterprise 2.2.2+ent at `http://127.0.0.1:8200`; namespaces `root`, `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`; AppRole per namespace; KV v2 `secret/` per tenant namespace; provider `hashicorp/vault` 4.8.0.
 > Evidence paths are relative to the repository root.

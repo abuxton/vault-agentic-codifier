@@ -56,7 +56,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-027 | Idempotence check and smoke-test integration | 4 | N/A | test | M | **Done** |
 | TASK-028 | Write AGENTS.md | 5 | N/A | documentation | M | **Done** |
 | TASK-029 | README and usage guide | 5 | N/A | documentation | M | **Done** |
-| TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | Blocked |
+| TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | **Done** |
 | TASK-031 | Exporter identity: policy, entity, group, and agent skill | 1 | N/A | implementation | M | **Done** |
 | TASK-032 | Create GitHub repository and publish | 5 | N/A | delivery | S | Ready to start |
 | TASK-033 | Waza review of skills TASK-007..021 and fixes | 4 | N/A | test | L | **Done** |
@@ -542,7 +542,7 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Type**: documentation
 **Effort**: M
 **Depends on**: TASK-027, TASK-028, TASK-029
-**Status**: Blocked
+**Status**: **Done** ([`docs/traceability.md`](../../../docs/traceability.md); `make spec-check` passes 40 of 40 and `make codify-test` passes; `tmp/*.md` reconciled with dated notes)
 **Description**: Produce a traceability matrix mapping each CAP-001 to CAP-007 acceptance criterion and each CAC to the task that implements it and the test that verifies it, and reconcile `tmp/` research artifacts (`domain-model.md`, `terraform-resource-map.md`, `brownfield-discovery-guide.md`, `hvd-alignment-matrix.md`) with what was actually built (resolved import IDs from TASK-006, the resolved layout from TASK-001). Run an OpenSpec verification pass and list any acceptance criteria not met as follow-up items.
 **Acceptance Criteria**:
 - AC: Every acceptance criterion in `specs.md` (CAP-001 AC1–AC7, CAP-002 AC1–AC6, CAP-003 AC1–AC8, CAP-004 AC1–AC8, CAP-005 AC1–AC7, CAP-006 AC1–AC8, CAP-007 AC1–AC8, CAC1–CAC7) maps to at least one task and one verifying test, or is listed as an explicit gap.

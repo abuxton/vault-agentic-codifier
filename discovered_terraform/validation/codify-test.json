@@ -74,6 +74,12 @@
       "status": "PASS"
     },
     {
+      "cac": "CAP",
+      "description": "40 harness criteria of specs.md against the generated output",
+      "stage": "spec-check",
+      "status": "PASS"
+    },
+    {
       "cac": "CAC1",
       "description": "validate, fmt -check and tflint in every layer",
       "stage": "static-gate",

@@ -1,0 +1,208 @@
+{
+  "counts": {
+    "PASS": 40
+  },
+  "results": [
+    {
+      "detail": "one vault_audit, type file, file_path /vault/logs/audit.log, import id file",
+      "id": "CAP-001-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "one global-rate-limit quota: path empty, rate 1000, interval 60, block_interval 60",
+      "id": "CAP-001-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "files owned by root-config declare no vault_policy, vault_auth_backend, vault_mount or vault_namespace",
+      "id": "CAP-001-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "README records seal type, licence id and expiry, replication mode; no replication.tf; no licence text",
+      "id": "CAP-001-AC4",
+      "status": "PASS"
+    },
+    {
+      "detail": "no fabricated audit options (hmac_accessor and similar are absent)",
+      "id": "CAP-001-AC5",
+      "status": "PASS"
+    },
+    {
+      "detail": "admin layer declares provider alias admin for namespace admin; its resources use provider vault.admin",
+      "id": "CAP-002-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "README lists admin and namespace-admin, says operator belongs to root-config/policies, shows the three admin groups",
+      "id": "CAP-002-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "no human_auth.tf; README says no human auth method detected in admin",
+      "id": "CAP-002-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "files owned by admin-config declare no vault_auth_backend (auth-mounts files in the layer do)",
+      "id": "CAP-002-AC5",
+      "status": "PASS"
+    },
+    {
+      "detail": "the admin vault_namespace has no custom_metadata block",
+      "id": "CAP-002-AC6",
+      "status": "PASS"
+    },
+    {
+      "detail": "5 vault_auth_backend, all type approle path approle; token/ not emitted",
+      "id": "CAP-003-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "6 roles: the 5 specified plus the root exporter role (harness drift)",
+      "id": "CAP-003-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "token_ttl 3600, token_max_ttl 14400, secret_id_num_uses 1 on every role; secret_id_ttl per role as specified",
+      "id": "CAP-003-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "token_policies of all 6 roles are vault_policy references",
+      "id": "CAP-003-AC4",
+      "status": "PASS"
+    },
+    {
+      "detail": "no role_id, secret_id or secret_id_accessor assigned a value in any .tf or .json file",
+      "id": "CAP-003-AC5",
+      "status": "PASS"
+    },
+    {
+      "detail": "coverage.md lists 5 mounts as vault_auth_backend and 6 roles; none unsupported",
+      "id": "CAP-003-AC6",
+      "status": "PASS"
+    },
+    {
+      "detail": "3 tenant KV v2 mounts with the specified descriptions, plus the imported root secret/ (4 vault_mount)",
+      "id": "CAP-004-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "no vault_mount in admin; the root secret/ is emitted once and noted in coverage.md",
+      "id": "CAP-004-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "no vault_kv_secret_v2, vault_kv_secret or vault_generic_secret; no SYNTHETIC- string",
+      "id": "CAP-004-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "no sys, identity or cubbyhole mount emitted",
+      "id": "CAP-004-AC4",
+      "status": "PASS"
+    },
+    {
+      "detail": "no default_lease_ttl_seconds or max_lease_ttl_seconds set to 0",
+      "id": "CAP-004-AC5",
+      "status": "PASS"
+    },
+    {
+      "detail": "no plugin_version emitted (no harness mount is pinned)",
+      "id": "CAP-004-AC7",
+      "status": "PASS"
+    },
+    {
+      "detail": "every vault_kv_secret_backend_v2 references its vault_mount",
+      "id": "CAP-004-AC8",
+      "status": "PASS"
+    },
+    {
+      "detail": "4 namespaces, maximum depth 2, admin is the parent of the three tenants",
+      "id": "CAP-005-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "4 vault_namespace; the 3 tenants carry the specified descriptions; admin has none",
+      "id": "CAP-005-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "parent listed before its children (admin first); no cycle (static gate, CAC1)",
+      "id": "CAP-005-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "children use provider = vault.<alias>; no namespace literal inside a vault_namespace block",
+      "id": "CAP-005-AC4",
+      "status": "PASS"
+    },
+    {
+      "detail": "no vault_namespace for the root namespace",
+      "id": "CAP-005-AC6",
+      "status": "PASS"
+    },
+    {
+      "detail": "namespace ids in hierarchy.md equal vault namespace list -detailed",
+      "id": "CAP-005-AC7",
+      "status": "PASS"
+    },
+    {
+      "detail": "10 policies: the 9 specified plus the root exporter (harness drift); default, root and default-ceiling not emitted",
+      "id": "CAP-006-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "correlation.md links operator, namespace-admin, platform-devops-write, billing-developers-read and identity-developers-read to their roles",
+      "id": "CAP-006-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "namespace-admin is correlated with the three admin groups in admin",
+      "id": "CAP-006-AC4",
+      "status": "PASS"
+    },
+    {
+      "detail": "namespace-relative paths are preserved verbatim (secret/data/platform/sre/*)",
+      "id": "CAP-006-AC7",
+      "status": "PASS"
+    },
+    {
+      "detail": "coverage.md records no EGP and no RGP; no vault_egp_policy or vault_rgp_policy",
+      "id": "CAP-006-AC8",
+      "status": "PASS"
+    },
+    {
+      "detail": "9 internal groups in admin: 3 tenant admin groups with namespace-admin, 6 team groups",
+      "id": "CAP-007-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "6 synthetic-user entities, each referenced exactly once by a team group (the exporter-agent entity is harness drift)",
+      "id": "CAP-007-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "no group alias and no alias in admin; teams.md says none for admin (the root exporter-agent alias is harness drift)",
+      "id": "CAP-007-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "teams.md: platform->sre,devops; app-billing and app-identity->developers,owners, each with its namespace",
+      "id": "CAP-007-AC5",
+      "status": "PASS"
+    },
+    {
+      "detail": "teams.md says access is applied at the namespace layer and marks the policy links inferred",
+      "id": "CAP-007-AC6",
+      "status": "PASS"
+    },
+    {
+      "detail": "no UUID literal in any .tf outside imports*.tf",
+      "id": "CAP-007-AC7",
+      "status": "PASS"
+    }
+  ],
+  "verdict": "PASS"
+}

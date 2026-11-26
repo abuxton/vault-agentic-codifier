@@ -2,7 +2,7 @@
 
 **Date**: 2026-11-26
 **Commit**: `0ba207f` on `main` (no remote yet; see TASK-032)
-**Status**: Phase 1 and Phase 2 **done and validated**. **Phases 3 and 4 are complete**. **32 of 34 tasks are done**; TASK-028 and TASK-029 (docs) are done, TASK-030 (traceability) is **in progress**, and TASK-032 (publish) is outstanding. An earlier version of this file said 33 of 34; that was a counting error (30 were done at that point). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
+**Status**: Phase 1 and Phase 2 **done and validated**. **Phases 3 and 4 are complete**. **33 of 34 tasks are done**; TASK-028, TASK-029 and TASK-030 (docs) are done, and TASK-032 (publish) is the last open task. An earlier version of this file said 33 of 34; that was a counting error (30 were done at that point). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
@@ -24,7 +24,7 @@ The goal is a Terraform baseline for which `terraform plan` shows **no changes**
 terraform-vault-vault-codifier/
 ├── README.md · AGENTS.md · PROJECT_BRIEF.md
 ├── Makefile                           ← validation targets (static-gate, zero-diff, verify, variants, codify-test)
-├── docs/                              ← usage-guide.md, waza-review.md (traceability.md: TASK-030)
+├── docs/                              ← usage-guide.md, waza-review.md traceability.md
 ├── openspec/changes/vault-brownfield-research/
 │   ├── proposal.md · specs.md · design.md · tasks.md
 │   └── task-006-decision.md           ← verified import IDs, namespace style, Enterprise features
@@ -124,22 +124,24 @@ Two real generator gaps were found by the TASK-026 variants and fixed:
 
 Audit-log verification is scoped to the discovery window in `run_report.json` and to tokens with the `exporter` policy and without `root`. `NO_AUDIT_DEVICE=1` marks the audit checks SKIP, for the empty-cluster variant only.
 
-### Phase 5 — Docs and delivery (2 of 4 done)
+### Phase 5 — Docs and delivery (3 of 4 done)
 
 | Task | Title | Status |
 |---|---|---|
 | TASK-028 | `AGENTS.md` | **Done** (`79f1147`). Commands in it were run as written. |
 | TASK-029 | `README.md`, `docs/usage-guide.md` | **Done** (`0ba207f`). The guide's flow was run on the harness: exporter login, discovery, `make assemble`, `make zero-diff`, `make verify`, and a seed-layer plan of 18 import, 0 add, 0 change, 0 destroy. |
-| **TASK-030** | Traceability matrix and handoff review | **In progress**, see below |
+| TASK-030 | Traceability matrix and handoff review | **Done**, see below |
 | **TASK-032** | Publish to `https://github.com/abuxton/vault-agentic-codifier` | Blocked on the decisions below |
 | TASK-034 | Terraform MCP installed, or fallback documented | **Done**. Fallback documented in `vault-codifier-conventions` and every codification skill |
 
-**TASK-030, state at hand-over (uncommitted):**
+**TASK-030, result:**
 
-- `skills/validation-codify-test/scripts/spec-check.sh` checks 40 of the 52 CAP criteria against the generated output, one result per criterion. All 40 pass. `--selftest` mutates a copy of the output and requires the matching criterion to fail: 12 of 12 faults caught. Reports: `discovered_terraform/validation/spec-check.{json,md}` (untracked).
-- Not yet done: a `make spec-check` target, a "Reference implementation" section in the `validation-codify-test` skill, `docs/traceability.md`, the `tmp/*.md` reconciliation, a final `make codify-test` result, and the risks list with owners.
-- The 12 CAP criteria not in `spec-check.sh` need a variant fixture, a plan, the audit log or a round trip. They map to `make variants` (CAP-001 AC6 and AC7, CAP-002 AC4, CAP-003 AC7, CAP-004 AC6, CAP-005 AC5, CAP-006 AC5 and AC6, CAP-007 AC4 and AC8), `make zero-diff` (CAC2, plus CAP-002 AC1, CAP-003 AC8, CAP-007 AC4) or are open. CAP-006 AC2 (lossless policy round trip) is verified by `make zero-diff`, because the plan compares the imported `policy` text with Vault; the matrix should say so. Two are partial and belong in the matrix as explicit gaps: **CAP-005 AC7** runs only when `VAULT_TOKEN` is set (it passes then, and is SKIP otherwise), and **CAP-004 AC7** checks only the absence of `plugin_version`, because no harness mount is pinned.
-- Counted against `specs.md`: CAP-001 7, CAP-002 6, CAP-003 8, CAP-004 8, CAP-005 7, CAP-006 8, CAP-007 8 = 52, plus 7 CAC = 59.
+- [`docs/traceability.md`](docs/traceability.md) maps all 59 criteria (52 CAP and 7 CAC) to the implementing task and the verifying check. 40 CAP criteria are checked by `make spec-check` (40 of 40 pass; `--selftest` catches 12 of 12 injected faults). The other 12 map to `make variants` or `make zero-diff`. No criterion is unmet. Four partial coverages, the harness drift and the risk list with owners are in sections 4 to 6.
+- The four `tmp/*.md` research notes carry a dated reconciliation note, and the resource map corrects its rows in place (approle x5, 6 roles, 10 policies, 4 mounts, KV v2 config emitted, secret data never emitted, 7 entities, 1 alias, aliased providers instead of resource-level `namespace`).
+- OpenSpec verification pass: section 7 of the traceability doc (the `openspec` CLI is not installed, so it was done by hand).
+- Final `make codify-test`: see the result block at the end of this section.
+
+**Final `make codify-test` (2026-11-26, harness at 127.0.0.1:8200): Verdict PASS.** CAC1 static-gate, CAC2 zero-diff, CAC3 and CAC4 readonly-secrets, CAC5 idempotence, CAC6 and CAC7 ownership, and the CAP-001 to CAP-007 row (`spec-check`, 40 of 40) all PASS. The smoke test passed before and after, and the harness state was identical before and after. Report: `discovered_terraform/validation/codify-test.md`.
 
 **TASK-032, decisions needed before the first push** (found by checking the tree on 2026-11-26):
 

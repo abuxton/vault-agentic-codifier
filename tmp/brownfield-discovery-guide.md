@@ -1,5 +1,7 @@
 # Brownfield Discovery Guide — Capturing a Live Vault Enterprise Cluster as Terraform
 
+> **Reconciled 2026-11-26 (TASK-030).** Harness drift from the original expectations: the root namespace carries the `exporter` policy and AppRole role (10 policies, 6 roles), a preloaded `secret/` KV mount (4 mounts), and the `exporter-agent` entity with one alias (7 entities, 1 alias). The built output and `docs/traceability.md` are authoritative. Pitfall 2 below: the codifier uses aliased providers and never the resource-level `namespace` argument, which breaks `import {}`.
+
 > Audience: practitioners running the codifier (or doing it by hand) against an existing Vault Enterprise cluster.
 > Harness used for the examples: Vault Enterprise 2.2.2+ent at `http://127.0.0.1:8200`; namespaces `root`, `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`; AppRole auth and KV v2 `secret/` in each tenant namespace.
 > Rule of the whole guide: **discovery is strictly read-only.** No command below writes to Vault.
@@ -263,7 +265,7 @@ VAULT_NAMESPACE=admin vault list -format=json identity/group-alias/id
 VAULT_NAMESPACE=admin vault read -format=json identity/group-alias/id/<id>
 ```
 
-Harness expectation in `admin`: 3 tenant-admin groups (`vault-platform-admin`, `vault-app-billing-admin`, `vault-app-identity-admin`), 6 team groups (`vault-<tenant>-<team>`), 6 entities (`synthetic-user-<tenant>-<team>`), and **0 aliases** (the harness creates none — this is a coverage gap for group-alias/entity-alias codification).
+Harness expectation in `admin`: 3 tenant-admin groups (`vault-platform-admin`, `vault-app-billing-admin`, `vault-app-identity-admin`), 6 team groups (`vault-<tenant>-<team>`), 6 entities (`synthetic-user-<tenant>-<team>`), and **0 aliases** (the harness creates none — this is a coverage gap for group-alias/entity-alias codification). *(Reconciled 2026-11-26: the `admin` namespace has 0 aliases as stated; the root namespace has 1 entity alias and 1 entity, `exporter-agent`, created for the read-only exporter. Total 7 entities, 1 alias.)*
 
 Resolve accessors to mount names with:
 
@@ -467,13 +469,13 @@ Expected harness numbers:
 |---|---|
 | Namespaces under root | 1 (`admin`) |
 | Namespaces under `admin` | 3 (`platform`, `app-billing`, `app-identity`) |
-| Auth mounts per namespace (excluding `token/`) | 1 (`approle/`) — in root, `admin` and each of the 3 tenants |
-| User secrets mounts per tenant | 1 (`secret/`, KV v2) |
-| Root policies (excluding `default`, `root`) | 1 (`operator`) |
+| Auth mounts per namespace (excluding `token/`) | 1 (`approle/`) — in root, `admin` and each of the 3 tenants (5 in total) |
+| User secrets mounts per tenant | 1 (`secret/`, KV v2); the root namespace also has a preloaded `secret/` (4 in total) |
+| Root policies (excluding `default`, `root`) | 2 (`operator` and the read-only `exporter`) *(reconciled: was 1; 10 policies in total)* |
 | `admin` policies | 2 (`admin`, `namespace-admin`) |
 | Tenant policies | 2 each (6 total) |
 | `admin` identity groups | 9 (3 tenant admin + 6 team) |
-| `admin` identity entities | 6 |
+| `admin` identity entities | 6 (7 cluster-wide with root `exporter-agent`) |
 | Audit devices | 1 (`file/`) |
 | Rate-limit quotas | 1 (`global-rate-limit`) |
 

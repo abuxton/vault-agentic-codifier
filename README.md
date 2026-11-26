@@ -74,7 +74,7 @@ Run `make help` for the list. The main ones: `assemble`, `ownership`, `static-ga
 - EGP, RGP and MFA are not exercised against a live cluster.
 - Enterprise settings with no provider resource (seal, licence, replication) are reported, not codified.
 
-See [`STATUS_REPORT.md`](STATUS_REPORT.md) for evidence and open risks, and [`AGENTS.md`](AGENTS.md) before contributing.
+See [`docs/traceability.md`](docs/traceability.md) for the criteria matrix and [`STATUS_REPORT.md`](STATUS_REPORT.md) for evidence and open risks, and [`AGENTS.md`](AGENTS.md) before contributing.
 
 ## Licence
 

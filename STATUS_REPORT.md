@@ -6,7 +6,7 @@
 
 ## Summary
 
-Phases 1 to 4 are done and validated against the harness. Phase 3 (codification) has seven generators (TASK-015..021), the layer-assembly runner (TASK-022) and the documented Terraform MCP fallback (TASK-034). Phase 4 (validation) adds the static gate, zero-diff plan, read-only and no-secrets verification, variant fixtures and the one-command `make codify-test` (TASK-023..027), and the waza review (TASK-033: 23 of 23 skills ready, tokens halved). The documentation and delivery phase (TASK-028..030, TASK-032) remains.
+Phases 1 to 4 are done and validated against the harness. Phase 3 (codification) has seven generators (TASK-015..021), the layer-assembly runner (TASK-022) and the documented Terraform MCP fallback (TASK-034). Phase 4 (validation) adds the static gate, zero-diff plan, read-only and no-secrets verification, variant fixtures and the one-command `make codify-test` (TASK-023..027), and the waza review (TASK-033: 23 of 23 skills ready, tokens halved). The documentation phase is done (TASK-028..030: AGENTS.md, README and usage guide, traceability matrix; 33 of 34 tasks). Only the publish step (TASK-032) remains.
 
 | Phase | Tasks | Done | Remaining |
 |---|---|---|---|
@@ -14,7 +14,7 @@ Phases 1 to 4 are done and validated against the harness. Phase 3 (codification)
 | 2 Discovery | 007–014 | 8 of 8 | — |
 | 3 Codification | 015–022, 034 | 9 of 9 | — |
 | 4 Validation | 023–027, 033 | 6 of 6 | — |
-| 5 Docs and delivery | 028–030, 032 | 2 of 4 (028, 029) | 030 in progress; 032 blocked on decisions |
+| 5 Docs and delivery | 028–030, 032 | 3 of 4 (028, 029, 030) | 032 publish |
 | **Total** | 34 | **32** (an earlier version said 33; that was a counting error) | **2 outstanding (030, 032)** |
 
 ## Evidence from the harness (Vault 2.2.2+ent)
@@ -103,5 +103,5 @@ Two generator gaps found by the variants and fixed: `admin-config.sh` now reads 
 
 ## Next steps, in order
 
-1. TASK-030: traceability matrix. `spec-check.sh` (40 of 52 CAP criteria, 12 of 12 self-test faults caught) is written and uncommitted; the matrix, `make spec-check`, the `tmp/*.md` reconciliation and the risks list remain.
+1. TASK-030 is done: `docs/traceability.md` maps all 59 criteria, `make spec-check` passes 40 of 40, `make codify-test` passes, and the `tmp/*.md` notes are reconciled.
 2. TASK-032: decide what to track (`.state.json`, `run_report.json`, `.github/prompts/`), install and authenticate `gh`, then create the repository and push. See `HANDOFF.md` section 3.

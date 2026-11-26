@@ -1,5 +1,7 @@
 # Domain Model — Vault Configuration Surface for Terraform Codification
 
+> **Reconciled 2026-11-26 (TASK-030).** The model matches what was built, with one clarification: the codifier emits one aliased provider per namespace and never uses the resource-level `namespace` argument (it breaks `import {}`; see `terraform-resource-map.md` section 5). The harness also holds root `exporter` objects and one entity alias, so "0 aliases" applies to the `admin` namespace only.
+
 > Scope: the parts of HashiCorp Vault Enterprise configuration that the codifier must discover, model and emit as Terraform HCL (`hashicorp/vault` provider `~> 4`, 4.8.0 installed in the harness).
 > Harness: Vault Enterprise 2.2.2+ent at `http://127.0.0.1:8200`; namespaces `root`, `admin`, `admin/platform`, `admin/app-billing`, `admin/app-identity`.
 > HVD source: `git@github.com:hashicorp/web-unified-docs.git` → `content/validated-designs/docs/docs/vault/administration-guide/vault-organizational-concepts.mdx`.
