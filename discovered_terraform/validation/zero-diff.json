@@ -54,35 +54,35 @@
         "result": "pass"
       }
     ],
-    "passes": [
+    "phases": [
       {
         "layer": "admin",
-        "pass": "import",
+        "phase": "import",
         "exit": 0
       },
       {
         "layer": "admin",
-        "pass": "reimport",
+        "phase": "reimport",
         "exit": 0
       },
       {
         "layer": "namespaces",
-        "pass": "import",
+        "phase": "import",
         "exit": 0
       },
       {
         "layer": "namespaces",
-        "pass": "reimport",
+        "phase": "reimport",
         "exit": 0
       },
       {
         "layer": "seed",
-        "pass": "import",
+        "phase": "import",
         "exit": 0
       },
       {
         "layer": "seed",
-        "pass": "reimport",
+        "phase": "reimport",
         "exit": 0
       }
     ]

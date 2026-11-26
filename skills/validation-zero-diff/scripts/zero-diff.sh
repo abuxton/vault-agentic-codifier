@@ -66,7 +66,7 @@ run_layer() {
     [ "$code" = 0 ] || { rc=1; echo "FAIL $layer/$phase: plan -detailed-exitcode returned $code"; }
     jq -c --arg layer "$layer" --arg phase "$phase" --argjson code "$code" --rawfile caps "$d/.caps" '
       ($caps | split("\n") | map(select(length>0) | split(" ") | {key:.[0], value:.[1]}) | from_entries) as $c
-      | (.resource_changes // []) | map({layer:$layer, pass:$phase, exit:$code, address:.address, capability:($c[.address] // "unknown"),
+      | (.resource_changes // []) | map({layer:$layer, phase:$phase, exit:$code, address:.address, capability:($c[.address] // "unknown"),
           clean:(.change.actions == ["no-op"])}) | .[]' "$d/post.json" >> "$work/results.ndjson"
     echo "layer $layer ($phase): plan exit $code, $(jq '[.resource_changes[]?]|length' "$d/post.json") resource(s)"
   done
@@ -90,7 +90,7 @@ jq -s '
   | ($found | map(.capability)) as $have
   | { layers: (group_by(.layer) | map({layer: .[0].layer, resources: (map(.address)|unique|length), pass: (all(.[]; .exit == 0 and .clean))})),
       capabilities: ($found + [seven[] | select(. as $c | $have | index($c) | not) | {capability: ., resources: 0, result: "none declared"}] | sort_by(.capability)),
-      passes: (group_by([.layer,.pass]) | map({layer: .[0].layer, pass: .[0].pass, exit: .[0].exit}))}' "$work/results.ndjson" > "$work/summary.json"
+      phases: (group_by([.layer,.phase]) | map({layer: .[0].layer, phase: .[0].phase, exit: .[0].exit}))}' "$work/results.ndjson" > "$work/summary.json"
 jq -s --slurpfile s "$work/summary.json" '{summary: $s[0], ignore_changes: .}' "$work/ignores.ndjson" > "$REP/zero-diff.json"
 
 {
