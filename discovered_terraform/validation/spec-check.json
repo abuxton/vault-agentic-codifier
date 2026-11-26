@@ -169,7 +169,7 @@
       "status": "PASS"
     },
     {
-      "detail": "coverage.md records no EGP and no RGP; no vault_egp_policy or vault_rgp_policy",
+      "detail": "coverage.md lists the 2 EGP and 2 RGP fixture policies by name; none is generated yet (TASK-S03)",
       "id": "CAP-006-AC8",
       "status": "PASS"
     },

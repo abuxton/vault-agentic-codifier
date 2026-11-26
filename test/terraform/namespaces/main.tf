@@ -112,3 +112,25 @@ resource "vault_identity_group" "team" {
     team   = each.value.team
   }
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MFA fixtures, admin namespace (stage 2, TASK-S02, CAP-009)
+# A TOTP method and a login-enforcement rule that requires it for the platform
+# admin group. TOTP stores no seed on the method; seeds are created per entity
+# by the generate endpoints, which nothing here calls.
+# ──────────────────────────────────────────────────────────────────────────────
+resource "vault_identity_mfa_totp" "admin" {
+  provider  = vault.admin
+  issuer    = "SYNTHETIC-vault-codifier"
+  period    = 30
+  key_size  = 20
+  algorithm = "SHA1"
+  digits    = 6
+}
+
+resource "vault_identity_mfa_login_enforcement" "platform_admin" {
+  provider           = vault.admin
+  name               = "synthetic-platform-admin-totp"
+  mfa_method_ids     = [vault_identity_mfa_totp.admin.method_id]
+  identity_group_ids = [vault_identity_group.tenant_admin["platform"].id]
+}

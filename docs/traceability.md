@@ -89,6 +89,8 @@ The harness holds more than `specs.md` assumed. The checks accept the real count
 | 5 AppRole roles | 6 | root `exporter` role |
 | 3 KV mounts | 4 | preloaded root `secret/` |
 | 6 entities, 0 aliases | 7 entities, 1 alias | root `exporter-agent` entity and alias |
+| No Sentinel or MFA objects (stage 1) | 2 EGP, 2 RGP, 1 TOTP method, 1 login enforcement | stage-2 fixtures (TASK-S02) |
+| Exporter policy: stage-1 paths | 24 more path blocks (6 read and list paths at 4 namespace depths) | EGP, RGP and MFA read grants (TASK-S02) |
 
 ## 6. Remaining risks and deferred items
 

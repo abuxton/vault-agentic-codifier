@@ -174,9 +174,11 @@ yn CAP-006-AC3 "correlation.md links operator, namespace-admin, platform-devops-
 grep '`namespace-admin`' "$c" | grep -q 'vault-app-billing-admin.*vault-app-identity-admin.*vault-platform-admin'
 yn CAP-006-AC4 "namespace-admin is correlated with the three admin groups in admin"
 grep -q 'path "secret/data/platform/sre/\*"' "$T/seed/admin_platform_policies.tf"; yn CAP-006-AC7 "namespace-relative paths are preserved verbatim (secret/data/platform/sre/*)"
-grep -q 'EGP: none' "$T/policies/coverage.md" && grep -q 'RGP: none' "$T/policies/coverage.md" &&
+# Stage 2 fixtures (TASK-S02): 2 EGP and 2 RGP exist. Until TASK-S03 emits them, coverage.md must list all four by name and no resource is generated.
+grep -q '^- EGP: .*synthetic-egp-platform-advisory' "$T/policies/coverage.md" && grep -q '^- EGP: .*synthetic-egp-root-advisory' "$T/policies/coverage.md" &&
+  grep -q '^- RGP: .*synthetic-rgp-platform-soft' "$T/policies/coverage.md" && grep -q '^- RGP: .*synthetic-rgp-root-soft' "$T/policies/coverage.md" &&
   ! grep -rEn 'resource "vault_(egp|rgp)_policy"' "$T" --include='*.tf' | grep -q .
-yn CAP-006-AC8 "coverage.md records no EGP and no RGP; no vault_egp_policy or vault_rgp_policy"
+yn CAP-006-AC8 "coverage.md lists the 2 EGP and 2 RGP fixture policies by name; none is generated yet (TASK-S03)"
 
 # ---------- CAP-007 teams
 gr=$(blocks vault_identity_group)

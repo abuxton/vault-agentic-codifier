@@ -26,9 +26,9 @@ Tracking issue: [#16](https://github.com/abuxton/vault-agentic-codifier/issues/1
 | Task | Title | Phase | Capability | Type | Effort | Status |
 |---|---|---|---|---|---|---|
 | [TASK-S01](https://github.com/abuxton/vault-agentic-codifier/issues/1) | Verify provider resources and import ids for stage 2 | A | all | research | M | **Done** for CAP-008 and CAP-009; CAP-010 and CAP-011 are verified inside TASK-S05 and TASK-S06 |
-| [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | Ready to start |
-| [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | Blocked |
-| [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | Blocked |
+| [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | **Done** |
+| [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | Ready to start |
+| [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | Ready to start |
 | [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Ready to start |
 | [TASK-S06](https://github.com/abuxton/vault-agentic-codifier/issues/6) | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Ready to start |
 | [TASK-S07](https://github.com/abuxton/vault-agentic-codifier/issues/7) | Verification extensions (spec-check, verify, variants) | D | CAC8 to CAC10 | test | L | Blocked |
@@ -58,7 +58,7 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Type**: implementation
 **Effort**: M
 **Depends on**: TASK-S01
-**Status**: Ready to start
+**Status**: Done
 **Description**: Add the synthetic fixtures from CAP-008 and CAP-009 to `test/terraform`: a root EGP and RGP, a tenant EGP and RGP, and a TOTP method with a login-enforcement rule in `admin`. Extend `exporter.hcl` with the six read and list paths from `task-s01-decision.md` section 4, at every namespace depth the policy already covers, and nothing else. Update the harness counts everywhere they appear.
 **Acceptance Criteria**:
 - AC: `make -C test all` and `make -C test smoke-test` pass with the fixtures applied.
@@ -75,7 +75,7 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Effort**: L
 **Skill**: `skills/discovery-policies`, `skills/codification-policies`
 **Depends on**: TASK-S02
-**Status**: Blocked
+**Status**: Ready to start
 **Description**: Extend discovery to store per-namespace EGP and RGP payloads and the generator to emit `vault_egp_policy`, `vault_rgp_policy`, the Sentinel sources under `policies/sentinel/<ns>/`, imports, and the coverage and correlation sections.
 **Acceptance Criteria**:
 - AC: CAP-008 AC1 to AC8 hold against the extended harness.
@@ -89,7 +89,7 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Effort**: L
 **Skill**: `skills/discovery-identity-teams`, `skills/codification-teams`
 **Depends on**: TASK-S02
-**Status**: Blocked
+**Status**: Ready to start
 **Description**: Extend discovery to read MFA methods and login enforcement without calling any generate endpoint, and the generator to emit the method and enforcement resources, `imports_mfa.tf` and `mfa.md`. Secret-bearing method types use sensitive variables with no default.
 **Acceptance Criteria**:
 - AC: CAP-009 AC1 to AC8 hold against the extended harness.

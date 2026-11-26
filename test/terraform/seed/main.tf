@@ -248,3 +248,28 @@ resource "vault_kv_secret_v2" "identity_mfa" {
     smtp_pass   = "SYNTHETIC-SMTP-PASS-REPLACE-IN-PRODUCTION"
   })
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Sentinel fixtures, admin/platform (stage 2, TASK-S02, CAP-008)
+# One EGP and one RGP in a tenant namespace. Both rules always pass.
+# ──────────────────────────────────────────────────────────────────────────────
+resource "vault_egp_policy" "platform_advisory" {
+  provider          = vault.platform
+  name              = "synthetic-egp-platform-advisory"
+  paths             = ["secret/*"]
+  enforcement_level = "advisory"
+  policy            = <<-EOT
+    // SYNTHETIC fixture: always passes.
+    main = rule { true }
+  EOT
+}
+
+resource "vault_rgp_policy" "platform_soft" {
+  provider          = vault.platform
+  name              = "synthetic-rgp-platform-soft"
+  enforcement_level = "soft-mandatory"
+  policy            = <<-EOT
+    // SYNTHETIC fixture: always passes.
+    main = rule { true }
+  EOT
+}
