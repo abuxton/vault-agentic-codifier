@@ -270,7 +270,7 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 4. ~~TASK-023..027 validation skills~~ and ~~TASK-033 waza fixes~~: done, one commit each.
 5. ~~TASK-028 `AGENTS.md`~~ and ~~TASK-029 README and usage guide~~: done, one commit each.
 6. ~~TASK-030 traceability~~ and ~~TASK-032 publish~~: done.
-7. Follow-ups are specified and planned as two OpenSpec changes, not started: `openspec/changes/vault-codifier-stage-2/` (CAP-008 to CAP-012: EGP, RGP and MFA fixtures; auth-method and engine configuration; a waza eval suite; 10 tasks) and `openspec/changes/vault-codifier-remote-review/` (CAP-013: a guarded review on a non-harness cluster, needs the cluster owner's written approval; 5 tasks). Owners are in `docs/traceability.md` section 6.
+7. Follow-ups are specified and planned as two OpenSpec changes, not started: `openspec/changes/vault-codifier-stage-2/` (tracking issue #16; CAP-008 to CAP-012: EGP, RGP and MFA fixtures; auth-method and engine configuration; a waza eval suite; 10 tasks) and `openspec/changes/vault-codifier-remote-review/` (tracking issue #17; CAP-013: a guarded review on a non-harness cluster, needs the cluster owner's written approval; 5 tasks). Owners are in `docs/traceability.md` section 6.
 
 Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
 

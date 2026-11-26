@@ -2,6 +2,8 @@
 
 Breaks the `vault-codifier-remote-review` change into tasks. It derives from [`proposal.md`](proposal.md), [`specs.md`](specs.md) (CAP-013) and [`design.md`](design.md). Stage 1 is [`../vault-brownfield-research`](../vault-brownfield-research/tasks.md); stage 2 is [`../vault-codifier-stage-2`](../vault-codifier-stage-2/tasks.md).
 
+Tracking issue: [#17](https://github.com/abuxton/vault-agentic-codifier/issues/17). Each task has an issue, linked from the index below.
+
 ## Baseline
 
 | Item | Value |
@@ -21,11 +23,11 @@ Breaks the `vault-codifier-remote-review` change into tasks. It derives from [`p
 
 | Task | Title | Capability | Type | Effort | Status |
 |---|---|---|---|---|---|
-| TASK-R01 | Owner approval and review plan | CAP-013 | delivery | S | Ready to start |
-| TASK-R02 | Guarded remote mode | CAP-013 | implementation | M | Ready to start |
-| TASK-R03 | Run the review on the approved cluster | CAP-013 | test | L | Blocked |
-| TASK-R04 | Sanitised report and harness-reproducible follow-ups | CAP-013 | documentation | M | Blocked |
-| TASK-R05 | Optional: plan against a scratch state | CAP-013 | test | S | Blocked |
+| [TASK-R01](https://github.com/abuxton/vault-agentic-codifier/issues/11) | Owner approval and review plan | CAP-013 | delivery | S | Ready to start |
+| [TASK-R02](https://github.com/abuxton/vault-agentic-codifier/issues/12) | Guarded remote mode | CAP-013 | implementation | M | Ready to start |
+| [TASK-R03](https://github.com/abuxton/vault-agentic-codifier/issues/13) | Run the review on the approved cluster | CAP-013 | test | L | Blocked |
+| [TASK-R04](https://github.com/abuxton/vault-agentic-codifier/issues/14) | Sanitised report and harness-reproducible follow-ups | CAP-013 | documentation | M | Blocked |
+| [TASK-R05](https://github.com/abuxton/vault-agentic-codifier/issues/15) | Optional: plan against a scratch state | CAP-013 | test | S | Blocked |
 
 ### TASK-R01: Owner approval and review plan
 **Capability**: CAP-013

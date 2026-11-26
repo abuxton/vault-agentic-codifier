@@ -106,5 +106,5 @@ Two generator gaps found by the variants and fixed: `admin-config.sh` now reads 
 
 All 34 tasks are done. Follow-ups are specified and planned, not started:
 
-1. [`vault-codifier-stage-2`](openspec/changes/vault-codifier-stage-2/proposal.md): an Enterprise fixture for EGP, RGP and MFA (CAP-008, CAP-009); auth-method and engine configuration beyond AppRole and KV v2 (CAP-010, CAP-011); a waza eval suite (CAP-012). 10 tasks. The real-executor eval run needs the owner's approval of the cost.
-2. [`vault-codifier-remote-review`](openspec/changes/vault-codifier-remote-review/proposal.md): a first, guarded, read-only review on a non-harness cluster (CAP-013). 5 tasks. It needs the cluster owner's written approval and is best run after stage 2.
+1. [`vault-codifier-stage-2`](openspec/changes/vault-codifier-stage-2/proposal.md): an Enterprise fixture for EGP, RGP and MFA (CAP-008, CAP-009); auth-method and engine configuration beyond AppRole and KV v2 (CAP-010, CAP-011); a waza eval suite (CAP-012). 10 tasks, tracking issue [#16](https://github.com/abuxton/vault-agentic-codifier/issues/16). The real-executor eval run needs the owner's approval of the cost.
+2. [`vault-codifier-remote-review`](openspec/changes/vault-codifier-remote-review/proposal.md): a first, guarded, read-only review on a non-harness cluster (CAP-013). 5 tasks, tracking issue [#17](https://github.com/abuxton/vault-agentic-codifier/issues/17). It needs the cluster owner's written approval and is best run after stage 2.

@@ -2,6 +2,8 @@
 
 Breaks the `vault-codifier-stage-2` change into tasks. It derives from [`proposal.md`](proposal.md), [`specs.md`](specs.md) (CAP-008 to CAP-012, CAC8 to CAC10) and [`design.md`](design.md). Stage 1 is [`../vault-brownfield-research`](../vault-brownfield-research/tasks.md); the review on a non-harness cluster is [`../vault-codifier-remote-review`](../vault-codifier-remote-review/tasks.md).
 
+Tracking issue: [#16](https://github.com/abuxton/vault-agentic-codifier/issues/16). Each task has an issue, linked from the index below.
+
 ## Baseline
 
 | Item | Value |
@@ -23,16 +25,16 @@ Breaks the `vault-codifier-stage-2` change into tasks. It derives from [`proposa
 
 | Task | Title | Phase | Capability | Type | Effort | Status |
 |---|---|---|---|---|---|---|
-| TASK-S01 | Verify provider resources and import ids for stage 2 | A | all | research | M | Ready to start |
-| TASK-S02 | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | Blocked |
-| TASK-S03 | Sentinel discovery and generator | B | CAP-008 | implementation | L | Blocked |
-| TASK-S04 | MFA discovery and generator | B | CAP-009 | implementation | L | Blocked |
-| TASK-S05 | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Blocked |
-| TASK-S06 | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Blocked |
-| TASK-S07 | Verification extensions (spec-check, verify, variants) | D | CAC8 to CAC10 | test | L | Blocked |
-| TASK-S08 | Eval suite scaffolding and deterministic graders | E | CAP-012 | test | L | Blocked |
-| TASK-S09 | Eval run with a real executor and baseline | E | CAP-012 | test | M | Blocked |
-| TASK-S10 | Stage-2 docs, traceability and publish | F | N/A | documentation | M | Blocked |
+| [TASK-S01](https://github.com/abuxton/vault-agentic-codifier/issues/1) | Verify provider resources and import ids for stage 2 | A | all | research | M | Ready to start |
+| [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | Blocked |
+| [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | Blocked |
+| [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | Blocked |
+| [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Blocked |
+| [TASK-S06](https://github.com/abuxton/vault-agentic-codifier/issues/6) | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Blocked |
+| [TASK-S07](https://github.com/abuxton/vault-agentic-codifier/issues/7) | Verification extensions (spec-check, verify, variants) | D | CAC8 to CAC10 | test | L | Blocked |
+| [TASK-S08](https://github.com/abuxton/vault-agentic-codifier/issues/8) | Eval suite scaffolding and deterministic graders | E | CAP-012 | test | L | Blocked |
+| [TASK-S09](https://github.com/abuxton/vault-agentic-codifier/issues/9) | Eval run with a real executor and baseline | E | CAP-012 | test | M | Blocked |
+| [TASK-S10](https://github.com/abuxton/vault-agentic-codifier/issues/10) | Stage-2 docs, traceability and publish | F | N/A | documentation | M | Blocked |
 
 Phases: A foundation, B Enterprise policy and identity, C breadth, D verification, E evals, F docs.
 
