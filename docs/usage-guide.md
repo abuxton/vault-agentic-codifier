@@ -64,7 +64,7 @@ It runs the seven discovery steps in dependency order (about six seconds on the 
 Read the run report:
 
 ```bash
-jq . discovered_terraform/run_report.json
+jq . discovered_terraform/run_report.json   # git-ignored: written by every run, never committed
 ```
 
 | Field | Meaning |

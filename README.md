@@ -78,4 +78,6 @@ See [`STATUS_REPORT.md`](STATUS_REPORT.md) for evidence and open risks, and [`AG
 
 ## Licence
 
-No licence has been chosen yet. It is recorded as an open decision in TASK-032.
+[Apache License 2.0](LICENSE). You may use, modify and redistribute this work, including commercially, provided you keep the licence text and the attribution in [`NOTICE`](NOTICE), and state significant changes. Apache-2.0 also grants an express patent licence.
+
+This applies to this repository only. It does not license HashiCorp Vault Enterprise or its licence file, which are never committed.

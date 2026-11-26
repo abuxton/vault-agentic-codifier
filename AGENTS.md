@@ -87,7 +87,7 @@ One resource type has exactly one owning skill. The rule lives in [`vault-codifi
 | [`skills/`](skills/) | The 23 skills: `vault-*` (2), `discovery-*` (8), `codification-*` (8), `validation-*` (5) |
 | [`Makefile`](Makefile) | Root targets that call the validation scripts |
 | [`test/`](test/) | The synthetic brownfield harness (docker compose and three Terraform layers) |
-| [`discovered_terraform/`](discovered_terraform/) | `raw/` (git-ignored), `terraform/` (generated), `validation/` (reports), `run_report.json` |
+| [`discovered_terraform/`](discovered_terraform/) | `raw/`, `run_report.json` and `.state.json` (all git-ignored run state), `terraform/` (generated), `validation/` (reports) |
 | [`openspec/changes/vault-brownfield-research/`](openspec/changes/vault-brownfield-research/) | `proposal.md`, `specs.md`, `design.md`, `tasks.md`, `task-006-decision.md` |
 | [`tmp/`](tmp/) | Research notes. `tmp/vault.hclic` is the licence and is never committed |
 | [`docs/`](docs/) | [Usage guide](docs/usage-guide.md), [waza review](docs/waza-review.md) |
