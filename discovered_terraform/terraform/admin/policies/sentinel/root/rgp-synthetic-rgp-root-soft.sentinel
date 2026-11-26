@@ -1,0 +1,2 @@
+// Harness fixture: always passes.
+main = rule { true }

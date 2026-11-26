@@ -1,8 +1,7 @@
 # admin.hcl
 # Admin-namespace administrator — full access within the org namespace and below.
 # Source: nhsy-hcp/terraform-vault-onboarding policies/vault_admin_policy.hcl
-# Ref: git@github.com:hashicorp/web-unified-docs.git
-#      content/validated-designs/docs/docs/vault/administration-guide/authentication-for-people.mdx
+# Ref: https://developer.hashicorp.com/validated-designs/vault/administration-guide/authentication-for-people
 
 # List existing policies
 path "sys/policies/acl" {

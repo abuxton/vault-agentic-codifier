@@ -689,3 +689,102 @@ path "+/+/+/+/data/*" {
 path "+/+/+/+/metadata/*" {
   capabilities = ["deny"]
 }
+
+# ── Stage 2 (TASK-S02): read Sentinel sources and MFA objects ─────────────
+# Read and list only. generate and admin-generate are update operations and stay denied.
+
+path "sys/policies/egp/*" {
+  capabilities = ["read"]
+}
+
+path "sys/policies/rgp/*" {
+  capabilities = ["read"]
+}
+
+path "identity/mfa/method" {
+  capabilities = ["list"]
+}
+
+path "identity/mfa/method/*" {
+  capabilities = ["list", "read"]
+}
+
+path "identity/mfa/login-enforcement" {
+  capabilities = ["list"]
+}
+
+path "identity/mfa/login-enforcement/*" {
+  capabilities = ["read"]
+}
+
+path "+/sys/policies/egp/*" {
+  capabilities = ["read"]
+}
+
+path "+/sys/policies/rgp/*" {
+  capabilities = ["read"]
+}
+
+path "+/identity/mfa/method" {
+  capabilities = ["list"]
+}
+
+path "+/identity/mfa/method/*" {
+  capabilities = ["list", "read"]
+}
+
+path "+/identity/mfa/login-enforcement" {
+  capabilities = ["list"]
+}
+
+path "+/identity/mfa/login-enforcement/*" {
+  capabilities = ["read"]
+}
+
+path "+/+/sys/policies/egp/*" {
+  capabilities = ["read"]
+}
+
+path "+/+/sys/policies/rgp/*" {
+  capabilities = ["read"]
+}
+
+path "+/+/identity/mfa/method" {
+  capabilities = ["list"]
+}
+
+path "+/+/identity/mfa/method/*" {
+  capabilities = ["list", "read"]
+}
+
+path "+/+/identity/mfa/login-enforcement" {
+  capabilities = ["list"]
+}
+
+path "+/+/identity/mfa/login-enforcement/*" {
+  capabilities = ["read"]
+}
+
+path "+/+/+/sys/policies/egp/*" {
+  capabilities = ["read"]
+}
+
+path "+/+/+/sys/policies/rgp/*" {
+  capabilities = ["read"]
+}
+
+path "+/+/+/identity/mfa/method" {
+  capabilities = ["list"]
+}
+
+path "+/+/+/identity/mfa/method/*" {
+  capabilities = ["list", "read"]
+}
+
+path "+/+/+/identity/mfa/login-enforcement" {
+  capabilities = ["list"]
+}
+
+path "+/+/+/identity/mfa/login-enforcement/*" {
+  capabilities = ["read"]
+}
