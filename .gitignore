@@ -48,3 +48,6 @@ discovered_terraform/.state.json
 
 # Git worktrees (git-flow feature branches)
 .worktrees/
+
+# Scratch output of agent runs (logs, scratch discovery); never committed
+tmp/work/
