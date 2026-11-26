@@ -58,7 +58,7 @@ This artifact breaks the `vault-brownfield-research` change into implementation 
 | TASK-029 | README and usage guide | 5 | N/A | documentation | M | **Done** |
 | TASK-030 | Traceability matrix and handoff review | 5 | N/A | documentation | M | **Done** |
 | TASK-031 | Exporter identity: policy, entity, group, and agent skill | 1 | N/A | implementation | M | **Done** |
-| TASK-032 | Create GitHub repository and publish | 5 | N/A | delivery | S | Ready to start |
+| TASK-032 | Create GitHub repository and publish | 5 | N/A | delivery | S | **Done** |
 | TASK-033 | Waza review of skills TASK-007..021 and fixes | 4 | N/A | test | L | **Done** |
 | TASK-034 | Terraform MCP availability or documented fallback | 3 | N/A | implementation | S | Done — fallback documented |
 
@@ -557,7 +557,7 @@ Verification against the synthetic harness in `test/` and scratch variant fixtur
 **Type**: delivery
 **Effort**: S
 **Depends on**: TASK-033 (so the first push carries the reviewed skills); TASK-025 for the final read-only and no-secrets sign-off; TASK-030 (the traceability matrix ships with the first push)
-**Status**: Ready to start once `gh auth login` succeeds (`gh auth status` hung in earlier sessions; `gh` is at `/opt/homebrew/bin/gh`)
+**Status**: **Done** (https://github.com/abuxton/vault-agentic-codifier; `origin/main` equals local `main`; history scan: 13 low findings, none a credential, accepted in `docs/traceability.md`; repository is public, owner to confirm)
 **Description**: Create the GitHub repository `abuxton/vault-agentic-codifier`, add it as `origin`, and push `main`. Owner and visibility are decided: owner `abuxton`; confirm visibility with the owner before creating it (private unless told otherwise).
 
 Decisions recorded 2026-11-26:

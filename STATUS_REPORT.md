@@ -1,12 +1,12 @@
 # Status report — terraform-vault-vault-codifier
 
-**Date**: 2026-11-25
-**Branch / head**: `main` at `2fc5e62` (no remote yet)
+**Date**: 2026-11-26
+**Branch / head**: `main` at `2fc5e62` (origin: https://github.com/abuxton/vault-agentic-codifier)
 **Scope**: agent skills that survey a live Vault Enterprise cluster read-only and generate Terraform HCL (`hashicorp/vault` 4.8.0, `import {}` blocks) with a zero-diff plan.
 
 ## Summary
 
-Phases 1 to 4 are done and validated against the harness. Phase 3 (codification) has seven generators (TASK-015..021), the layer-assembly runner (TASK-022) and the documented Terraform MCP fallback (TASK-034). Phase 4 (validation) adds the static gate, zero-diff plan, read-only and no-secrets verification, variant fixtures and the one-command `make codify-test` (TASK-023..027), and the waza review (TASK-033: 23 of 23 skills ready, tokens halved). The documentation phase is done (TASK-028..030: AGENTS.md, README and usage guide, traceability matrix; 33 of 34 tasks). Only the publish step (TASK-032) remains.
+Phases 1 to 5 are done; the codifier is validated against the harness. Phase 3 (codification) has seven generators (TASK-015..021), the layer-assembly runner (TASK-022) and the documented Terraform MCP fallback (TASK-034). Phase 4 (validation) adds the static gate, zero-diff plan, read-only and no-secrets verification, variant fixtures and the one-command `make codify-test` (TASK-023..027), and the waza review (TASK-033: 23 of 23 skills ready, tokens halved). The documentation phase is done (TASK-028..030: AGENTS.md, README and usage guide, traceability matrix; and the publish step, TASK-032). All 34 tasks are done.
 
 | Phase | Tasks | Done | Remaining |
 |---|---|---|---|
@@ -14,7 +14,7 @@ Phases 1 to 4 are done and validated against the harness. Phase 3 (codification)
 | 2 Discovery | 007–014 | 8 of 8 | — |
 | 3 Codification | 015–022, 034 | 9 of 9 | — |
 | 4 Validation | 023–027, 033 | 6 of 6 | — |
-| 5 Docs and delivery | 028–030, 032 | 3 of 4 (028, 029, 030) | 032 publish |
+| 5 Docs and delivery | 028–030, 032 | 4 of 4 | — |
 | **Total** | 34 | **32** (an earlier version said 33; that was a counting error) | **2 outstanding (030, 032)** |
 
 ## Evidence from the harness (Vault 2.2.2+ent)
@@ -55,7 +55,7 @@ The plans were run with the harness root token. Discovery used the exporter AppR
 | 026 | Variant fixtures (`make variants`) | Done — 3 scenarios; found and fixed 2 generator gaps |
 | 027 | One-command CAC1..CAC7 run (`make codify-test`) | Done — 11 stages PASS |
 | 028–030 | AGENTS.md, README, traceability | Not started |
-| 032 | Create GitHub repository and publish | Ready to start (needs `gh auth login`) |
+| 032 | Create GitHub repository and publish | **Done** |
 | 033 | Waza review and fixes | Done — 23 of 23 ready; [`docs/waza-review.md`](docs/waza-review.md) |
 | 034 | Terraform MCP availability or fallback | Done — fallback documented as a supported path |
 
@@ -97,11 +97,16 @@ Two generator gaps found by the variants and fixed: `admin-config.sh` now reads 
 | Auth mounts other than AppRole, and secrets engines other than KV v2, are mount-only | Solution architect | Listed in `auth-mounts/coverage.md` and `secrets-engines/coverage.md` as "review manually" |
 | The plan for `admin/` needs `TF_VAR_exporter_agent_approle_name` | Maintainer | The exporter alias name is a sensitive variable; set it from the role id at plan time |
 | `design.md` §6.2 still shows Python pseudocode | Solution architect | Illustrative only; the skills are authoritative |
-| Harness root token `root` and `terraform.tfstate` files under `test/terraform/` | Security | Confirm they are ignored before the first push (TASK-032) |
-| `gh` was not authenticated in the last session | Maintainer | Needed for TASK-032 |
-| `discovered_terraform/terraform/` is now committed | Maintainer | Decide in TASK-032 whether the harness output stays as a reference or is ignored |
+| Harness root token `root` and `terraform.tfstate` files under `test/terraform/` | Security | Verified ignored and untracked at TASK-032 |
+| The repository is public | Repository owner | TASK-032 said private unless told otherwise; confirm, or switch with `gh repo edit --visibility private` |
+| 13 low-severity findings in git history | Repository owner | None is a credential; accepted, listed in `docs/traceability.md` section 6 |
+| `discovered_terraform/terraform/` is committed | Maintainer | Kept as the reviewed reference output; the run state is ignored |
 
 ## Next steps, in order
 
-1. TASK-030 is done: `docs/traceability.md` maps all 59 criteria, `make spec-check` passes 40 of 40, `make codify-test` passes, and the `tmp/*.md` notes are reconciled.
-2. TASK-032: decide what to track (`.state.json`, `run_report.json`, `.github/prompts/`), install and authenticate `gh`, then create the repository and push. See `HANDOFF.md` section 3.
+All 34 tasks are done. Follow-ups, in priority order (owners in `docs/traceability.md` section 6):
+
+1. An Enterprise fixture for EGP, RGP and MFA.
+2. Method and engine resources beyond AppRole and KV v2.
+3. A waza eval suite.
+4. A first review on a non-harness cluster.

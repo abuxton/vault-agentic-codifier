@@ -100,7 +100,7 @@ The harness holds more than `specs.md` assumed. The checks accept the real count
 | Engines other than KV v2 | Emitted as `vault_mount` only; engine configuration is listed in `coverage.md` for manual review | Generator owner |
 | Replication and DR | Recorded in the root README only; not codified | Vault platform owner |
 | Waza eval suite | Skipped; the 23 skills pass the structure checks only (see [`waza-review.md`](waza-review.md)) | Skill owner |
-| Findings in git history | `vault-radar scan repo` reports 12 low-severity findings: 6 `pass` phase keys in `zero-diff.json` (renamed), 4 synthetic placeholders in `test/terraform/seed/main.tf`, 2 test values in a deleted test file. None is a credential. Accepted; the history stays unchanged | Repository owner |
+| Findings in git history | `vault-radar scan repo` reports 13 low-severity findings: 6 `pass` phase keys in `zero-diff.json` (renamed), 4 synthetic placeholders in `test/terraform/seed/main.tf`, 2 test values in a deleted test file, and 1 sentence in `HANDOFF.md` that reads like an assignment (reworded). None is a credential. Accepted; the history stays unchanged | Repository owner |
 | Real-cluster use | Verified on the harness only. A first run on a production cluster needs a review of every `coverage.md` | Vault platform owner |
 
 ## 7. OpenSpec verification pass (2026-11-26)

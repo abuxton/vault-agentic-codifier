@@ -1,8 +1,8 @@
 # Handoff Document — terraform-vault-vault-codifier
 
 **Date**: 2026-11-26
-**Commit**: `0ba207f` on `main` (no remote yet; see TASK-032)
-**Status**: Phase 1 and Phase 2 **done and validated**. **Phases 3 and 4 are complete**. **33 of 34 tasks are done**; TASK-028, TASK-029 and TASK-030 (docs) are done, and TASK-032 (publish) is the last open task. An earlier version of this file said 33 of 34; that was a counting error (30 were done at that point). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
+**Commit**: `main` on `origin` (https://github.com/abuxton/vault-agentic-codifier); see section 10
+**Status**: Phase 1 and Phase 2 **done and validated**. **Phases 3 and 4 are complete**. **All 34 tasks are done** (TASK-005 is superseded). TASK-028 to TASK-030 (docs) and TASK-032 (publish) closed Phase 5. An earlier version of this file said 33 of 34; that was a counting error (30 were done at that point). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
@@ -124,32 +124,32 @@ Two real generator gaps were found by the TASK-026 variants and fixed:
 
 Audit-log verification is scoped to the discovery window in `run_report.json` and to tokens with the `exporter` policy and without `root`. `NO_AUDIT_DEVICE=1` marks the audit checks SKIP, for the empty-cluster variant only.
 
-### Phase 5 — Docs and delivery (3 of 4 done)
+### Phase 5 — Docs and delivery (4 of 4 done)
 
 | Task | Title | Status |
 |---|---|---|
 | TASK-028 | `AGENTS.md` | **Done** (`79f1147`). Commands in it were run as written. |
 | TASK-029 | `README.md`, `docs/usage-guide.md` | **Done** (`0ba207f`). The guide's flow was run on the harness: exporter login, discovery, `make assemble`, `make zero-diff`, `make verify`, and a seed-layer plan of 18 import, 0 add, 0 change, 0 destroy. |
 | TASK-030 | Traceability matrix and handoff review | **Done**, see below |
-| **TASK-032** | Publish to `https://github.com/abuxton/vault-agentic-codifier` | Blocked on the decisions below |
+| TASK-032 | Publish to `https://github.com/abuxton/vault-agentic-codifier` | **Done**, see below |
 | TASK-034 | Terraform MCP installed, or fallback documented | **Done**. Fallback documented in `vault-codifier-conventions` and every codification skill |
 
 **TASK-030, result:**
 
 - [`docs/traceability.md`](docs/traceability.md) maps all 59 criteria (52 CAP and 7 CAC) to the implementing task and the verifying check. 40 CAP criteria are checked by `make spec-check` (40 of 40 pass; `--selftest` catches 12 of 12 injected faults). The other 12 map to `make variants` or `make zero-diff`. No criterion is unmet. Four partial coverages, the harness drift and the risk list with owners are in sections 4 to 6.
 - The four `tmp/*.md` research notes carry a dated reconciliation note, and the resource map corrects its rows in place (approle x5, 6 roles, 10 policies, 4 mounts, KV v2 config emitted, secret data never emitted, 7 entities, 1 alias, aliased providers instead of resource-level `namespace`).
-- OpenSpec verification pass: section 7 of the traceability doc (the `openspec` CLI is not installed, so it was done by hand).
+- OpenSpec verification (done by hand): see section 7 of the traceability doc (the `openspec` CLI is not installed, so it was done by hand).
 - Final `make codify-test`: see the result block at the end of this section.
 
 **Final `make codify-test` (2026-11-26, harness at 127.0.0.1:8200): Verdict PASS.** CAC1 static-gate, CAC2 zero-diff, CAC3 and CAC4 readonly-secrets, CAC5 idempotence, CAC6 and CAC7 ownership, and the CAP-001 to CAP-007 row (`spec-check`, 40 of 40) all PASS. The smoke test passed before and after, and the harness state was identical before and after. Report: `discovered_terraform/validation/codify-test.md`.
 
-**TASK-032, decisions needed before the first push** (found by checking the tree on 2026-11-26):
+**TASK-032, result (2026-11-26):**
 
-1. `git ls-files` lists `discovered_terraform/.state.json` and `discovered_terraform/run_report.json`. TASK-032 AC2 requires the list to be empty. But `make verify` reads the `run_report.json` window and `docs/usage-guide.md` shows it, so either untrack both and regenerate on demand, or relax the AC. **Owner decision.**
-2. `.github/prompts/opsx-*.prompt.md` (OpenSpec tooling) is tracked. Keep or untrack. `.mcp.json`, `.opencode/` and `skills-lock.json` need the same call.
-3. `gh` is at `/opt/homebrew/bin/gh` (not on the default PATH). `gh auth status` printed nothing in 10 seconds, so authentication is unconfirmed and the command may hang. Run `gh auth login` and check it yourself.
-4. No licence is chosen; the README says so.
-5. The secret scan of history is `vault-radar` (pre-commit hook, offline, staged diffs only) rather than the `gitleaks` named in the AC; `gitleaks` is not installed. Scanning the whole history needs a separate `vault-radar scan git` run, or record the substitution.
+- Remote: `https://github.com/abuxton/vault-agentic-codifier`, `origin/main` equals local `main`. The pre-push secret scan passes.
+- **Visibility is PUBLIC.** The task said private unless told otherwise; the repository was already public when it was checked. Confirm this is intended, or run `gh repo edit abuxton/vault-agentic-codifier --visibility private --accept-visibility-change-consequences`.
+- Description and topics `vault`, `terraform`, `agent-skills` are set with `gh repo edit`. `gh` works with the keychain login.
+- Tracked-file checks pass: no `.hclic`, `terraform.tfstate*`, `discovered_terraform/raw/`, `.state.json`, `run_report.json`, `.opencode/`, `.github/prompts/` or `.github/skills/`; `openspec/`, `.mcp.json`, `skills-lock.json`, `LICENSE` and `NOTICE` are tracked.
+- Whole-history scan (`vault-radar scan repo --clone-dir . --skip-activeness`): 13 low-severity findings, none a credential. They are listed in `docs/traceability.md` section 6 and accepted. The history was not rewritten.
 
 ### Waza review (TASK-033), done
 
@@ -269,8 +269,8 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 3. ~~TASK-022 layer assembly~~ and ~~TASK-034 MCP fallback~~: done.
 4. ~~TASK-023..027 validation skills~~ and ~~TASK-033 waza fixes~~: done, one commit each.
 5. ~~TASK-028 `AGENTS.md`~~ and ~~TASK-029 README and usage guide~~: done, one commit each.
-6. **TASK-030** traceability: finish the items listed in section 3, Phase 5, then commit `spec-check.sh` with it.
-7. **TASK-032** publish, after the decisions listed in section 3, Phase 5. Commit after each task.
+6. ~~TASK-030 traceability~~ and ~~TASK-032 publish~~: done.
+7. Follow-ups, in priority order (owners in `docs/traceability.md` section 6): an Enterprise fixture for EGP, RGP and MFA; method and engine resources beyond AppRole and KV v2; a waza eval suite; a first review on a non-harness cluster.
 
 Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
 
@@ -306,29 +306,13 @@ Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude
 
 ```
 Branch:  main
-Head:    0ba207f  docs: add README and usage guide ... (TASK-029)
-         35e54e5  fix(skills): repair four descriptions mangled by the waza restructure
-         79f1147  docs: add AGENTS.md ... (TASK-028)
-         c215578  docs: record Phase 4 complete in HANDOFF and STATUS_REPORT
-         2fc5e62  refactor(skills): restructure all 23 skills for waza ... (TASK-033)
-         1313c75  feat(validation-codify-test) ... (TASK-027)
-         b93ac9a  feat(validation-variants) ... (TASK-026)
-         8a9eabf  feat(validation-readonly-secrets) ... (TASK-025)
-         642fee8  validation-zero-diff (TASK-024) · 1f68a12  validation-static-gate (TASK-023)
-Remote:  (none; TASK-032)
-Untracked (TASK-030 in progress): skills/validation-codify-test/scripts/spec-check.sh,
-         discovered_terraform/validation/spec-check.{json,md}
-Generated output under discovered_terraform/terraform/ is committed; TASK-032 decides whether it stays.
+Remote:  origin  https://github.com/abuxton/vault-agentic-codifier  (public; tracks origin/main)
+Head:    run `git log --oneline -5`; the last task commit is "docs: record TASK-032 ..." after 3974133 (TASK-030)
+Run state (run_report.json, .state.json) is git-ignored. Generated output under discovered_terraform/terraform/ and the evidence under discovered_terraform/validation/ are committed.
 ```
 
-Before the first push (TASK-032) decide what to do with `discovered_terraform/terraform/` and `discovered_terraform/.state.json`, and confirm `test/terraform/**/terraform.tfstate*` and `*.hclic` are ignored. Then:
-
-```bash
-gh auth login
-gh repo create <owner>/terraform-vault-vault-codifier --private --source=. --remote=origin
-git push -u origin main
-```
+Push with `GIT_TERMINAL_PROMPT=0 git push origin main`. The pre-commit and pre-push hooks run the Vault Radar secret scan; fix findings, never bypass.
 
 ---
 
-*Updated 2026-11-26 after TASK-029, with TASK-030 in progress. Convention: one commit per task.*
+*Updated 2026-11-26 after TASK-032; all 34 tasks done. Convention: one commit per task.*
