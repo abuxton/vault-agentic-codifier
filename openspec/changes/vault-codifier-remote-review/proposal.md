@@ -6,6 +6,8 @@ This change runs the codifier read-only against a real Vault Enterprise cluster,
 
 It is kept apart from stage 2 (`vault-codifier-stage-2`) because it differs in kind. Stage 2 adds capability and is tested on the harness. This change needs a real cluster, an owner's written approval, and a relaxed address guard, and its outcome depends on someone else's system.
 
+Related: [`vault-codifier-existing-terraform`](../vault-codifier-existing-terraform/proposal.md) handles clusters that already have Terraform. It is harness-only until the guarded remote mode of this change exists.
+
 ## What Changes
 
 - Add a guarded remote mode to discovery and codification, so they can run against an address other than `127.0.0.1` when explicitly allowed.

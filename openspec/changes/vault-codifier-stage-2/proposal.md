@@ -8,7 +8,7 @@ Stage 1 (`vault-brownfield-research`, 34 of 34 tasks done) codifies the harness 
 
 Stage 2 closes these three gaps. The first two raise what the codifier can capture. The third measures whether agents follow the skills.
 
-A further gap, that no real cluster has been reviewed, is a separate change: [`vault-codifier-remote-review`](../vault-codifier-remote-review/proposal.md).
+A further gap, that no real cluster has been reviewed, is a separate change: [`vault-codifier-remote-review`](../vault-codifier-remote-review/proposal.md). Another, for clusters that already have Terraform for part of their configuration, is [`vault-codifier-existing-terraform`](../vault-codifier-existing-terraform/proposal.md).
 
 ## What Changes
 
