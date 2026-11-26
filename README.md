@@ -5,6 +5,7 @@
 [![Top language](https://img.shields.io/github/languages/top/abuxton/vault-agentic-codifier)](https://github.com/abuxton/vault-agentic-codifier)
 [![Terraform provider](https://img.shields.io/badge/hashicorp%2Fvault-4.8.0-844FBA?logo=terraform&logoColor=white)](https://registry.terraform.io/providers/hashicorp/vault/4.8.0)
 [![Vault Enterprise](https://img.shields.io/badge/Vault_Enterprise-2.2.2-FFEC6E?logo=vault&logoColor=black)](https://developer.hashicorp.com/vault)
+[![Built with IBM Bob](https://img.shields.io/badge/Built_with-IBM_Bob-0F62FE?logo=ibm&logoColor=white)](https://www.ibm.com/products/bob)
 
 Agent skills that survey a live HashiCorp Vault Enterprise cluster **read-only** and generate Terraform HCL for the `hashicorp/vault` provider (4.8.0), with `import {}` blocks, so that `terraform plan` reports no changes against the cluster.
 
