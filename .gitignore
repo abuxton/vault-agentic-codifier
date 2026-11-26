@@ -18,6 +18,17 @@ discovered_terraform/raw/
 discovered_terraform/run-report*.json
 discovered_terraform/run-report*.jsonl
 
+# Run state: written by every discovery run (discovery-orchestrator/scripts/run.sh), never kept in code.
+# Regenerate with `bash skills/discovery-orchestrator/scripts/run.sh`.
+discovered_terraform/run_report.json
+discovered_terraform/.state.json
+
+# Generic OpenSpec tooling: redeployed by `openspec init` for each workload, not part of this project.
+# The project's own spec, plan and tasks live in openspec/ and ARE tracked.
+.opencode/
+.github/prompts/
+.github/skills/
+
 # Editor and OS artefacts
 .DS_Store
 *.swp
