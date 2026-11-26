@@ -45,3 +45,6 @@ discovered_terraform/.state.json
 .codex/
 .cursor/
 .windsurf/
+
+# Git worktrees (git-flow feature branches)
+.worktrees/
