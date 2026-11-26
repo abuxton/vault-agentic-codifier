@@ -25,12 +25,12 @@ Tracking issue: [#16](https://github.com/abuxton/vault-agentic-codifier/issues/1
 
 | Task | Title | Phase | Capability | Type | Effort | Status |
 |---|---|---|---|---|---|---|
-| [TASK-S01](https://github.com/abuxton/vault-agentic-codifier/issues/1) | Verify provider resources and import ids for stage 2 | A | all | research | M | Ready to start |
-| [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | Blocked |
+| [TASK-S01](https://github.com/abuxton/vault-agentic-codifier/issues/1) | Verify provider resources and import ids for stage 2 | A | all | research | M | **Done** for CAP-008 and CAP-009; CAP-010 and CAP-011 are verified inside TASK-S05 and TASK-S06 |
+| [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | Ready to start |
 | [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | Blocked |
 | [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | Blocked |
-| [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Blocked |
-| [TASK-S06](https://github.com/abuxton/vault-agentic-codifier/issues/6) | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Blocked |
+| [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Ready to start |
+| [TASK-S06](https://github.com/abuxton/vault-agentic-codifier/issues/6) | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Ready to start |
 | [TASK-S07](https://github.com/abuxton/vault-agentic-codifier/issues/7) | Verification extensions (spec-check, verify, variants) | D | CAC8 to CAC10 | test | L | Blocked |
 | [TASK-S08](https://github.com/abuxton/vault-agentic-codifier/issues/8) | Eval suite scaffolding and deterministic graders | E | CAP-012 | test | L | Blocked |
 | [TASK-S09](https://github.com/abuxton/vault-agentic-codifier/issues/9) | Eval run with a real executor and baseline | E | CAP-012 | test | M | Blocked |
@@ -45,7 +45,7 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Type**: research
 **Effort**: M
 **Depends on**: none
-**Status**: Ready to start
+**Status**: **Done** for CAP-008 and CAP-009 ([`task-s01-decision.md`](task-s01-decision.md)). CAP-010 and CAP-011 are verified at the start of TASK-S05 and TASK-S06.
 **Description**: Do for stage 2 what TASK-006 did for stage 1. For every resource in the `specs.md` traceability table, confirm the resource name exists in `hashicorp/vault` 4.8.0, its required arguments, which arguments are write-only (not read back), and the import id shape, by running `terraform plan` with `import {}` against the harness or a scratch container. Record the result in `task-s01-decision.md`. Use the Terraform MCP or the documented fallback.
 **Acceptance Criteria**:
 - AC: A table lists each resource with its import id shape, the arguments Vault does not return, and whether the plan is zero-diff after import.
@@ -58,12 +58,12 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Type**: implementation
 **Effort**: M
 **Depends on**: TASK-S01
-**Status**: Blocked
-**Description**: Add the synthetic fixtures from CAP-008 and CAP-009 to `test/terraform`: a root EGP and RGP, a tenant EGP and RGP, and a TOTP method with a login-enforcement rule in `admin`. Extend `exporter.hcl` with read and list on the Sentinel and MFA paths, nothing else. Update the harness counts everywhere they appear.
+**Status**: Ready to start
+**Description**: Add the synthetic fixtures from CAP-008 and CAP-009 to `test/terraform`: a root EGP and RGP, a tenant EGP and RGP, and a TOTP method with a login-enforcement rule in `admin`. Extend `exporter.hcl` with the six read and list paths from `task-s01-decision.md` section 4, at every namespace depth the policy already covers, and nothing else. Update the harness counts everywhere they appear.
 **Acceptance Criteria**:
 - AC: `make -C test all` and `make -C test smoke-test` pass with the fixtures applied.
 - AC: `terraform plan` in each harness layer shows no changes after apply.
-- AC: The exporter token reads the new paths and a write attempt returns 403.
+- AC: The exporter token reads the new paths (200) and each write in `task-s01-decision.md` section 4 returns 403, tested against the committed harness.
 - AC: `make codify-test` still passes with updated counts (CAC8).
 - AC: Fixture values carry the `SYNTHETIC-` convention and no real seed or key (CAC9, CAC10).
 
@@ -105,8 +105,8 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Effort**: XL
 **Skill**: `skills/discovery-auth-mounts`, `skills/codification-auth-mounts`
 **Depends on**: TASK-S01
-**Status**: Blocked
-**Description**: Build the scratch variant fixture for LDAP, Kubernetes, AWS, cert, token roles and JWT/OIDC outside `admin`, extend discovery to read the method config and roles with secrets masked, and extend the generator to emit per-method resources. One method at a time, each with its own zero-diff check.
+**Status**: Ready to start
+**Description**: First verify the CAP-010 resources and import ids as TASK-S01 did, and append them to `task-s01-decision.md`. Then build the scratch variant fixture for LDAP, Kubernetes, AWS, cert, token roles and JWT/OIDC outside `admin`, extend discovery to read the method config and roles with secrets masked, and extend the generator to emit per-method resources. One method at a time, each with its own zero-diff check.
 **Acceptance Criteria**:
 - AC: CAP-010 AC1 to AC7 hold in the variant run.
 - AC: No fixture secret appears in any file, report or log (CAC10).
@@ -119,8 +119,8 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Effort**: XL
 **Skill**: `skills/discovery-secrets-engines`, `skills/codification-secrets-engines`
 **Depends on**: TASK-S01
-**Status**: Blocked
-**Description**: Build the scratch variant fixture for PKI, database, AWS, transit and SSH, extend discovery to read engine config without key material, and extend the generator to emit per-engine resources. One engine at a time, each with its own zero-diff check.
+**Status**: Ready to start
+**Description**: First verify the CAP-011 resources and import ids as TASK-S01 did, and append them to `task-s01-decision.md`. Then build the scratch variant fixture for PKI, database, AWS, transit and SSH, extend discovery to read engine config without key material, and extend the generator to emit per-engine resources. One engine at a time, each with its own zero-diff check.
 **Acceptance Criteria**:
 - AC: CAP-011 AC1 to AC8 hold in the variant run.
 - AC: No private key, issued certificate, transit key bytes or credential appears anywhere (CAC10).

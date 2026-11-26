@@ -5,7 +5,7 @@ Capability specs CAP-008 to CAP-012 for stage 2. They extend the stage-1 specs i
 ## Conventions
 
 - The stage-1 conventions apply unchanged: documentation source `git@github.com:hashicorp/web-unified-docs.git`, provider `hashicorp/vault` 4.8.0, Terraform `>= 1.9`, aliased providers (never the resource-level `namespace` argument), read-only discovery, no secrets in output, byte-identical re-runs.
-- Provider resource names and import ids in this file are **to be verified** against 4.8.0 by TASK-S01, the same way stage 1 did in TASK-006. Where TASK-S01 disagrees with this file, TASK-S01 wins and this file is corrected.
+- Provider resource names and import ids for CAP-008 and CAP-009 were verified against 4.8.0 by TASK-S01 ([`task-s01-decision.md`](task-s01-decision.md)). Those for CAP-010 and CAP-011 are verified at the start of TASK-S05 and TASK-S06 and appended to that note. Where a task note disagrees with this file, the note wins and this file is corrected.
 - The harness is the oracle for CAP-008 to CAP-011. A fixture added to the harness is committed and documented, and `make -C test smoke-test` still passes.
 - Every capability here runs against the harness or throwaway containers on `127.0.0.1`. The review of a non-harness cluster is a separate change, [`vault-codifier-remote-review`](../vault-codifier-remote-review/proposal.md).
 
@@ -30,24 +30,24 @@ Capability specs CAP-008 to CAP-012 for stage 2. They extend the stage-1 specs i
 - AC5: Policies of the same name in different namespaces do not collide (CAC6).
 - AC6: On a cluster without Sentinel (a 404 or 403 on the list endpoints), the codifier records the status in the run report, emits nothing, and exits 0. The stage-1 `empty-cluster` variant still passes.
 - AC7: `terraform plan` after import is zero-diff in every layer (CAC2). If the provider cannot read a field back, the generator applies the same `lifecycle { ignore_changes }` treatment as stage 1 and records it in `coverage.md`.
-- AC8: The exporter token reads these paths and cannot write to them (CAC4).
+- AC8: The exporter token reads these paths and cannot write to them (CAC4). The stage-1 exporter policy grants `list` only on `sys/policies/egp` and `sys/policies/rgp`, so `GET` returns 403; TASK-S02 adds `read` on `sys/policies/egp/*` and `sys/policies/rgp/*` (TASK-S01 section 4).
 
 ## CAP-009: MFA
 
 **Capability**: `mfa`
 **Description**: Discover MFA methods and login enforcement rules and emit them. A method's secret material is never read or emitted.
-**Inputs**: `LIST /v1/identity/mfa/method`, `GET /v1/identity/mfa/method/<type>/<id>`, `LIST /v1/identity/mfa/login-enforcement`, `GET /v1/identity/mfa/login-enforcement/<name>`.
+**Inputs**: `LIST /v1/identity/mfa/method` (per namespace; a method in `admin` is not visible from root), `GET /v1/identity/mfa/method/<type>/<id>`, `LIST /v1/identity/mfa/login-enforcement`, `GET /v1/identity/mfa/login-enforcement/<name>`.
 **Outputs**: `<ns>_mfa.tf`, `imports_mfa.tf` and `mfa.md` in the `teams` layer, next to the identity objects they reference.
 **Fixture** (TASK-S02): in `admin`, one TOTP method and one login-enforcement rule that requires it for the `vault-platform-admin` group.
 **Acceptance Criteria**:
 - AC1: The output contains one `vault_identity_mfa_totp` and one `vault_identity_mfa_login_enforcement` for the fixture, in provider alias `admin`.
 - AC2: The enforcement rule references the method and the group through resource references, never UUID literals (as CAP-007 AC7).
-- AC3: Duo, Okta and PingID methods, when present, are emitted with their key arguments as variables with no default, and the value never appears in a payload, file, report or log (CAC10).
+- AC3: Duo, Okta and PingID methods, when present, are emitted with their key arguments (`secret_key` and `integration_key`; `api_token`; `settings_file_base64`) as variables with no default, plus `lifecycle { ignore_changes }` on those arguments, because Vault does not return them and the plan would otherwise show an update (verified for Duo; Okta and PingID in TASK-S04). The value never appears in a payload, file, report or log (CAC10).
 - AC4: No TOTP seed, QR code or barcode value is read. The discovery stage does not call the generate or admin-generate endpoints.
-- AC5: Method ids are UUIDs; they are used only in `imports_mfa.tf`.
+- AC5: Method ids are UUIDs and are used only in `imports_mfa.tf`. A login enforcement is imported by its **name**, not a UUID (TASK-S01).
 - AC6: `mfa.md` lists every method and enforcement rule with its namespace and the groups, entities and mounts it targets.
 - AC7: A namespace with no MFA objects produces no empty file.
-- AC8: Zero-diff after import (CAC2); import id shapes are recorded by TASK-S01.
+- AC8: Zero-diff after import (CAC2). Verified for TOTP and enforcement in TASK-S01: import is by method UUID and enforcement name, with 0 to add, 0 to change.
 
 ## CAP-010: Auth method configuration
 
