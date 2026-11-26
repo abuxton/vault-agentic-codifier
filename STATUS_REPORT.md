@@ -14,8 +14,8 @@ Phases 1 to 4 are done and validated against the harness. Phase 3 (codification)
 | 2 Discovery | 007–014 | 8 of 8 | — |
 | 3 Codification | 015–022, 034 | 9 of 9 | — |
 | 4 Validation | 023–027, 033 | 6 of 6 | — |
-| 5 Docs and delivery | 028–030, 032 | 0 of 4 | all |
-| **Total** | 34 | **33** | **4 outstanding (028, 029, 030, 032)** |
+| 5 Docs and delivery | 028–030, 032 | 2 of 4 (028, 029) | 030 in progress; 032 blocked on decisions |
+| **Total** | 34 | **32** (an earlier version said 33; that was a counting error) | **2 outstanding (030, 032)** |
 
 ## Evidence from the harness (Vault 2.2.2+ent)
 
@@ -103,5 +103,5 @@ Two generator gaps found by the variants and fixed: `admin-config.sh` now reads 
 
 ## Next steps, in order
 
-1. TASK-028..030: AGENTS.md, README, traceability.
-2. TASK-032: authenticate `gh`, review the committed `discovered_terraform/` output, create the repository and push.
+1. TASK-030: traceability matrix. `spec-check.sh` (40 of 52 CAP criteria, 12 of 12 self-test faults caught) is written and uncommitted; the matrix, `make spec-check`, the `tmp/*.md` reconciliation and the risks list remain.
+2. TASK-032: decide what to track (`.state.json`, `run_report.json`, `.github/prompts/`), install and authenticate `gh`, then create the repository and push. See `HANDOFF.md` section 3.

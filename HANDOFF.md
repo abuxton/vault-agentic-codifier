@@ -1,8 +1,8 @@
 # Handoff Document — terraform-vault-vault-codifier
 
-**Date**: 2026-11-25
-**Commit**: `965cc07` on `main` (no remote yet; see TASK-032), plus this handoff and `STATUS_REPORT.md` update
-**Status**: Phase 1 and Phase 2 **done and validated**. **Phase 3 and Phase 4 are complete** (33 of 34 tasks; TASK-015..027, TASK-033 and TASK-034 done). Next step: Phase 5, TASK-028..030 (docs), then TASK-032 (publish). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
+**Date**: 2026-11-26
+**Commit**: `0ba207f` on `main` (no remote yet; see TASK-032)
+**Status**: Phase 1 and Phase 2 **done and validated**. **Phases 3 and 4 are complete**. **32 of 34 tasks are done**; TASK-028 and TASK-029 (docs) are done, TASK-030 (traceability) is **in progress**, and TASK-032 (publish) is outstanding. An earlier version of this file said 33 of 34; that was a counting error (30 were done at that point). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
 
@@ -22,17 +22,20 @@ The goal is a Terraform baseline for which `terraform plan` shows **no changes**
 
 ```
 terraform-vault-vault-codifier/
-├── PROJECT_BRIEF.md
+├── README.md · AGENTS.md · PROJECT_BRIEF.md
+├── Makefile                           ← validation targets (static-gate, zero-diff, verify, variants, codify-test)
+├── docs/                              ← usage-guide.md, waza-review.md (traceability.md: TASK-030)
 ├── openspec/changes/vault-brownfield-research/
 │   ├── proposal.md · specs.md · design.md · tasks.md
 │   └── task-006-decision.md           ← verified import IDs, namespace style, Enterprise features
-├── skills/                            ← 17 agent skills (the deliverable); runnable scripts under each `scripts/`
+├── skills/                            ← 23 agent skills (the deliverable); scripts in `scripts/`, detail in `references/`
 │   ├── vault-codifier-conventions/    ← START HERE: tool choice, secret guard, naming, header, providers, layers
 │   ├── vault-exporter-setup/          ← TASK-031: provision the read-only exporter identity
 │   ├── discovery-{namespaces,root-config,policies,auth-mounts,
 │   │             secrets-engines,identity-teams,admin-config,orchestrator}/   ← TASK-007..014
-│   └── codification-{namespaces,root-config,policies,auth-mounts,
-│                     secrets-engines,teams,admin-config}/                     ← TASK-015..021
+│   ├── codification-{namespaces,root-config,policies,auth-mounts,
+│   │                 secrets-engines,teams,admin-config,layer-assembly}/       ← TASK-015..022
+│   └── validation-{static-gate,zero-diff,readonly-secrets,variants,codify-test}/  ← TASK-023..027
 ├── STATUS_REPORT.md                   ← point-in-time status, evidence and risks
 ├── test/                              ← synthetic brownfield harness (docker-compose + 3 Terraform layers)
 ├── tmp/                               ← research notes (never commit vault.hclic)
@@ -121,13 +124,30 @@ Two real generator gaps were found by the TASK-026 variants and fixed:
 
 Audit-log verification is scoped to the discovery window in `run_report.json` and to tokens with the `exporter` policy and without `root`. `NO_AUDIT_DEVICE=1` marks the audit checks SKIP, for the empty-cluster variant only.
 
-### Phase 5 — Not started
+### Phase 5 — Docs and delivery (2 of 4 done)
 
 | Task | Title | Status |
 |---|---|---|
-| TASK-028..030 | AGENTS.md, README, traceability | Not started |
-| **TASK-032** | Create the GitHub repository and publish to `https://github.com/abuxton/vault-agentic-codifier` | Ready. Needs `gh auth login`; review the committed `discovered_terraform/` output first |
-| **TASK-034** | Terraform MCP installed, or fallback documented | **Done**. Fallback documented in `vault-codifier-conventions` and every codification skill |
+| TASK-028 | `AGENTS.md` | **Done** (`79f1147`). Commands in it were run as written. |
+| TASK-029 | `README.md`, `docs/usage-guide.md` | **Done** (`0ba207f`). The guide's flow was run on the harness: exporter login, discovery, `make assemble`, `make zero-diff`, `make verify`, and a seed-layer plan of 18 import, 0 add, 0 change, 0 destroy. |
+| **TASK-030** | Traceability matrix and handoff review | **In progress**, see below |
+| **TASK-032** | Publish to `https://github.com/abuxton/vault-agentic-codifier` | Blocked on the decisions below |
+| TASK-034 | Terraform MCP installed, or fallback documented | **Done**. Fallback documented in `vault-codifier-conventions` and every codification skill |
+
+**TASK-030, state at hand-over (uncommitted):**
+
+- `skills/validation-codify-test/scripts/spec-check.sh` checks 40 of the 52 CAP criteria against the generated output, one result per criterion. All 40 pass. `--selftest` mutates a copy of the output and requires the matching criterion to fail: 12 of 12 faults caught. Reports: `discovered_terraform/validation/spec-check.{json,md}` (untracked).
+- Not yet done: a `make spec-check` target, a "Reference implementation" section in the `validation-codify-test` skill, `docs/traceability.md`, the `tmp/*.md` reconciliation, a final `make codify-test` result, and the risks list with owners.
+- The 12 CAP criteria not in `spec-check.sh` need a variant fixture, a plan, the audit log or a round trip. They map to `make variants` (CAP-001 AC6 and AC7, CAP-002 AC4, CAP-003 AC7, CAP-004 AC6, CAP-005 AC5, CAP-006 AC5 and AC6, CAP-007 AC4 and AC8), `make zero-diff` (CAC2, plus CAP-002 AC1, CAP-003 AC8, CAP-007 AC4) or are open. CAP-006 AC2 (lossless policy round trip) is verified by `make zero-diff`, because the plan compares the imported `policy` text with Vault; the matrix should say so. Two are partial and belong in the matrix as explicit gaps: **CAP-005 AC7** runs only when `VAULT_TOKEN` is set (it passes then, and is SKIP otherwise), and **CAP-004 AC7** checks only the absence of `plugin_version`, because no harness mount is pinned.
+- Counted against `specs.md`: CAP-001 7, CAP-002 6, CAP-003 8, CAP-004 8, CAP-005 7, CAP-006 8, CAP-007 8 = 52, plus 7 CAC = 59.
+
+**TASK-032, decisions needed before the first push** (found by checking the tree on 2026-11-26):
+
+1. `git ls-files` lists `discovered_terraform/.state.json` and `discovered_terraform/run_report.json`. TASK-032 AC2 requires the list to be empty. But `make verify` reads the `run_report.json` window and `docs/usage-guide.md` shows it, so either untrack both and regenerate on demand, or relax the AC. **Owner decision.**
+2. `.github/prompts/opsx-*.prompt.md` (OpenSpec tooling) is tracked. Keep or untrack. `.mcp.json`, `.opencode/` and `skills-lock.json` need the same call.
+3. `gh` is at `/opt/homebrew/bin/gh` (not on the default PATH). `gh auth status` printed nothing in 10 seconds, so authentication is unconfirmed and the command may hang. Run `gh auth login` and check it yourself.
+4. No licence is chosen; the README says so.
+5. The secret scan of history is `vault-radar` (pre-commit hook, offline, staged diffs only) rather than the `gitleaks` named in the AC; `gitleaks` is not installed. Scanning the whole history needs a separate `vault-radar scan git` run, or record the substitution.
 
 ### Waza review (TASK-033), done
 
@@ -175,7 +195,7 @@ The synthetic brownfield cluster (started with `make -C test all`) contains:
 
 | Namespace | Auth mounts | KV mounts | Policies (non-builtin) | Identity |
 |---|---|---|---|---|
-| root `""` | `approle/` (role: `terraform-admin`) | — | `operator`, `exporter` | — |
+| root `""` | `approle/` (roles: `terraform-admin`, `exporter`) | `secret/` (KV v2, preloaded) | `operator`, `exporter` | 1 entity (`exporter-agent`) and its alias |
 | `admin` | `approle/` (role: `namespace-provisioner`) | — | `admin`, `namespace-admin` | 6 entities, 9 groups |
 | `admin/platform` | `approle/` (role: `platform-ci`) | `secret/` (KV v2) | `platform-sre-read`, `platform-devops-write` | — |
 | `admin/app-billing` | `approle/` (role: `billing-service`) | `secret/` (KV v2) | `billing-developers-read`, `billing-owners-write` | — |
@@ -184,7 +204,7 @@ The synthetic brownfield cluster (started with `make -C test all`) contains:
 Other fixed facts:
 - Audit device: `file` at `/vault/logs/audit.log` in root namespace
 - Rate-limit quota: `global-rate-limit`, rate=1000, interval=60
-- No OIDC/LDAP, no group aliases, no entity aliases — discovery must handle empty-set correctly
+- No OIDC/LDAP and no group aliases; one entity alias (`exporter-agent`, root). Discovery must handle empty sets; `make variants` covers the cases the harness lacks
 - Builtin objects (`token/`, `sys/`, `identity/`, `cubbyhole/`, `default`, `root`) must be skipped
 
 Start the harness:
@@ -206,6 +226,8 @@ make -C test smoke-test  # verify 6/6 checks pass
 | Vault CLI | `/opt/homebrew/bin/vault` |
 | Terraform | `/opt/homebrew/bin/terraform` |
 | Docker | `~/.rd/bin/docker` (Rancher Desktop) |
+| tflint | `~/.local/bin/tflint` (0.66.0), used by `make static-gate` |
+| gh | `/opt/homebrew/bin/gh` (not on the default PATH; auth unconfirmed, TASK-032) |
 | jq, curl | on `PATH` |
 | waza | `~/bin/waza` (0.42.0), used by TASK-033 |
 | Vault licence | `./tmp/vault.hclic` (never committed) |
@@ -244,7 +266,9 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 2. ~~TASK-019 secrets-engines, TASK-020 teams, TASK-021 admin-config~~: done and validated, one commit each.
 3. ~~TASK-022 layer assembly~~ and ~~TASK-034 MCP fallback~~: done.
 4. ~~TASK-023..027 validation skills~~ and ~~TASK-033 waza fixes~~: done, one commit each.
-5. **TASK-028..030** docs, then **TASK-032** publish. Commit after each task.
+5. ~~TASK-028 `AGENTS.md`~~ and ~~TASK-029 README and usage guide~~: done, one commit each.
+6. **TASK-030** traceability: finish the items listed in section 3, Phase 5, then commit `spec-check.sh` with it.
+7. **TASK-032** publish, after the decisions listed in section 3, Phase 5. Commit after each task.
 
 Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
 
@@ -253,7 +277,7 @@ Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep 
 - `vault` and `terraform` are not on `PATH` by default: `export PATH=$PATH:/opt/homebrew/bin`.
 - zsh: `GID` is read-only, `--include=*` globs fail unquoted, and `$var` is not word-split. `jq` treats `label` as reserved; use `lbl`.
 - Scripts must run on `/bin/bash` 3.2: use `${arr[@]+"${arr[@]}"}` for empty arrays under `set -u`; no `mapfile`.
-- `gh` and the `timeout` command are not available in the default shell; `gh auth status` can hang.
+- `gh` and the `timeout` command are not available in the default shell.
 - Never print or commit the exporter token. Mint one with the `exporter` AppRole at `auth/approle/` (secret-id TTL 900 s, 1 use).
 
 ### Running against the harness
@@ -280,19 +304,19 @@ Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude
 
 ```
 Branch:  main
-Head:    965cc07  docs(conventions): ... (TASK-034)
-         a0be155  feat(codification-layer-assembly): ... (TASK-022)
-         3bb9c0f  docs: update status report and handoff after TASK-019..021
-         08e35f9  feat(codification-admin-config): ... (TASK-021)
-         f9ad41b  feat(codification-teams): ... (TASK-020)
-         de99452  feat(codification-secrets-engines): ... (TASK-019)
-         250a4ad  feat(codification-auth-mounts): ... (TASK-018)
-         23e9e44  feat(codification-policies): ... (TASK-017)
-         88c3cd8  feat(codification-root-config): ... (TASK-016)
-         75c15f1  feat(codification-namespaces): ... (TASK-015)
-         bfcb039  feat(discovery): validate TASK-007..014 ...
+Head:    0ba207f  docs: add README and usage guide ... (TASK-029)
+         35e54e5  fix(skills): repair four descriptions mangled by the waza restructure
+         79f1147  docs: add AGENTS.md ... (TASK-028)
+         c215578  docs: record Phase 4 complete in HANDOFF and STATUS_REPORT
+         2fc5e62  refactor(skills): restructure all 23 skills for waza ... (TASK-033)
+         1313c75  feat(validation-codify-test) ... (TASK-027)
+         b93ac9a  feat(validation-variants) ... (TASK-026)
+         8a9eabf  feat(validation-readonly-secrets) ... (TASK-025)
+         642fee8  validation-zero-diff (TASK-024) · 1f68a12  validation-static-gate (TASK-023)
 Remote:  (none; TASK-032)
-Generated output under discovered_terraform/terraform/ and run_report.json is committed; TASK-032 decides whether it stays.
+Untracked (TASK-030 in progress): skills/validation-codify-test/scripts/spec-check.sh,
+         discovered_terraform/validation/spec-check.{json,md}
+Generated output under discovered_terraform/terraform/ is committed; TASK-032 decides whether it stays.
 ```
 
 Before the first push (TASK-032) decide what to do with `discovered_terraform/terraform/` and `discovered_terraform/.state.json`, and confirm `test/terraform/**/terraform.tfstate*` and `*.hclic` are ignored. Then:
@@ -305,4 +329,4 @@ git push -u origin main
 
 ---
 
-*Updated 2026-11-25 after TASK-022 and TASK-034. Convention: one commit per task.*
+*Updated 2026-11-26 after TASK-029, with TASK-030 in progress. Convention: one commit per task.*
