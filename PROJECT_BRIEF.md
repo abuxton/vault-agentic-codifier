@@ -29,6 +29,12 @@ Seven capabilities, specified in [`specs.md`](openspec/changes/vault-brownfield-
 
 Specs run in dependency order: `namespaces` → `root-config` → `policies` → `auth-mounts` → `secrets-engines` → `teams` → `admin-config`.
 
+Three follow-on changes add further capabilities (CAP-008 to CAP-016); see section 7. The one for teams that **already have Terraform for part of their cluster** is [`vault-codifier-existing-terraform`](openspec/changes/vault-codifier-existing-terraform/proposal.md):
+
+- **CAP-014 `code-inventory`** — Reads the existing code and a state copy into a secret-free inventory with an identity key per object.
+- **CAP-015 `reconcile`** — Classifies every object against the live cluster (matched, drifted, unmanaged, unimported, renamed, state-only, orphan, out-of-policy, unresolved, unverifiable) and reports attribute drift from a plan-only run.
+- **CAP-016 `adopt-proposals`** — Writes an additive overlay of imports, `moved {}` suggestions and new resources. It never edits the existing code.
+
 ## 4. Architecture
 
 ### Four-phase pipeline
@@ -98,6 +104,16 @@ Change: [`openspec/changes/vault-brownfield-research/`](openspec/changes/vault-b
 | [`tasks.md`](openspec/changes/vault-brownfield-research/tasks.md) | ✅ Done | 30 implementation tasks in five phases: Foundation, Discovery Engine, Codification Engine, Validation & Testing, Documentation & Handoff |
 
 Implementation is in progress; see [`HANDOFF.md`](HANDOFF.md) and [`STATUS_REPORT.md`](STATUS_REPORT.md) for the current state.
+
+### Follow-on changes
+
+Each follow-on change extends stage 1 and leaves its criteria in force. They are independent of each other.
+
+| Change | Capabilities | Purpose | Status |
+|---|---|---|---|
+| [`vault-codifier-stage-2`](openspec/changes/vault-codifier-stage-2/proposal.md) | CAP-008 to CAP-012 | Sentinel and MFA, auth-method and engine configuration, and a skill eval suite | Specified; tasks not started |
+| [`vault-codifier-remote-review`](openspec/changes/vault-codifier-remote-review/proposal.md) | CAP-013 | A guarded, read-only review of a real, non-harness cluster | Specified; tasks not started |
+| [`vault-codifier-existing-terraform`](openspec/changes/vault-codifier-existing-terraform/proposal.md) | CAP-014 to CAP-016 | Compare existing Vault Terraform and state with the live cluster; gap and drift report plus additive adopt proposals | Specified; tasks not started |
 
 ## 8. Roles
 
