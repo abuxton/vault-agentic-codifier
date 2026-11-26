@@ -22,15 +22,16 @@ produce a correlation matrix that shows which auth roles, identity groups and
 identity entities reference each policy. The matrix is also emitted as JSON so
 `codification-teams` can consume it.
 
-Input: `discovered_terraform/raw/<namespace>/policies.json` (plus
+Input: `discovered_terraform/raw/<namespace>/policies.json` and `sentinel.json` (plus
 `auth_mounts.json` and `identity.json` for correlation, read-only).
 Output: `discovered_terraform/terraform/<layer>/policies.tf`, `imports.tf`,
-`policies/<namespace>/<name>.hcl`, `policies/correlation.md`,
+`policies/<namespace>/<name>.hcl`, `<ns>_sentinel.tf`, `imports_sentinel.tf`,
+`policies/sentinel/<namespace>/<kind>-<name>.sentinel`, `policies/correlation.md`,
 `policies/correlation.json`, `policies/coverage.md`.
 
 ## 2. Governance
 
-- **Ownership**: only `vault_policy` is emitted. No auth backend, role, mount,
+- **Ownership**: only `vault_policy`, `vault_egp_policy` and `vault_rgp_policy` are emitted. No auth backend, role, mount,
   namespace or identity resources.
 - Policies are placed in the layer matching their namespace: root -> `admin/`,
   `admin` -> `admin/`, tenant namespaces -> `seed/`.
@@ -73,10 +74,12 @@ Output: `discovered_terraform/terraform/<layer>/policies.tf`, `imports.tf`,
    reference to a policy not in the same namespace's set is `dangling` and is
    marked as such. Write `correlation.md` (policy x auth role, identity group,
    entity, per namespace) and `correlation.json`.
-7. **Coverage**: `coverage.md` lists EGP/RGP objects discovered
-   (`sys/policies/egp`, `sys/policies/rgp`) with the resource used per TASK-006
-   (dedicated resource or `vault_generic_endpoint`); "none discovered" if empty.
-8. Prepend provenance header (`Capability: policies`); run fmt and validate.
+7. **Sentinel** (CAP-008): emit one `vault_egp_policy` or `vault_rgp_policy` per `sentinel.json` entry with `name`,
+   `enforcement_level`, `paths` (EGP, Vault's order) and `policy = file(...)`. The source always goes to a
+   `.sentinel` file, byte-for-byte. Import id is the bare name.
+8. **Coverage**: `coverage.md` lists the EGP/RGP names, a per-namespace count ("none" where empty) and a table of
+   enforcement level and paths; "none discovered" if empty.
+9. Prepend provenance header (`Capability: policies`); run fmt and validate.
 
 ## 8. Stop conditions
 

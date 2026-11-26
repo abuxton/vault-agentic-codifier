@@ -22,7 +22,7 @@ Run against http://127.0.0.1:8200. Output generated twice into a scratch directo
 | admin-config | 0 | pass | none declared |
 | auth-mounts | 11 | pass | pass |
 | namespaces | 4 | pass | pass |
-| policies | 10 | pass | pass |
+| policies | 14 | pass | pass |
 | root-config | 2 | pass | pass |
 | secrets-engines | 8 | pass | pass |
 | teams | 17 | pass | pass |

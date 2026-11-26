@@ -16,3 +16,5 @@
 - A policy named by a role but absent from its namespace is marked `dangling`.
 - `correlation.json` validates as JSON and is non-empty.
 - 10 `import {}` blocks.
+- Stage 2 (CAP-008): 2 `vault_egp_policy` and 2 `vault_rgp_policy` (root and `admin/platform`), 4 more `import {}`
+  blocks in `imports_sentinel.tf`, 4 `.sentinel` files byte-identical to the API, and `coverage.md` with counts per namespace.

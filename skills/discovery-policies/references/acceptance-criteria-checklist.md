@@ -9,5 +9,5 @@
 - [ ] **AC-2 (CAP-006 AC1)**: Built-in policies `default`, `root` and `default-ceiling` are excluded from all output payloads.
 - [ ] **AC-3 (CAP-006 AC2)**: Stored `policy_text` matches the live cluster API output byte-for-byte.
 - [ ] **AC-4 (CAP-006 AC7)**: Path stanzas with namespace-relative paths (e.g. `secret/data/*`) are preserved without alterations.
-- [ ] **AC-5 (CAP-006 AC8)**: EGP/RGP checks return "none" for the harness without causing errors.
+- [ ] **AC-5 (CAP-006 AC8, CAP-008)**: EGP/RGP lists are read without error; `sentinel.json` holds 1 EGP and 1 RGP in root and in `admin/platform`, and none elsewhere.
 - [ ] **AC-6 (CAC5)**: Two consecutive discovery runs produce byte-identical JSON payloads.

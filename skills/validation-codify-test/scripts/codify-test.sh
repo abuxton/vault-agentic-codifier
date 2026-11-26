@@ -101,7 +101,7 @@ stage codify-run-1    -     "discover with a fresh exporter token and generate" 
 stage codify-run-2    -     "second run against the unchanged cluster" codify_run 2
 stage idempotence     CAC5  "two runs give byte-identical output and raw trees" idempotent
 stage ownership       "CAC6,CAC7" "labels unique and deterministic; provenance header on every file" bash "$sk/codification-layer-assembly/scripts/check.sh" "$WORK/run1/terraform"
-stage spec-check      CAP   "40 harness criteria of specs.md against the generated output" env VAULT_TOKEN=root bash "$sk/validation-codify-test/scripts/spec-check.sh" "$WORK/run1/terraform" "$REP"
+stage spec-check      CAP   "45 harness criteria of specs.md against the generated output" env VAULT_TOKEN=root bash "$sk/validation-codify-test/scripts/spec-check.sh" "$WORK/run1/terraform" "$REP"
 stage static-gate     CAC1  "validate, fmt -check and tflint in every layer" static_gate
 stage zero-diff       CAC2  "import into a scratch state; plan exits 0 in every layer" zero_diff
 stage readonly-secrets "CAC3,CAC4" "audit log read-only and no secrets in output or raw" verify
@@ -126,7 +126,7 @@ cac_row() { printf '%s\n' "$1"; }
   echo "| CAC5 | idempotent | idempotence | $(st idempotence) |"
   echo "| CAC6 | naming | ownership | $(st ownership) |"
   echo "| CAC7 | provenance | ownership | $(st ownership) |"
-  echo "| CAP-001 to CAP-007 | harness criteria (40 of 52) | spec-check | $(st spec-check) |"
+  echo "| CAP-001 to CAP-007 | harness criteria (45: 40 stage 1, 5 CAP-008) | spec-check | $(st spec-check) |"
   echo; echo "## Per capability"; echo; echo "| Capability | Resources | CAC1 (static gate) | CAC2 (zero diff) |"; echo "|---|---|---|---|"
   jq -r '.[] | [.capability, (.resources|tostring), .result] | @tsv' <<<"$caps" | while IFS=$'\t' read -r c n r; do
     g=$(gate_fail "$c"); [ "$(st static-gate)" = PASS ] && gs=pass || { [ "${g:-0}" -gt 0 ] && gs="FAIL ($g)" || gs="pass"; }

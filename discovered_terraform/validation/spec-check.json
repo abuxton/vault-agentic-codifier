@@ -1,6 +1,6 @@
 {
   "counts": {
-    "PASS": 40
+    "PASS": 45
   },
   "results": [
     {
@@ -169,8 +169,33 @@
       "status": "PASS"
     },
     {
-      "detail": "coverage.md lists the 2 EGP and 2 RGP fixture policies by name; none is generated yet (TASK-S03)",
+      "detail": "coverage.md lists the 2 EGP and 2 RGP fixture policies by name; they are emitted in *_sentinel.tf, not in *_policies.tf",
       "id": "CAP-006-AC8",
+      "status": "PASS"
+    },
+    {
+      "detail": "2 EGP and 2 RGP: root without a provider, admin/platform under vault.admin_platform; names and enforcement levels match the fixture",
+      "id": "CAP-008-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "the four Sentinel sources are files, byte-identical to the fixture text",
+      "id": "CAP-008-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "EGP paths keep the order Vault returns; an RGP has no paths",
+      "id": "CAP-008-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "coverage.md states the EGP and RGP count per namespace and none where there is none",
+      "id": "CAP-008-AC4",
+      "status": "PASS"
+    },
+    {
+      "detail": "four import blocks by bare policy name; labels carry the namespace so equal names in two namespaces cannot collide",
+      "id": "CAP-008-AC5",
       "status": "PASS"
     },
     {

@@ -259,7 +259,7 @@ resource "vault_egp_policy" "platform_advisory" {
   paths             = ["secret/*"]
   enforcement_level = "advisory"
   policy            = <<-EOT
-    // SYNTHETIC fixture: always passes.
+    // Harness fixture: always passes.
     main = rule { true }
   EOT
 }
@@ -269,7 +269,7 @@ resource "vault_rgp_policy" "platform_soft" {
   name              = "synthetic-rgp-platform-soft"
   enforcement_level = "soft-mandatory"
   policy            = <<-EOT
-    // SYNTHETIC fixture: always passes.
+    // Harness fixture: always passes.
     main = rule { true }
   EOT
 }

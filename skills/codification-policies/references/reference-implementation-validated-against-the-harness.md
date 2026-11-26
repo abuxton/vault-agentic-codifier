@@ -13,7 +13,9 @@ Run `skills/codification-policies/scripts/generate.sh [raw] [out-root]`.
 - Exit 2 on a missing or unreadable `policies.json`, an unsafe policy name, or a duplicate label.
 - A policy named by a role, group or entity but absent from its namespace is `dangling` in
   `correlation.{md,json}`; nothing is fabricated for it.
-- EGP/RGP: discovery lists names only, so `coverage.md` records them for manual review.
+- EGP/RGP (CAP-008): emitted as `vault_egp_policy` and `vault_rgp_policy` in `<ns>_sentinel.tf` with
+  `imports_sentinel.tf` and sources under `<layer>/policies/sentinel/<root|ns__path>/<kind>-<name>.sentinel`.
+  The harness has 2 EGP and 2 RGP (root and `admin/platform`).
 
 Validated: `fmt -check` and `validate` pass in `admin/` and `seed/`; `terraform plan` shows
 `7 to import` in `admin/` (policies, audit, quota, namespace) and `6 to import` in `seed/`, all with

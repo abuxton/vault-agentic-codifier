@@ -6,7 +6,7 @@ Maps every acceptance criterion in [`specs.md`](../openspec/changes/vault-brownf
 
 | Check | Command | What it covers |
 |---|---|---|
-| `spec-check` | `make spec-check` (`make spec-check-selftest` injects 12 faults) | 40 harness criteria, one result per criterion, against the generated output. Report: `discovered_terraform/validation/spec-check.md` |
+| `spec-check` | `make spec-check` (`make spec-check-selftest` injects 14 faults) | 45 harness criteria (40 stage 1, 5 CAP-008), one result per criterion, against the generated output. Report: `discovered_terraform/validation/spec-check.md` |
 | `variants` | `make variants` | 10 criteria that need a fixture the harness lacks (OIDC, userpass, PKI, a nested namespace, a 403 token, an empty cluster) |
 | `zero-diff` | `make zero-diff` | CAC2 and the plan-based criteria: import into a scratch state, `plan -detailed-exitcode` is 0 in every layer |
 | `static-gate` | `make static-gate` | CAC1: `fmt -check`, `validate`, `tflint` |
@@ -24,6 +24,7 @@ Implementing task per capability: each capability has a discovery task and a gen
 | CAP-005 namespaces | TASK-007 | TASK-015 |
 | CAP-006 policies | TASK-009 | TASK-017 |
 | CAP-007 teams | TASK-012 | TASK-020 |
+| CAP-008 sentinel-policies (stage 2) | TASK-S03 (`policies.sh`, `sentinel.json`) | TASK-S03 (`codification-policies`) |
 
 ## 1. Common criteria
 
@@ -50,6 +51,7 @@ Implementing tasks are in the table above. The result for each criterion is in t
 | CAP-005 | AC1, AC2, AC3, AC4, AC6, AC7 |
 | CAP-006 | AC1, AC3, AC4, AC7, AC8 |
 | CAP-007 | AC1, AC2, AC3, AC5, AC6, AC7 |
+| CAP-008 (stage 2) | AC1, AC2, AC3, AC4, AC5 |
 
 ## 3. Criteria verified by another check (12)
 
@@ -96,7 +98,7 @@ The harness holds more than `specs.md` assumed. The checks accept the real count
 
 | Item | Risk | Owner |
 |---|---|---|
-| Sentinel EGP and RGP | Mapped, never exercised: no harness fixture, so import and `file()` emission are untested | Vault platform owner |
+| Sentinel EGP and RGP | Emitted and zero-diff against the harness (TASK-S03). The `empty-cluster` variant covers CAP-008 AC6; AC7 `ignore_changes` was not needed | Vault platform owner |
 | MFA methods and login enforcement | Not discovered or emitted; no fixture | Vault platform owner |
 | Auth methods other than AppRole | The backend is emitted as a mount; method configuration is only checked for OIDC (variant) and LDAP (scratch payload) | Generator owner |
 | Engines other than KV v2 | Emitted as `vault_mount` only; engine configuration is listed in `coverage.md` for manual review | Generator owner |

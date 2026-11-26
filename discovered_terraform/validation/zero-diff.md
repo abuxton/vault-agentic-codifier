@@ -7,16 +7,16 @@ Imports applied in a scratch state (Vault is not modified), followed by `terrafo
 | admin-config | 0 | none declared |
 | auth-mounts | 11 | pass |
 | namespaces | 4 | pass |
-| policies | 10 | pass |
+| policies | 14 | pass |
 | root-config | 2 | pass |
 | secrets-engines | 8 | pass |
 | teams | 17 | pass |
 
 | Layer | Resources | Result |
 |---|---|---|
-| admin | 31 | pass |
+| admin | 33 | pass |
 | namespaces | 3 | pass |
-| seed | 18 | pass |
+| seed | 20 | pass |
 
 ## ignore_changes entries
 

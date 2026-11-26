@@ -39,5 +39,6 @@ namespace (`admin/namespace-admin` is wrong).
 | `admin` | `namespace-admin` |
 | `admin/platform` | `platform-sre-read` (resource uses `provider = vault.<alias>`) |
 
-EGP/RGP use `vault_egp_policy` / `vault_rgp_policy` with the name as import ID.
-The harness has none; record "none" in `coverage.md`.
+EGP/RGP use `vault_egp_policy` / `vault_rgp_policy` with the bare name as import ID (verified, `task-s01-decision.md`).
+Each goes in `<ns>_sentinel.tf` with `policy = file("${path.module}/policies/sentinel/<ns>/<kind>-<name>.sentinel")`.
+A namespace without any gets no file and `coverage.md` records "none".

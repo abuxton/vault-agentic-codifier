@@ -34,7 +34,7 @@ The following non-negotiable governance rules apply:
 3. **Skip Builtins**: Always ignore and exclude the built-in `default`, `root` and `default-ceiling` policies. Vault 2.x creates `default-ceiling` (the agent-registry ceiling policy) in every namespace; it is managed internally and is not codified. They cannot be managed via standard `vault_policy` resources.
 4. **Verbatim Policy Text**: Stored policy documents must preserve the raw string returned by Vault byte-for-byte (including comments and whitespace).
 5. **No Mutation of Paths**: Path stanzas within policies (even if using relative paths like `secret/data/*`) must NOT be rewritten during discovery.
-6. **Graceful Handling of Sentinel (EGP/RGP)**: On non-Enterprise editions or when permissions are missing, log 403/404 to the run report and record "none" / "unavailable" in coverage.
+6. **Graceful Handling of Sentinel (EGP/RGP)**: On non-Enterprise editions or when permissions are missing, log 403/404 to the run report and record "none" / "unavailable" in coverage. Where the list answers 200, `GET` each policy and store its body (CAP-008).
 7. **Deterministic Storage**: Format output JSON with sorted keys (`jq -S`).
 8. **Provenance**: Cite upstream HashiCorp documentation: `https://developer.hashicorp.com/vault/api-docs/system/policies` and `https://developer.hashicorp.com/vault/docs/concepts/policies`.
 
@@ -68,9 +68,10 @@ The following non-negotiable governance rules apply:
        │
        ├──► [LIST /v1/sys/policies/egp (Sentinel Endpoint)]
        ├──► [LIST /v1/sys/policies/rgp (Sentinel Endpoint)]
+       │       └──► [GET /v1/sys/policies/<egp|rgp>/<name> for each name]
        │
        ▼
-[3. Write discovered_terraform/raw/<namespace>/policies.json via jq -S]
+[3. Write <namespace>/policies.json and <namespace>/sentinel.json via jq -S]
        │
        ▼
 [4. Append Sentinel findings to discovered_terraform/raw/coverage.json]

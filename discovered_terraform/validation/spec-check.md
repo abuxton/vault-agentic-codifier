@@ -37,7 +37,12 @@ Harness-verifiable acceptance criteria of `specs.md` against the generated Terra
 | CAP-006-AC3 | PASS | correlation.md links operator, namespace-admin, platform-devops-write, billing-developers-read and identity-developers-read to their roles |
 | CAP-006-AC4 | PASS | namespace-admin is correlated with the three admin groups in admin |
 | CAP-006-AC7 | PASS | namespace-relative paths are preserved verbatim (secret/data/platform/sre/*) |
-| CAP-006-AC8 | PASS | coverage.md lists the 2 EGP and 2 RGP fixture policies by name; none is generated yet (TASK-S03) |
+| CAP-006-AC8 | PASS | coverage.md lists the 2 EGP and 2 RGP fixture policies by name; they are emitted in *_sentinel.tf, not in *_policies.tf |
+| CAP-008-AC1 | PASS | 2 EGP and 2 RGP: root without a provider, admin/platform under vault.admin_platform; names and enforcement levels match the fixture |
+| CAP-008-AC2 | PASS | the four Sentinel sources are files, byte-identical to the fixture text |
+| CAP-008-AC3 | PASS | EGP paths keep the order Vault returns; an RGP has no paths |
+| CAP-008-AC4 | PASS | coverage.md states the EGP and RGP count per namespace and none where there is none |
+| CAP-008-AC5 | PASS | four import blocks by bare policy name; labels carry the namespace so equal names in two namespaces cannot collide |
 | CAP-007-AC1 | PASS | 9 internal groups in admin: 3 tenant admin groups with namespace-admin, 6 team groups |
 | CAP-007-AC2 | PASS | 6 synthetic-user entities, each referenced exactly once by a team group (the exporter-agent entity is harness drift) |
 | CAP-007-AC3 | PASS | no group alias and no alias in admin; teams.md says none for admin (the root exporter-agent alias is harness drift) |
@@ -45,4 +50,4 @@ Harness-verifiable acceptance criteria of `specs.md` against the generated Terra
 | CAP-007-AC6 | PASS | teams.md says access is applied at the namespace layer and marks the policy links inferred |
 | CAP-007-AC7 | PASS | no UUID literal in any .tf outside imports*.tf |
 
-Verdict: **PASS** ({"PASS":40})
+Verdict: **PASS** ({"PASS":45})

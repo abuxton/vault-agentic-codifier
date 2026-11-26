@@ -46,3 +46,10 @@ curl -s -S \
   --header "X-Vault-Namespace: admin" \
   "${VAULT_ADDR}/v1/sys/policies/rgp" | jq -S .
 ```
+
+### Read One Sentinel Policy (read only)
+```bash
+curl -s -S --header "X-Vault-Token: ${EXPORTER_TOKEN}" --header "X-Vault-Namespace: admin/platform" \
+  "${VAULT_ADDR}/v1/sys/policies/egp/synthetic-egp-platform-advisory" | jq -S .data
+```
+The exporter policy needs `read` on `sys/policies/egp/*` and `sys/policies/rgp/*`.

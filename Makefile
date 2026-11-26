@@ -29,7 +29,7 @@ verify: ## Audit log is read-only for the discovery window and no secret is in t
 verify-selftest: ## Inject faults; the verifier must catch every one (TASK-025)
 	bash skills/validation-readonly-secrets/scripts/verify.sh --selftest
 
-spec-check: ## Check 40 harness criteria of specs.md against the generated output (TASK-030)
+spec-check: ## Check 45 harness criteria of specs.md against the generated output (TASK-030)
 	bash skills/validation-codify-test/scripts/spec-check.sh
 
 spec-check-selftest: ## Mutate a copy of the output; each fault must fail its criterion (TASK-030)

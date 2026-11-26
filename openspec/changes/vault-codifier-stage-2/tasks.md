@@ -27,7 +27,7 @@ Tracking issue: [#16](https://github.com/abuxton/vault-agentic-codifier/issues/1
 |---|---|---|---|---|---|---|
 | [TASK-S01](https://github.com/abuxton/vault-agentic-codifier/issues/1) | Verify provider resources and import ids for stage 2 | A | all | research | M | **Done** for CAP-008 and CAP-009; CAP-010 and CAP-011 are verified inside TASK-S05 and TASK-S06 |
 | [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | **Done** |
-| [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | Ready to start |
+| [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | **Done** |
 | [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | Ready to start |
 | [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Ready to start |
 | [TASK-S06](https://github.com/abuxton/vault-agentic-codifier/issues/6) | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Ready to start |
@@ -75,7 +75,7 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Effort**: L
 **Skill**: `skills/discovery-policies`, `skills/codification-policies`
 **Depends on**: TASK-S02
-**Status**: Ready to start
+**Status**: Done
 **Description**: Extend discovery to store per-namespace EGP and RGP payloads and the generator to emit `vault_egp_policy`, `vault_rgp_policy`, the Sentinel sources under `policies/sentinel/<ns>/`, imports, and the coverage and correlation sections.
 **Acceptance Criteria**:
 - AC: CAP-008 AC1 to AC8 hold against the extended harness.

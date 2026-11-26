@@ -8,7 +8,7 @@ resource "vault_egp_policy" "root_advisory" {
   paths             = ["secret/*", "auth/approle/*"]
   enforcement_level = "advisory"
   policy            = <<-EOT
-    // SYNTHETIC fixture: always passes.
+    // Harness fixture: always passes.
     main = rule { true }
   EOT
 }
@@ -17,7 +17,7 @@ resource "vault_rgp_policy" "root_soft" {
   name              = "synthetic-rgp-root-soft"
   enforcement_level = "soft-mandatory"
   policy            = <<-EOT
-    // SYNTHETIC fixture: always passes.
+    // Harness fixture: always passes.
     main = rule { true }
   EOT
 }

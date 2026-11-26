@@ -20,6 +20,13 @@ Saved to `discovered_terraform/raw/<namespace>/policies.json` (or `root/policies
 ]
 ```
 
+### Per-Namespace `sentinel.json` (CAP-008)
+Saved next to `policies.json`. `paths` is `null` for an RGP. `policy_text` is `.data.policy` verbatim.
+```json
+{"egp":[{"enforcement_level":"advisory","name":"synthetic-egp-platform-advisory","namespace":"admin/platform","paths":["secret/*"],"policy_text":"...","type":"egp"}],
+ "rgp":[]}
+```
+
 ### Coverage Record (`coverage.json`)
 `LIST` on an empty EGP/RGP set returns 404, which is recorded as an empty list, not a failure.
 ```json

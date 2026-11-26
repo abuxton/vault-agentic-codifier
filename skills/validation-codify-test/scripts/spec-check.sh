@@ -33,6 +33,8 @@ if [ "${1:-}" = "--selftest" ]; then # mutate a copy of the output; the matching
   mut CAP-005-AC6 "root namespace emitted"        "printf 'resource \"vault_namespace\" \"root\" {\n  path = \"\"\n}\n' >> namespaces/namespaces.tf"
   mut CAP-006-AC1 "a policy dropped"              "rm seed/admin_platform_policies.tf"
   mut CAP-006-AC8 "an EGP policy emitted"         "printf 'resource \"vault_egp_policy\" \"x\" {}\n' >> admin/admin_policies.tf"
+  mut CAP-008-AC1 "a tenant Sentinel file dropped" "rm seed/admin_platform_sentinel.tf"
+  mut CAP-008-AC2 "a Sentinel source edited"      "printf '// tampered\n' >> admin/policies/sentinel/root/egp-synthetic-egp-root-advisory.sentinel"
   mut CAP-007-AC7 "a UUID literal in a .tf"       "printf '# 0a1b2c3d-0a1b-0a1b-0a1b-0a1b2c3d4e5f\n' >> admin/admin_identity.tf"
   [ $bad = 0 ] && echo "SELFTEST: all faults detected"; exit $bad
 fi
@@ -174,11 +176,37 @@ yn CAP-006-AC3 "correlation.md links operator, namespace-admin, platform-devops-
 grep '`namespace-admin`' "$c" | grep -q 'vault-app-billing-admin.*vault-app-identity-admin.*vault-platform-admin'
 yn CAP-006-AC4 "namespace-admin is correlated with the three admin groups in admin"
 grep -q 'path "secret/data/platform/sre/\*"' "$T/seed/admin_platform_policies.tf"; yn CAP-006-AC7 "namespace-relative paths are preserved verbatim (secret/data/platform/sre/*)"
-# Stage 2 fixtures (TASK-S02): 2 EGP and 2 RGP exist. Until TASK-S03 emits them, coverage.md must list all four by name and no resource is generated.
+# Stage 2 (CAP-008): the Sentinel fixtures are listed in coverage.md and emitted in *_sentinel.tf, never in *_policies.tf.
 grep -q '^- EGP: .*synthetic-egp-platform-advisory' "$T/policies/coverage.md" && grep -q '^- EGP: .*synthetic-egp-root-advisory' "$T/policies/coverage.md" &&
   grep -q '^- RGP: .*synthetic-rgp-platform-soft' "$T/policies/coverage.md" && grep -q '^- RGP: .*synthetic-rgp-root-soft' "$T/policies/coverage.md" &&
-  ! grep -rEn 'resource "vault_(egp|rgp)_policy"' "$T" --include='*.tf' | grep -q .
-yn CAP-006-AC8 "coverage.md lists the 2 EGP and 2 RGP fixture policies by name; none is generated yet (TASK-S03)"
+  ! grep -Eq 'resource "vault_(egp|rgp)_policy"' "$T"/*/*_policies.tf
+yn CAP-006-AC8 "coverage.md lists the 2 EGP and 2 RGP fixture policies by name; they are emitted in *_sentinel.tf, not in *_policies.tf"
+
+# ---------- CAP-008 sentinel-policies (stage 2)
+eg=$(blocks vault_egp_policy); rg=$(blocks vault_rgp_policy)
+[ "$(nblk "$eg")" = 2 ] && [ "$(nblk "$rg")" = 2 ] &&
+  grep -q '^resource "vault_egp_policy" "synthetic_egp_root_advisory"' "$T/admin/root_sentinel.tf" && ! grep -q '^  provider' "$T/admin/root_sentinel.tf" &&
+  grep -A1 '^resource "vault_egp_policy" "admin_platform_synthetic_egp_platform_advisory"' "$T/seed/admin_platform_sentinel.tf" | grep -q 'provider *= vault.admin_platform' &&
+  grep -A1 '^resource "vault_rgp_policy" "admin_platform_synthetic_rgp_platform_soft"' "$T/seed/admin_platform_sentinel.tf" | grep -q 'provider *= vault.admin_platform' &&
+  [ "$(grep -c 'enforcement_level *= "advisory"' <<<"$eg")" = 2 ] && [ "$(grep -c 'enforcement_level *= "soft-mandatory"' <<<"$rg")" = 2 ]
+yn CAP-008-AC1 "2 EGP and 2 RGP: root without a provider, admin/platform under vault.admin_platform; names and enforcement levels match the fixture"
+want=$(printf '// Harness fixture: always passes.\nmain = rule { true }\n'); ok=1
+for f in "$T/admin/policies/sentinel/root/egp-synthetic-egp-root-advisory.sentinel" "$T/admin/policies/sentinel/root/rgp-synthetic-rgp-root-soft.sentinel" \
+         "$T/seed/policies/sentinel/admin__platform/egp-synthetic-egp-platform-advisory.sentinel" "$T/seed/policies/sentinel/admin__platform/rgp-synthetic-rgp-platform-soft.sentinel"; do
+  [ -f "$f" ] && [ "$(cat "$f"; echo x)" = "$want"$'\n'x ] || ok=0
+done
+[ $ok = 1 ]; yn CAP-008-AC2 "the four Sentinel sources are files, byte-identical to the fixture text"
+grep -q 'paths *= \["secret/\*", "auth/approle/\*"\]' "$T/admin/root_sentinel.tf" && grep -q 'paths *= \["secret/\*"\]' "$T/seed/admin_platform_sentinel.tf" &&
+  ! grep -q 'paths' <<<"$rg"
+yn CAP-008-AC3 "EGP paths keep the order Vault returns; an RGP has no paths"
+grep -q '^| root | 1 | 1 |$' "$T/policies/coverage.md" && grep -q '^| admin/platform | 1 | 1 |$' "$T/policies/coverage.md" &&
+  grep -q '^| admin | none | none |$' "$T/policies/coverage.md" && grep -q '^| admin/app-billing | none | none |$' "$T/policies/coverage.md"
+yn CAP-008-AC4 "coverage.md states the EGP and RGP count per namespace and none where there is none"
+ie=$T/admin/imports_sentinel.tf; is=$T/seed/imports_sentinel.tf
+grep -q 'to = vault_egp_policy.synthetic_egp_root_advisory' "$ie" && grep -A1 'to = vault_rgp_policy.synthetic_rgp_root_soft' "$ie" | grep -q 'id = "synthetic-rgp-root-soft"' &&
+  grep -A1 'to = vault_egp_policy.admin_platform_synthetic_egp_platform_advisory' "$is" | grep -q 'id = "synthetic-egp-platform-advisory"' &&
+  [ "$(grep -c '^import {' "$ie" "$is" | awk -F: '{s+=$2} END {print s}')" = 4 ]
+yn CAP-008-AC5 "four import blocks by bare policy name; labels carry the namespace so equal names in two namespaces cannot collide"
 
 # ---------- CAP-007 teams
 gr=$(blocks vault_identity_group)
