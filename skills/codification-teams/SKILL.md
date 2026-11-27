@@ -28,10 +28,11 @@ Input: `discovered_terraform/raw/<namespace>/identity.json`,
 Output: `discovered_terraform/terraform/namespaces/` (`identity_groups.tf`,
 `identity_entities.tf`, `identity_aliases.tf` when non-empty, `imports.tf`),
 `teams/teams.md`, `teams/teams.json`, `teams/README.md`.
+MFA (CAP-009) adds `<ns>_mfa.tf`, `imports_mfa.tf`, `teams/mfa.md`.
 
 ## 2. Governance
 
-- **Ownership**: `vault_identity_*` are owned here only.
+- **Ownership**: `vault_identity_*`, including `vault_identity_mfa_*`, are owned here only.
 - **No UUID literals in `.tf` files except `imports.tf`.** `member_entity_ids`
   is always `[vault_identity_entity.<label>.id]`; `canonical_id` is always a
   resource reference.
@@ -99,4 +100,5 @@ Load these when you need the detail; each is moved verbatim from this file.
 - [UUID prohibition and policy-link provenance](references/uuid-prohibition-and-policy-link-provenance.md)
 - [Coding standards applied](references/coding-standards-applied.md)
 - [Acceptance criteria (harness)](references/acceptance-criteria-harness.md)
+- [MFA (CAP-009)](references/mfa.md)
 - [Reference implementation (validated against the harness)](references/reference-implementation-validated-against-the-harness.md)

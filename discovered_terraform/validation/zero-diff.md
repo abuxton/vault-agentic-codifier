@@ -10,11 +10,11 @@ Imports applied in a scratch state (Vault is not modified), followed by `terrafo
 | policies | 14 | pass |
 | root-config | 2 | pass |
 | secrets-engines | 8 | pass |
-| teams | 17 | pass |
+| teams | 19 | pass |
 
 | Layer | Resources | Result |
 |---|---|---|
-| admin | 33 | pass |
+| admin | 35 | pass |
 | namespaces | 3 | pass |
 | seed | 20 | pass |
 

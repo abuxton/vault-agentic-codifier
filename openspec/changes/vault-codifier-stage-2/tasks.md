@@ -28,7 +28,7 @@ Tracking issue: [#16](https://github.com/abuxton/vault-agentic-codifier/issues/1
 | [TASK-S01](https://github.com/abuxton/vault-agentic-codifier/issues/1) | Verify provider resources and import ids for stage 2 | A | all | research | M | **Done** for CAP-008 and CAP-009; CAP-010 and CAP-011 are verified inside TASK-S05 and TASK-S06 |
 | [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | **Done** |
 | [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | **Done** |
-| [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | Ready to start |
+| [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | **Done** |
 | [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Ready to start |
 | [TASK-S06](https://github.com/abuxton/vault-agentic-codifier/issues/6) | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Ready to start |
 | [TASK-S07](https://github.com/abuxton/vault-agentic-codifier/issues/7) | Verification extensions (spec-check, verify, variants) | D | CAC8 to CAC10 | test | L | Blocked |
@@ -89,7 +89,7 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Effort**: L
 **Skill**: `skills/discovery-identity-teams`, `skills/codification-teams`
 **Depends on**: TASK-S02
-**Status**: Ready to start
+**Status**: Done
 **Description**: Extend discovery to read MFA methods and login enforcement without calling any generate endpoint, and the generator to emit the method and enforcement resources, `imports_mfa.tf` and `mfa.md`. Secret-bearing method types use sensitive variables with no default.
 **Acceptance Criteria**:
 - AC: CAP-009 AC1 to AC8 hold against the extended harness.

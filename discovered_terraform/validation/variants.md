@@ -6,6 +6,7 @@ Throwaway containers on 127.0.0.1:18200 and :18201; the committed harness on 820
 |---|---|---|---|
 | variant | seed | PASS | harness layers applied to the throwaway cluster |
 | variant | fixture | PASS | oidc+role+external group/alias, userpass, pki, database, nested namespace, default-readonly x2, dangling role |
+| variant | fixture-mfa | PASS | duo, okta and pingid methods with marker key values |
 | variant | discovery | PASS | orchestrator exit 0 (got 0) |
 | variant | assemble | PASS | assemble.sh exit 0 (got 0): assembly: ok |
 | variant | CAP-002-AC4 | PASS | one vault_jwt_auth_backend type=oidc with oidc_discovery_url |
@@ -18,6 +19,8 @@ Throwaway containers on 127.0.0.1:18200 and :18201; the committed harness on 820
 | variant | CAP-006-AC5 | PASS | does-not-exist flagged dangling in correlation.md; no vault_policy for it |
 | variant | CAP-007-AC4 | PASS | external group and one group alias whose mount_accessor is a resource reference |
 | variant | CAP-007-AC8 | PASS | platform-variant-group emitted with provider vault.admin_platform |
+| variant | CAP-009-AC3-keys | PASS | duo, okta and pingid key arguments are variables with ignore_changes; no marker in any file |
+| variant | CAP-009-AC3-nodefault | PASS | none of the four MFA variables has a default |
 | variant | CAP-003-AC4 | PASS | ghost-role keeps literal does-not-exist and coverage.md reports it |
 | variant | CAC1 | PASS | static gate exit 0 (got 0) |
 | variant | CAC2 | PASS | zero-diff exit 0 in every layer (got 0); 7 capabilities pass |

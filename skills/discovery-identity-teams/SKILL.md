@@ -27,8 +27,6 @@ in each namespace, and build an `accessor -> {namespace, path, type}` map from
 the TASK-010 auth mount payloads so each alias is annotated with the auth mount
 path it belongs to. Groups are the codified "teams".
 
-Doc source (cite in every generated file): `https://developer.hashicorp.com/vault/docs`
-
 ---
 
 ## Governance
@@ -49,8 +47,9 @@ Shared rules:
 Additional rules for this skill:
 
 - Group and entity **IDs are lookup keys only**. They are used to resolve `member_entity_ids` to names during discovery and must never appear as literals in generated HCL (the only exception is `imports.tf`).
-- Accessor values come **only** from TASK-010 `auth_mounts.json`. Never obtain accessors from the identity API and never hard-code them.
+- Accessor values come **only** from TASK-010 `auth_mounts.json`; never from the identity API, never hard-coded.
 - Use `LIST .../name` endpoints (not `.../id`) for groups and entities so ordering is by name and stable.
+- MFA (CAP-009): read-only `LIST` and `GET` of MFA methods and enforcements into `mfa.json`; never `generate` or `admin-generate`.
 
 ```bash
 export VAULT_CONFIG_PATH=/dev/null
@@ -104,3 +103,4 @@ Load these when you need the detail; each is moved verbatim from this file.
 - [Acceptance criteria](references/acceptance-criteria.md)
 - [Related skills](references/related-skills.md)
 - [Exact curl commands](references/exact-curl-commands.md)
+- [MFA discovery (CAP-009)](references/mfa.md)

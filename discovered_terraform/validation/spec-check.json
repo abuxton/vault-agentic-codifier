@@ -1,6 +1,6 @@
 {
   "counts": {
-    "PASS": 45
+    "PASS": 51
   },
   "results": [
     {
@@ -226,6 +226,36 @@
     {
       "detail": "no UUID literal in any .tf outside imports*.tf",
       "id": "CAP-007-AC7",
+      "status": "PASS"
+    },
+    {
+      "detail": "one vault_identity_mfa_totp and one vault_identity_mfa_login_enforcement, both under vault.admin, and none anywhere else",
+      "id": "CAP-009-AC1",
+      "status": "PASS"
+    },
+    {
+      "detail": "the enforcement references the method and the vault-platform-admin group by resource reference, no UUID literal",
+      "id": "CAP-009-AC2",
+      "status": "PASS"
+    },
+    {
+      "detail": "no Duo, Okta or PingID key argument is a string literal; discovery never calls a generate endpoint (Duo, Okta and PingID are proven by the mfa variant)",
+      "id": "CAP-009-AC3",
+      "status": "PASS"
+    },
+    {
+      "detail": "the method is imported by its UUID and the enforcement by its name; the UUID is only in imports_mfa.tf",
+      "id": "CAP-009-AC5",
+      "status": "PASS"
+    },
+    {
+      "detail": "mfa.md lists the method and the enforcement with their namespace and the group they target",
+      "id": "CAP-009-AC6",
+      "status": "PASS"
+    },
+    {
+      "detail": "only admin has MFA objects, so no other namespace gets an MFA file",
+      "id": "CAP-009-AC7",
       "status": "PASS"
     }
   ],

@@ -105,6 +105,13 @@ R policy write -namespace=admin/app-billing default-readonly - <<<'path "secret/
 R write -namespace=admin/platform identity/group name=platform-variant-group policies=default-readonly metadata=tenant=platform >/dev/null
 R write -namespace=admin/platform auth/approle/role/ghost-role token_policies=does-not-exist >/dev/null
 rec $S fixture PASS "oidc+role+external group/alias, userpass, pki, database, nested namespace, default-readonly x2, dangling role"
+# MFA (CAP-009): Duo, Okta and PingID in admin, each created with the marker in its key field. A synthetic PingID
+# settings file in the format Vault validates; none of these values may reach any output file.
+R write -namespace=admin identity/mfa/method/duo name=duo-fix "integration_key=$MARK-ik" "secret_key=$MARK-sk" api_hostname=api-0000.duosecurity.com >/dev/null
+R write -namespace=admin identity/mfa/method/okta name=okta-fix org_name=synthetic-org "api_token=$MARK-ot" >/dev/null
+PING=$(printf '#PingID properties\nuse_base64_key=cGluZ2lkLWZpeHR1cmU=\nuse_signature=true\ntoken=%s-pt\nidp_url=https://idpxnyl3m.pingidentity.com/pingid\norg_alias=synthetic-org\nadmin_url=https://idpxnyl3m.pingidentity.com/pingid\nauthenticator_url=https://authenticator.pingone.com/pingid/ppm\n' "$MARK" | base64 | tr -d '\n')
+R write -namespace=admin identity/mfa/method/pingid name=pingid-fix "settings_file_base64=$PING" >/dev/null
+rec $S fixture-mfa PASS "duo, okta and pingid methods with marker key values"
 
 export EXPORTER_TOKEN; EXPORTER_TOKEN=$(exporter_token) || { rec $S exporter-login FAIL "AppRole login failed"; exit 1; }
 RAW=$WORK/v/raw; mkdir -p "$WORK/v"
@@ -142,13 +149,19 @@ ok $S CAP-007-AC4 "external group and one group alias whose mount_accessor is a 
 # CAP-007 AC8: a group in admin/platform is emitted under that namespace's provider alias
 ok $S CAP-007-AC8 "platform-variant-group emitted with provider vault.admin_platform" \
   bash -c "grep -A2 'platform_variant_group\"' $T/seed/admin_platform_identity.tf | grep -q 'provider.*vault.admin_platform'"
+# CAP-009 AC3 (Duo, Okta, PingID): key arguments are sensitive variables with no default, ignored after import, and no value leaks
+ok $S CAP-009-AC3-keys "duo, okta and pingid key arguments are variables with ignore_changes; no marker in any file" \
+  bash -c "! grep -rqI -- $MARK $T $RAW && grep -q 'secret_key *= var\\.' $T/admin/admin_mfa.tf && grep -q 'api_token *= var\\.' $T/admin/admin_mfa.tf && grep -q 'settings_file_base64 *= var\\.' $T/admin/admin_mfa.tf && [ \$(grep -c 'ignore_changes' $T/admin/admin_mfa.tf) = 3 ] && [ \$(grep -c '^variable ' $T/admin/admin_mfa.tf) = 4 ]"
+ok $S CAP-009-AC3-nodefault "none of the four MFA variables has a default" \
+  bash -c "! awk '/^variable /{v=1} v&&/default/{f=1} /^}/{v=0} END{exit !f}' $T/admin/admin_mfa.tf"
 # CAP-003 AC4: a role naming an unknown policy keeps the literal and is reported
 ok $S CAP-003-AC4 "ghost-role keeps literal does-not-exist and coverage.md reports it" \
   bash -c "grep -q 'policy not in namespace: does-not-exist' $T/auth-mounts/coverage.md"
 
 bash "$sk/validation-static-gate/scripts/gate.sh" "$T" >"$WORK/gate.log" 2>&1; ec=$?
 ok $S CAC1 "static gate exit 0 (got $ec)" test "$ec" = 0
-VAULT_TOKEN=root TF_VAR_admin_oidc_oidc_client_secret=$PH \
+VAULT_TOKEN=root TF_VAR_admin_oidc_oidc_client_secret=$PH TF_VAR_admin_duo_integration_key=$PH TF_VAR_admin_duo_secret_key=$PH \
+  TF_VAR_admin_okta_api_token=$PH TF_VAR_admin_pingid_settings_file_base64=$PH \
   bash "$sk/validation-zero-diff/scripts/zero-diff.sh" "$T" "$WORK/v/validation" >"$WORK/zd.log" 2>&1; ec=$?
 ok $S CAC2 "zero-diff exit 0 in every layer (got $ec); $(grep -c ': pass' "$WORK/zd.log") capabilities pass" test "$ec" = 0
 VAULT_CONTAINER=$VAR bash "$sk/validation-readonly-secrets/scripts/verify.sh" "$T" "$RAW" "$WORK/v/validation" "$WORK/v/run_report.json" >"$WORK/vf.log" 2>&1; ec=$?

@@ -32,7 +32,7 @@
     },
     {
       "capability": "teams",
-      "resources": 17,
+      "resources": 19,
       "result": "pass"
     }
   ],
@@ -75,7 +75,7 @@
     },
     {
       "cac": "CAP",
-      "description": "40 harness criteria of specs.md against the generated output",
+      "description": "45 harness criteria of specs.md against the generated output",
       "stage": "spec-check",
       "status": "PASS"
     },

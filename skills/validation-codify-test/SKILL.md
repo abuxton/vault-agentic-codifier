@@ -22,7 +22,7 @@ make codify-test                    # about 90 seconds
 VARIANTS=1 make codify-test         # adds the TASK-026 edge-case fixtures, about 3 more minutes
 bash skills/validation-codify-test/scripts/codify-test.sh --selftest
 make spec-check                     # only the CAP criteria, against the committed output
-make spec-check-selftest            # mutate a copy of the output; each of 14 faults must fail its criterion
+make spec-check-selftest            # mutate a copy of the output; each of 17 faults must fail its criterion
 ```
 
 Reports: `discovered_terraform/validation/codify-test.{json,md}`, plus the zero-diff and read-only reports the
@@ -37,7 +37,7 @@ stages write. Exit 0 only when every stage passes. A failing stage prints the la
 | `codify-run-1`, `codify-run-2` | | each mints a fresh exporter token (AppRole, one-time secret-id), runs the orchestrator, then `assemble.sh`, into its own scratch directory |
 | `idempotence` | CAC5 | the two output trees and the two raw trees hash identically; regenerating over an existing tree changes nothing |
 | `ownership` | CAC6, CAC7 | `check.sh`: unique deterministic labels, provenance headers, one import per resource |
-| `spec-check` | CAP-001 to CAP-007 | `spec-check.sh`: 45 criteria: 40 of the 52 stage-1 CAP criteria plus 5 for CAP-008, one result each (see below) |
+| `spec-check` | CAP-001 to CAP-007 | `spec-check.sh`: 51 criteria: 40 of the 52 stage-1 CAP criteria, 5 for CAP-008 and 6 for CAP-009, one result each (see below) |
 | `static-gate` | CAC1 | `gate.sh`: validate, `fmt -check`, tflint per layer |
 | `zero-diff` | CAC2 | `zero-diff.sh`: scratch-state import, `plan -detailed-exitcode` 0 |
 | `readonly-secrets` | CAC3, CAC4 | `verify.sh` on both runs, over a window spanning both |

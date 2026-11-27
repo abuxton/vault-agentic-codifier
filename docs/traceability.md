@@ -6,7 +6,7 @@ Maps every acceptance criterion in [`specs.md`](../openspec/changes/vault-brownf
 
 | Check | Command | What it covers |
 |---|---|---|
-| `spec-check` | `make spec-check` (`make spec-check-selftest` injects 14 faults) | 45 harness criteria (40 stage 1, 5 CAP-008), one result per criterion, against the generated output. Report: `discovered_terraform/validation/spec-check.md` |
+| `spec-check` | `make spec-check` (`make spec-check-selftest` injects 17 faults) | 51 harness criteria (40 stage 1, 5 CAP-008, 6 CAP-009), one result per criterion, against the generated output. Report: `discovered_terraform/validation/spec-check.md` |
 | `variants` | `make variants` | 10 criteria that need a fixture the harness lacks (OIDC, userpass, PKI, a nested namespace, a 403 token, an empty cluster) |
 | `zero-diff` | `make zero-diff` | CAC2 and the plan-based criteria: import into a scratch state, `plan -detailed-exitcode` is 0 in every layer |
 | `static-gate` | `make static-gate` | CAC1: `fmt -check`, `validate`, `tflint` |
@@ -25,6 +25,7 @@ Implementing task per capability: each capability has a discovery task and a gen
 | CAP-006 policies | TASK-009 | TASK-017 |
 | CAP-007 teams | TASK-012 | TASK-020 |
 | CAP-008 sentinel-policies (stage 2) | TASK-S03 (`policies.sh`, `sentinel.json`) | TASK-S03 (`codification-policies`) |
+| CAP-009 mfa (stage 2) | TASK-S04 (`identity-teams.sh`, `mfa.json`) | TASK-S04 (`codification-teams`) |
 
 ## 1. Common criteria
 
@@ -52,6 +53,7 @@ Implementing tasks are in the table above. The result for each criterion is in t
 | CAP-006 | AC1, AC3, AC4, AC7, AC8 |
 | CAP-007 | AC1, AC2, AC3, AC5, AC6, AC7 |
 | CAP-008 (stage 2) | AC1, AC2, AC3, AC4, AC5 |
+| CAP-009 (stage 2) | AC1, AC2, AC3, AC5, AC6, AC7 |
 
 ## 3. Criteria verified by another check (12)
 
@@ -66,6 +68,9 @@ Implementing tasks are in the table above. The result for each criterion is in t
 | CAP-005 AC5 namespace nested deeper than two levels | `variants` (TASK-026) | `variant` CAP-005-AC5 |
 | CAP-006 AC2 lossless policy round trip | `zero-diff` (TASK-024); TASK-009 compared 10 policies byte for byte with the API | policies layer |
 | CAP-006 AC5 dangling policy reference | `variants` (TASK-026) | `variant` CAP-006-AC5 |
+| CAP-009 AC3 Duo, Okta and PingID key arguments | `variants` (TASK-S04) | `variant` CAP-009-AC3-keys, CAP-009-AC3-nodefault |
+| CAP-009 AC4 no TOTP seed read | `spec-check` CAP-009-AC3 (no generate call in discovery) and `readonly-secrets` (audit log) | harness |
+| CAP-009 AC8 zero diff after import | `zero-diff` (TASK-024); `variants` CAC2 with Duo, Okta, PingID | `teams` layer |
 | CAP-006 AC6 same policy name in two namespaces | `variants` (TASK-026) | `variant` CAP-006-AC6 |
 | CAP-007 AC4 external group and group alias | `variants` (TASK-026) | `variant` CAP-007-AC4 |
 | CAP-007 AC8 group in a non-admin namespace | `variants` (TASK-026) | `variant` CAP-007-AC8 |
@@ -99,7 +104,7 @@ The harness holds more than `specs.md` assumed. The checks accept the real count
 | Item | Risk | Owner |
 |---|---|---|
 | Sentinel EGP and RGP | Emitted and zero-diff against the harness (TASK-S03). The `empty-cluster` variant covers CAP-008 AC6; AC7 `ignore_changes` was not needed | Vault platform owner |
-| MFA methods and login enforcement | Not discovered or emitted; no fixture | Vault platform owner |
+| MFA methods and login enforcement | TOTP and enforcement emitted and zero-diff against the harness; Duo, Okta and PingID proven on a scratch container by the `variant` scenario (TASK-S04) | Vault platform owner |
 | Auth methods other than AppRole | The backend is emitted as a mount; method configuration is only checked for OIDC (variant) and LDAP (scratch payload) | Generator owner |
 | Engines other than KV v2 | Emitted as `vault_mount` only; engine configuration is listed in `coverage.md` for manual review | Generator owner |
 | Replication and DR | Recorded in the root README only; not codified | Vault platform owner |

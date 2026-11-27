@@ -13,6 +13,12 @@
       "status": "PASS"
     },
     {
+      "check": "fixture-mfa",
+      "detail": "duo, okta and pingid methods with marker key values",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
       "check": "discovery",
       "detail": "orchestrator exit 0 (got 0)",
       "scenario": "variant",
@@ -81,6 +87,18 @@
     {
       "check": "CAP-007-AC8",
       "detail": "platform-variant-group emitted with provider vault.admin_platform",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-009-AC3-keys",
+      "detail": "duo, okta and pingid key arguments are variables with ignore_changes; no marker in any file",
+      "scenario": "variant",
+      "status": "PASS"
+    },
+    {
+      "check": "CAP-009-AC3-nodefault",
+      "detail": "none of the four MFA variables has a default",
       "scenario": "variant",
       "status": "PASS"
     },
@@ -223,7 +241,7 @@
     },
     {
       "fail": 0,
-      "pass": 18,
+      "pass": 21,
       "scenario": "variant"
     }
   ],

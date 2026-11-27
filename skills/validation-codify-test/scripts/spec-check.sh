@@ -35,6 +35,9 @@ if [ "${1:-}" = "--selftest" ]; then # mutate a copy of the output; the matching
   mut CAP-006-AC8 "an EGP policy emitted"         "printf 'resource \"vault_egp_policy\" \"x\" {}\n' >> admin/admin_policies.tf"
   mut CAP-008-AC1 "a tenant Sentinel file dropped" "rm seed/admin_platform_sentinel.tf"
   mut CAP-008-AC2 "a Sentinel source edited"      "printf '// tampered\n' >> admin/policies/sentinel/root/egp-synthetic-egp-root-advisory.sentinel"
+  mut CAP-009-AC1 "the MFA file dropped"          "rm admin/admin_mfa.tf"
+  mut CAP-009-AC2 "a method id as a literal"      "perl -pi -e 's/vault_identity_mfa_totp\\.admin_totp\\.method_id/\"6907f873-6fb3-9dc7-c4bf-c2205d8f5c3c\"/' admin/admin_mfa.tf"
+  mut CAP-009-AC3 "a Duo key written as a literal" "printf 'resource \"vault_identity_mfa_duo\" \"x\" {\\n  secret_key = \"abc\"\\n}\\n' >> admin/admin_mfa.tf"
   mut CAP-007-AC7 "a UUID literal in a .tf"       "printf '# 0a1b2c3d-0a1b-0a1b-0a1b-0a1b2c3d4e5f\n' >> admin/admin_identity.tf"
   [ $bad = 0 ] && echo "SELFTEST: all faults detected"; exit $bad
 fi
@@ -232,6 +235,27 @@ grep -q 'applied at the namespace layer' "$tm" && grep -q 'inferred' "$tm" && gr
 yn CAP-007-AC6 "teams.md says access is applied at the namespace layer and marks the policy links inferred"
 ! grep -rEn "$UUID" "$T" --include='*.tf' --exclude='imports*.tf' --exclude-dir=.terraform | grep -q .
 yn CAP-007-AC7 "no UUID literal in any .tf outside imports*.tf"
+
+# ---------- CAP-009 mfa (stage 2)
+mf=$T/admin/admin_mfa.tf; mi=$T/admin/imports_mfa.tf
+[ "$(grep -c '^resource "vault_identity_mfa_totp"' "$mf")" = 1 ] && [ "$(grep -c '^resource "vault_identity_mfa_login_enforcement"' "$mf")" = 1 ] &&
+  [ "$(blocks vault_identity_mfa_totp | grep -c '^resource ')" = 1 ] && [ "$(blocks vault_identity_mfa_login_enforcement | grep -c '^resource ')" = 1 ] &&
+  [ "$(grep -c 'provider *= vault.admin$' "$mf")" = 2 ]
+yn CAP-009-AC1 "one vault_identity_mfa_totp and one vault_identity_mfa_login_enforcement, both under vault.admin, and none anywhere else"
+en=$(block vault_identity_mfa_login_enforcement admin_synthetic_platform_admin_totp)
+grep -q 'mfa_method_ids *= \[vault_identity_mfa_totp\.admin_totp\.method_id\]' <<<"$en" && grep -q 'identity_group_ids *= \[vault_identity_group\.admin_vault_platform_admin\.id\]' <<<"$en" &&
+  ! grep -Eq "$UUID" "$mf"
+yn CAP-009-AC2 "the enforcement references the method and the vault-platform-admin group by resource reference, no UUID literal"
+! grep -rEn '(secret_key|integration_key|api_token|settings_file_base64) *= *"' "$T" --include='*.tf' | grep -q . &&
+  ! grep -rEn 'identity/mfa/.*(generate|admin-generate)' "$T" "$ROOT/skills/discovery-orchestrator/scripts" | grep -q .
+yn CAP-009-AC3 "no Duo, Okta or PingID key argument is a string literal; discovery never calls a generate endpoint (Duo, Okta and PingID are proven by the mfa variant)"
+grep -A1 'to = vault_identity_mfa_totp.admin_totp' "$mi" | grep -Eq "id = \"$UUID\"" && grep -A1 'to = vault_identity_mfa_login_enforcement.admin_synthetic_platform_admin_totp' "$mi" | grep -q 'id = "synthetic-platform-admin-totp"' &&
+  ! grep -Eq "$UUID" "$mf"
+yn CAP-009-AC5 "the method is imported by its UUID and the enforcement by its name; the UUID is only in imports_mfa.tf"
+grep -q 'vault_identity_mfa_totp.admin_totp' "$T/teams/mfa.md" && grep -q 'admin_vault_platform_admin' "$T/teams/mfa.md" && grep -q '| `admin` | login enforcement |' "$T/teams/mfa.md"
+yn CAP-009-AC6 "mfa.md lists the method and the enforcement with their namespace and the group they target"
+[ "$(find "$T" -name '*_mfa.tf' ! -name 'imports_*' | wc -l | tr -d ' ')" = 1 ] && [ ! -e "$T/seed/imports_mfa.tf" ] && [ ! -e "$T/seed/admin_platform_mfa.tf" ]
+yn CAP-009-AC7 "only admin has MFA objects, so no other namespace gets an MFA file"
 
 # ---------- report
 printf '%s\n' "${res[@]}" | jq -s -S --argjson f "$fail" '{verdict:(if $f==0 then "PASS" else "FAIL" end), counts:(group_by(.status)|map({(.[0].status):length})|add), results:.}' > "$REP/spec-check.json"

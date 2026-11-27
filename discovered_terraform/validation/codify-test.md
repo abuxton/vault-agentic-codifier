@@ -13,7 +13,7 @@ Run against http://127.0.0.1:8200. Output generated twice into a scratch directo
 | CAC5 | idempotent | idempotence | PASS |
 | CAC6 | naming | ownership | PASS |
 | CAC7 | provenance | ownership | PASS |
-| CAP-001 to CAP-007 | harness criteria (40 of 52) | spec-check | PASS |
+| CAP-001 to CAP-007 | harness criteria (45: 40 stage 1, 5 CAP-008) | spec-check | PASS |
 
 ## Per capability
 
@@ -25,7 +25,7 @@ Run against http://127.0.0.1:8200. Output generated twice into a scratch directo
 | policies | 14 | pass | pass |
 | root-config | 2 | pass | pass |
 | secrets-engines | 8 | pass | pass |
-| teams | 17 | pass | pass |
+| teams | 19 | pass | pass |
 
 ## Stages
 
@@ -37,7 +37,7 @@ Run against http://127.0.0.1:8200. Output generated twice into a scratch directo
 | codify-run-2 | - | PASS | second run against the unchanged cluster |
 | idempotence | CAC5 | PASS | two runs give byte-identical output and raw trees |
 | ownership | CAC6,CAC7 | PASS | labels unique and deterministic; provenance header on every file |
-| spec-check | CAP | PASS | 40 harness criteria of specs.md against the generated output |
+| spec-check | CAP | PASS | 45 harness criteria of specs.md against the generated output |
 | static-gate | CAC1 | PASS | validate, fmt -check and tflint in every layer |
 | zero-diff | CAC2 | PASS | import into a scratch state; plan exits 0 in every layer |
 | readonly-secrets | CAC3,CAC4 | PASS | audit log read-only and no secrets in output or raw |

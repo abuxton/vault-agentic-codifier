@@ -3,7 +3,7 @@
     "layers": [
       {
         "layer": "admin",
-        "resources": 33,
+        "resources": 35,
         "pass": true
       },
       {
@@ -50,7 +50,7 @@
       },
       {
         "capability": "teams",
-        "resources": 17,
+        "resources": 19,
         "result": "pass"
       }
     ],

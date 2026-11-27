@@ -6,11 +6,15 @@
 #   admin/<ns>_identity.tf, admin/<ns>_identity_aliases.tf (only when aliases exist), admin/imports_identity.tf
 #   seed/...   same names for tenant namespaces
 #   teams/teams.md, teams/teams.json, teams/README.md
+#   <layer>/<ns>_mfa.tf, <layer>/imports_mfa.tf, teams/mfa.md   (CAP-009; only when a namespace has MFA objects)
 # Codified: vault_identity_entity, vault_identity_group, vault_identity_entity_alias, vault_identity_group_alias.
 # References, never literals: member_entity_ids, canonical_id, mount_accessor and policies (when the policy
 # is codified in the same namespace). The only UUIDs written are the import IDs in imports_identity.tf.
 # An alias whose name is a UUID (an AppRole role_id) becomes a sensitive variable with no default.
 # Inferred policy links appear in teams.md and teams.json only, never in HCL.
+# MFA: vault_identity_mfa_{totp,duo,okta,pingid} and vault_identity_mfa_login_enforcement. A method is imported by its
+# UUID, an enforcement by its name. Duo, Okta and PingID key arguments are sensitive variables with no default and
+# are ignored after import, because Vault never returns them (task-s01-decision.md sections 2 and 5).
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 RAW=${1:-discovered_terraform/raw}
@@ -150,6 +154,96 @@ for layer in admin seed; do
   } > "$L/imports_identity.tf"
 done
 
+# ---- MFA (CAP-009) ------------------------------------------------------------------------------
+GMAP=$(echo "$ALL" | jq -c '[.[]|.groups[]|{key:.id,value:.label}]|from_entries')
+EMAP=$(echo "$ALL" | jq -c '[.[]|.entities[]|{key:.id,value:.label}]|from_entries')
+MALL='[]'
+while IFS= read -r ns; do
+  d=$(dir_of "$ns"); [ -s "$d/mfa.json" ] || continue
+  jq -e '(.methods|type=="array") and (.enforcements|type=="array")' "$d/mfa.json" >/dev/null || { echo "STOP: $d/mfa.json unreadable" >&2; exit 2; }
+  if jq -e '[.. | objects | keys[] | select(. == "secret_key" or . == "integration_key" or . == "api_token" or . == "settings_file_base64" or . == "password" or . == "client_secret")] | length > 0' "$d/mfa.json" >/dev/null; then
+    echo "STOP: $d/mfa.json contains a credential field (value not printed)" >&2; exit 2
+  fi
+  MALL=$(echo "$MALL" | jq -c --slurpfile i "$d/mfa.json" --argjson gmap "$GMAP" --argjson emap "$EMAP" --argjson amap "$AMAP" \
+      --arg ns "$ns" --arg layer "$(layer_of "$ns")" "$LIB"'
+    ([ $i[0].methods | sort_by(.type, (.config|tojson), .id) | group_by(.type)[] | to_entries[]
+       | .key as $k | .value as $m
+       | $m + {label:(nsjoin($ns; $m.type + (if $k > 0 then "_" + (($k+1)|tostring) else "" end)) | lbl)} ]) as $ms
+    | ($ms | map({key:.id, value:{t:.type, l:.label}}) | from_entries) as $mmap
+    | . + [ {ns:$ns, layer:$layer, nsl:(if $ns=="" then "root" else ($ns|lbl) end), methods:$ms,
+        enforcements:[ $i[0].enforcements[] | {
+          id:.id, name:.name, label:(nsjoin($ns; .name)|lbl),
+          methods:[ .mfa_method_ids[] | ($mmap[.] // error("MFA method not found in this namespace")) ] | sort_by(.l),
+          groups:[ .identity_group_ids[] | ($gmap[.] // error("identity group not in identity.json")) ] | sort,
+          entities:[ .identity_entity_ids[] | ($emap[.] // error("identity entity not in identity.json")) ] | sort,
+          accessors:[ .auth_method_accessors[] | ($amap[.] // error("auth mount accessor not found")) as $a
+                      | if $a.layer != $layer then error("auth mount is in another layer") else $a.ref end ] | sort,
+          types:(.auth_method_types | sort) } ] } ]') \
+    || { echo "STOP: could not resolve MFA references in $d/mfa.json (see message above)" >&2; exit 2; }
+done <<< "$nss"
+echo "$MALL" | jq -e '[ .[] | .layer as $l | (.methods[] | {t:"m", layer:$l, label}), (.enforcements[] | {t:"l", layer:$l, label}) ]
+  | group_by([.t,.layer,.label]) | map(select(length>1)) | length == 0' >/dev/null || { echo "STOP: duplicate MFA label within a layer" >&2; exit 2; }
+
+read -r -d '' RENDER_MFA <<'JQ' || true
+def prov: if $ns != "" then "  provider = vault.\($alias)\n" else "" end;
+def var($n; $what): "variable \"\($n)\" {\n  description = \($what|tojson)\n  type        = string\n  sensitive   = true\n}\n\n";
+def opt($k; $v): if $v == null or $v == "" then "" else "  \($k) = \($v|tojson)\n" end;
+def ign($l): "\n  lifecycle {\n    ignore_changes = [\($l|join(", "))]\n  }\n";
+def refs($k; $l): if ($l|length) > 0 then "  \($k) = [" + ($l|join(", ")) + "]\n" else "" end;
+def method:
+  . as $m | $m.config as $c | $m.label as $l
+  | if $m.type == "totp" then
+      "resource \"vault_identity_mfa_totp\" \"\($l)\" {\n" + prov + opt("issuer"; $c.issuer) + opt("period"; $c.period) + opt("key_size"; $c.key_size)
+      + opt("algorithm"; $c.algorithm) + opt("digits"; $c.digits) + opt("skew"; $c.skew) + opt("qr_size"; $c.qr_size)
+      + opt("max_validation_attempts"; $c.max_validation_attempts) + "}\n"
+    elif $m.type == "duo" then
+      var($l + "_integration_key"; "Duo integration key for the MFA method \($l). Supply at plan time; Vault never returns it.")
+      + var($l + "_secret_key"; "Duo secret key for the MFA method \($l). Supply at plan time; Vault never returns it.")
+      + "resource \"vault_identity_mfa_duo\" \"\($l)\" {\n" + prov + opt("api_hostname"; $c.api_hostname) + opt("push_info"; $c.pushinfo)
+      + (if $c.use_passcode == true then "  use_passcode = true\n" else "" end) + opt("username_format"; $c.username_format)
+      + "  integration_key = var.\($l)_integration_key\n  secret_key = var.\($l)_secret_key\n" + ign(["integration_key", "secret_key"]) + "}\n"
+    elif $m.type == "okta" then
+      var($l + "_api_token"; "Okta API token for the MFA method \($l). Supply at plan time; Vault never returns it.")
+      + "resource \"vault_identity_mfa_okta\" \"\($l)\" {\n" + prov + opt("org_name"; $c.org_name) + opt("base_url"; $c.base_url) + opt("username_format"; $c.username_format)
+      + "  api_token = var.\($l)_api_token\n" + ign(["api_token", "primary_email"]) + "}\n"
+    else
+      var($l + "_settings_file_base64"; "PingID settings file (base64) for the MFA method \($l). Supply at plan time; Vault never returns it.")
+      + "resource \"vault_identity_mfa_pingid\" \"\($l)\" {\n" + prov + "  settings_file_base64 = var.\($l)_settings_file_base64\n" + ign(["settings_file_base64"]) + "}\n"
+    end;
+def enforcement:
+  "resource \"vault_identity_mfa_login_enforcement\" \"\(.label)\" {\n" + prov + "  name = \(.name|tojson)\n"
+  + refs("mfa_method_ids"; [ .methods[] | "vault_identity_mfa_\(.t).\(.l).method_id" ])
+  + refs("identity_group_ids"; [ .groups[] | "vault_identity_group.\(.).id" ])
+  + refs("identity_entity_ids"; [ .entities[] | "vault_identity_entity.\(.).id" ])
+  + refs("auth_method_accessors"; [ .accessors[] | "\(.).accessor" ])
+  + (if (.types|length) > 0 then "  auth_method_types = [" + (.types | map(tojson) | join(", ")) + "]\n" else "" end) + "}\n";
+.[] | select(.ns == $ns) | ( [ .methods[] | method ] + [ .enforcements | sort_by(.name)[] | enforcement ] ) | join("\n")
+JQ
+
+for layer in admin seed; do
+  sub=$(echo "$MALL" | jq -c --arg l "$layer" '[.[]|select(.layer==$l and ((.methods|length)+(.enforcements|length)) > 0)]')
+  L=$OUT/$layer
+  rm -f "$L"/*_mfa.tf "$L/imports_mfa.tf"
+  [ "$(echo "$sub" | jq length)" = 0 ] && continue
+  mkdir -p "$L"
+  aliases=(); for n in $(echo "$sub" | jq -r '[.[].ns|select(.!="")]|unique|.[]'); do aliases+=("$n"); done
+  bash "$scaffold" "$L" ${aliases[@]+"${aliases[@]}"} >/dev/null
+  for ns in $(echo "$sub" | jq -r '[.[].ns]|unique|.[]' | sed 's/^$/@root/'); do
+    [ "$ns" = "@root" ] && ns=""
+    nsl=$(echo "$sub" | jq -r --arg ns "$ns" '[.[]|select(.ns==$ns)][0].nsl')
+    { hdr identity_mfa_totp "${ns:-(root)}"
+      echo "$sub" | jq -r --arg ns "$ns" --arg alias "$nsl" "$LIB $RENDER_MFA"
+    } > "$L/${nsl}_mfa.tf"
+  done
+  { hdr identity_mfa_totp "(per resource provider)"
+    echo "$sub" | jq -r '
+      def imp($res; $label; $id): "import {\n  to = \($res).\($label)\n  id = \($id|tojson)\n}\n";
+      sort_by(.ns) | map(
+        ([.methods[] | imp("vault_identity_mfa_\(.type)"; .label; .id)]
+       + [.enforcements|sort_by(.name)[] | imp("vault_identity_mfa_login_enforcement"; .label; .name)]) | join("\n")) | join("\n")'
+  } > "$L/imports_mfa.tf"
+done
+
 # ---- team-to-access matrix --------------------------------------------------------------------
 mkdir -p "$OUT/teams"
 corr='[]'; [ -s "$OUT/policies/correlation.json" ] && corr=$(cat "$OUT/policies/correlation.json")
@@ -193,5 +287,17 @@ cat > "$OUT/teams/README.md" <<'EOF'
 - Inferred policy links are documented in `teams.md` and `teams.json` only.
 EOF
 
+rm -f "$OUT/teams/mfa.md"
+if [ "$(echo "$MALL" | jq '[.[]|(.methods|length)+(.enforcements|length)]|add // 0')" != 0 ]; then
+  {
+    echo '# MFA'; echo
+    echo 'Method ids are Vault UUIDs and appear only in `imports_mfa.tf`. A login enforcement rule is imported by name. Duo, Okta and PingID key arguments are sensitive variables with no default and are ignored after import, because Vault never returns them. No TOTP seed or QR code is read.'; echo
+    echo '| Namespace | Kind | Resource | Targets |'; echo '|---|---|---|---|'
+    echo "$MALL" | jq -r '.[] | (if .ns=="" then "root" else .ns end) as $n
+      | ( .methods[] | "| `\($n)` | method (\(.type)) | `vault_identity_mfa_\(.type).\(.label)` | - |" ),
+        ( .enforcements[] | "| `\($n)` | login enforcement | `vault_identity_mfa_login_enforcement.\(.label)` | methods: \(.methods|map("`"+.l+"`")|join(", ")); groups: \(if (.groups|length)>0 then (.groups|map("`"+.+"`")|join(", ")) else "-" end); entities: \(if (.entities|length)>0 then (.entities|map("`"+.+"`")|join(", ")) else "-" end); mounts: \(if (.accessors|length)>0 then (.accessors|map("`"+.+"`")|join(", ")) else "-" end); types: \(if (.types|length)>0 then (.types|join(", ")) else "-" end) |" )'
+  } > "$OUT/teams/mfa.md"
+fi
+
 for l in admin seed; do [ -d "$OUT/$l" ] && "$TF" fmt -recursive "$OUT/$l" >/dev/null; done
-echo "teams: $(echo "$ALL" | jq '[.[].entities|length]|add // 0') entit(ies), $(echo "$ALL" | jq '[.[].groups|length]|add // 0') group(s), $(echo "$ALL" | jq '[.[]|(.ealiases|length)+(.galiases|length)]|add // 0') alias(es)"
+echo "teams: $(echo "$ALL" | jq '[.[].entities|length]|add // 0') entit(ies), $(echo "$ALL" | jq '[.[].groups|length]|add // 0') group(s), $(echo "$ALL" | jq '[.[]|(.ealiases|length)+(.galiases|length)]|add // 0') alias(es), $(echo "$MALL" | jq '[.[].methods|length]|add // 0') MFA method(s), $(echo "$MALL" | jq '[.[].enforcements|length]|add // 0') enforcement(s)"

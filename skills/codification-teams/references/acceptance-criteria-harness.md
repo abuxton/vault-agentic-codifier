@@ -10,5 +10,7 @@
 - `teams.md` lists platform -> sre, devops; app-billing/app-identity ->
   developers, owners, with inferred links labelled.
 - 15 `import {}` blocks (9 + 6); fmt and validate pass.
+- Stage 2 (CAP-009): in `admin`, one `vault_identity_mfa_totp` and one `vault_identity_mfa_login_enforcement`, imported by
+  UUID and by name, 2 more `import {}` blocks, and `teams/mfa.md`. The `mfa` variant covers Duo, Okta and PingID.
 - Scratch `oidc` + external group: one `type = "external"` group, one alias with
   `mount_accessor = vault_auth_backend.<label>.accessor`.

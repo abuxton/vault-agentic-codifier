@@ -49,5 +49,11 @@ Harness-verifiable acceptance criteria of `specs.md` against the generated Terra
 | CAP-007-AC5 | PASS | teams.md: platform->sre,devops; app-billing and app-identity->developers,owners, each with its namespace |
 | CAP-007-AC6 | PASS | teams.md says access is applied at the namespace layer and marks the policy links inferred |
 | CAP-007-AC7 | PASS | no UUID literal in any .tf outside imports*.tf |
+| CAP-009-AC1 | PASS | one vault_identity_mfa_totp and one vault_identity_mfa_login_enforcement, both under vault.admin, and none anywhere else |
+| CAP-009-AC2 | PASS | the enforcement references the method and the vault-platform-admin group by resource reference, no UUID literal |
+| CAP-009-AC3 | PASS | no Duo, Okta or PingID key argument is a string literal; discovery never calls a generate endpoint (Duo, Okta and PingID are proven by the mfa variant) |
+| CAP-009-AC5 | PASS | the method is imported by its UUID and the enforcement by its name; the UUID is only in imports_mfa.tf |
+| CAP-009-AC6 | PASS | mfa.md lists the method and the enforcement with their namespace and the group they target |
+| CAP-009-AC7 | PASS | only admin has MFA objects, so no other namespace gets an MFA file |
 
-Verdict: **PASS** ({"PASS":45})
+Verdict: **PASS** ({"PASS":51})

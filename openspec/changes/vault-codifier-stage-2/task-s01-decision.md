@@ -22,8 +22,8 @@ Where this note and `specs.md` disagree, this note wins and `specs.md` has been 
 | Resource | Not returned | Treatment | Evidence |
 |---|---|---|---|
 | `vault_identity_mfa_duo` | `secret_key`, `integration_key` | Sensitive variables with no default, plus `lifecycle { ignore_changes = [secret_key, integration_key] }` | `GET identity/mfa/method/duo/<id>` returns `null` for both. Without `ignore_changes` the plan shows an in-place update |
-| `vault_identity_mfa_okta` | `api_token` | Same as Duo | Expected from the provider schema; not run here, no Okta fixture. Treat as unverified until a variant covers it |
-| `vault_identity_mfa_pingid` | `settings_file_base64` | Same as Duo | Unverified, as for Okta |
+| `vault_identity_mfa_okta` | `api_token`, `primary_email` | Sensitive variable with no default and `lifecycle { ignore_changes = [api_token, primary_email] }`; emit `base_url`, which Vault returns | Verified in TASK-S04 on a scratch container: with `primary_email = true` in config the plan shows an update, because Vault never returns it. Omit it from the config and ignore it |
+| `vault_identity_mfa_pingid` | `settings_file_base64` | Sensitive variable with no default and `lifecycle { ignore_changes = [settings_file_base64] }` | Verified in TASK-S04: Vault returns `admin_url`, `authenticator_url`, `idp_url`, `org_alias`, `use_signature`, all computed, so none is emitted. `3 to import, 0 to change` with Duo and Okta |
 | `vault_identity_mfa_totp` | none (no seed or QR is stored in the method) | No treatment | The seed is created per entity by `generate`/`admin-generate`, which discovery never calls |
 
 ## 3. Corrections to `specs.md`
@@ -73,3 +73,13 @@ TASK-S02 repeats the write attempts against the committed harness (its acceptanc
 
 - Okta and PingID have no fixture. TASK-S04 adds scratch variants for them and updates section 2.
 - CAP-010 and CAP-011 resource names are not verified here. TASK-S05 and TASK-S06 each begin by verifying their own resources the same way and append to this note.
+
+## 5. Duo, Okta and PingID on a scratch container (TASK-S04)
+
+Created on a throwaway Vault 2.2.2+ent dev container in namespace `admin`, with a marker string in every secret field.
+
+- `LIST identity/mfa/method` returns `key_info` per method with `type`; `GET identity/mfa/method/<type>/<id>` returns the same fields. The marker appeared in neither response, so the keys are never returned.
+- A method's `name` is empty unless set at creation; a `name` argument is then not emitted.
+- Duo returns `api_hostname`, `use_passcode`, `pushinfo`, `username_format`. Okta returns `org_name`, `base_url`, `username_format`. PingID returns only computed fields.
+- Combined plan with `ignore_changes` on the key arguments and `primary_email` left out: `3 to import, 0 to add, 0 to change, 0 to destroy`.
+

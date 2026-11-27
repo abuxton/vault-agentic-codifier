@@ -24,3 +24,10 @@
 Arrays are sorted by `name` (aliases by `mount_path`, then `name`). `accessor_map` keys are sorted by `jq -S`.
 
 ---
+
+## `mfa.json` (CAP-009)
+
+```json
+{"methods":[{"config":{"algorithm":"SHA1","digits":6,"issuer":"...","key_size":20,"max_validation_attempts":5,"period":30,"qr_size":200,"skew":1},"id":"<uuid>","namespace":"admin","type":"totp"}],
+ "enforcements":[{"auth_method_accessors":[],"auth_method_types":[],"id":"<uuid>","identity_entity_ids":[],"identity_group_ids":["<uuid>"],"mfa_method_ids":["<uuid>"],"name":"...","namespace":"admin"}]}
+```

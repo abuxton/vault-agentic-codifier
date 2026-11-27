@@ -121,7 +121,7 @@ resource "vault_identity_group" "team" {
 # ──────────────────────────────────────────────────────────────────────────────
 resource "vault_identity_mfa_totp" "admin" {
   provider  = vault.admin
-  issuer    = "SYNTHETIC-vault-codifier"
+  issuer    = "vault-codifier-harness"
   period    = 30
   key_size  = 20
   algorithm = "SHA1"
