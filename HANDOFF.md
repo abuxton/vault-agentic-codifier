@@ -1,7 +1,7 @@
 # Handoff Document — terraform-vault-vault-codifier
 
 **Date**: 2026-11-25 (stage 2 in progress; stage 1 section dated 2026-11-26 earlier)
-**Commit**: stage 1 is on `main` at `76bfcd8`. Stage 2 is on `feature/16-stage-2-enterprise-config` at `97707a4` plus uncommitted TASK-S05 work. See section 10.
+**Commit**: stage 1 is on `main` at `76bfcd8`. Stage 2 is on `feature/16-stage-2-enterprise-config` at `c67f857` (S05 notes, spec amendment and fixture committed as work in progress; no discovery or generator code yet). See section 10.
 **Status**: **Stage 1 (34 of 34 tasks) is done and published.** **Stage 2 is in progress: TASK-S01 to S04 done, TASK-S05 in progress, TASK-S06 to S10 pending.** `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
@@ -20,14 +20,14 @@ Plan: `openspec/changes/vault-codifier-stage-2/{proposal,specs,design,tasks}.md`
 | TASK-S02 | #2 | Synthetic EGP, RGP and TOTP MFA fixtures | Done, closed | `f624f82` |
 | TASK-S03 | #3 | Sentinel EGP and RGP discovery and codification (CAP-008) | Done, closed | `3188dca`, `f332cf5` |
 | TASK-S04 | #4 | MFA methods and login enforcement (CAP-009) | Done, closed | `97707a4` |
-| TASK-S05 | #5 | Auth method configuration (CAP-010) | **In progress** (see below) | uncommitted, WIP commit pending |
+| TASK-S05 | #5 | Auth method configuration (CAP-010) | **In progress** (see below) | `c67f857` (WIP: notes and fixture only) |
 | TASK-S06 | #6 | Engine configuration (CAP-011) | Ready to start | — |
 | TASK-S07 | #7 | Verification extensions | Blocked on S03 to S06 | — |
 | TASK-S08 | #8 | Waza eval suite scaffolding (mock executor, "harness only") | Blocked | — |
 | TASK-S09 | #9 | Real-executor eval run | Blocked; **needs the owner's approval of model, trials and cost** | — |
 | TASK-S10 | #10 | Docs, traceability, publish | Blocked | — |
 
-Current numbers: `spec-check` has 51 criteria (40 stage 1, 5 CAP-008, 6 CAP-009), the self-test injects 17 faults, the harness has 2 EGP, 2 RGP, 1 TOTP method and 1 login enforcement (all in `admin`). The last full `make codify-test`, `make spec-check-selftest` and `make variants` were green at `97707a4`.
+Current numbers: `spec-check` has 51 criteria (40 stage 1, 5 CAP-008, 6 CAP-009), the self-test injects 17 faults, the harness has 2 EGP, 2 RGP, 1 TOTP method and 1 login enforcement (all in `admin`). The last full `make codify-test`, `make spec-check-selftest` and `make variants` were green at `97707a4` (nothing that affects them changed in `c67f857`).
 
 ### Resume commands
 
@@ -53,7 +53,7 @@ docker ps --format '{{.Names}} {{.Ports}}' | grep vault-codifier  # expect only 
 
 ### TASK-S05 (CAP-010) — what is done and what is left
 
-**Done (in the working tree):**
+**Done (committed in `c67f857`):**
 
 - `specs.md`: CAP-010 AC1 amended with the cert-role exception.
 - `task-s01-decision.md` section 6: the verified import-id table, taken from a scratch container where one configuration with 15 `import {}` blocks planned "15 to import, 0 to change", applied, and re-planned with exit 0.
@@ -405,7 +405,7 @@ Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude
 main     76bfcd8  published stage-1 line (origin/main)
 develop  0f2db79  branches from main; stage 2 merges here with --no-ff
 feature/16-stage-2-enterprise-config  checked out at .worktrees/feature-stage-2-enterprise-config
-  dea74e7 S01   f624f82 S02   3188dca + f332cf5 S03   ab5af83 gitignore tmp/work/   97707a4 S04
+  dea74e7 S01   f624f82 S02   3188dca + f332cf5 S03   ab5af83 gitignore tmp/work/   97707a4 S04   c67f857 S05 WIP (notes, fixture)
 Remote:  origin  https://github.com/abuxton/vault-agentic-codifier  (public)
 Run state (run_report.json, .state.json) is git-ignored. Generated output under discovered_terraform/terraform/ and the evidence under discovered_terraform/validation/ are committed.
 ```
