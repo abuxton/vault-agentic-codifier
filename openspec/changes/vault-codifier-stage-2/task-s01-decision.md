@@ -83,3 +83,23 @@ Created on a throwaway Vault 2.2.2+ent dev container in namespace `admin`, with 
 - Duo returns `api_hostname`, `use_passcode`, `pushinfo`, `username_format`. Okta returns `org_name`, `base_url`, `username_format`. PingID returns only computed fields.
 - Combined plan with `ignore_changes` on the key arguments and `primary_email` left out: `3 to import, 0 to add, 0 to change, 0 to destroy`.
 
+## 6. CAP-010 auth method configuration (TASK-S05)
+
+Verified on a throwaway Vault 2.2.2+ent container in `admin/platform` (fixture: `skills/validation-variants/scripts/fixture-auth-config.sh`). One configuration with 15 `import {}` blocks planned `15 to import, 0 to change`, applied as 15 imported, and re-planned with exit 0.
+
+| Resource | Import id | Sensitive or unreadable | Handling |
+|---|---|---|---|
+| `vault_ldap_auth_backend` | mount path | `bindpass` never returned | Variable, `ignore_changes = [bindpass, disable_remount]`. It owns the mount, so no `vault_auth_backend` is emitted. Vault returns `max_page_size = 0` and the provider default is -1, so `max_page_size` is always emitted |
+| `vault_ldap_auth_backend_group` | `auth/<p>/groups/<name>` | none | `policies` |
+| `vault_ldap_auth_backend_user` | `auth/<p>/users/<name>` | none | `groups`, `policies` |
+| `vault_kubernetes_auth_backend_config` | `auth/<p>/config` | `token_reviewer_jwt` (Vault returns only `token_reviewer_jwt_set`) | Variable and `ignore_changes`. `kubernetes_ca_cert` is public and is emitted |
+| `vault_kubernetes_auth_backend_role` | `auth/<p>/role/<name>` | none | |
+| `vault_aws_auth_backend_client` | `auth/<p>/config/client` | `secret_key` never returned. **`access_key` is returned in clear** | Both are variables when `access_key` is set, both ignored after import. The raw payload keeps neither |
+| `vault_aws_auth_backend_role` | `auth/<p>/role/<name>` | none | Vault returns singular names (`bound_iam_principal_arn`); the provider takes plurals. `resolve_aws_unique_ids = false` is emitted when it is false |
+| `vault_cert_auth_backend_role` | **none: "doesn't support import"** | none | **Not emitted.** An import-less resource plans as a create, which breaks the zero-diff claim (a `vault_generic_endpoint` stand-in also plans as a create). The cert mount is emitted as `vault_auth_backend`; the cert roles are listed in `coverage.md` as "review manually: provider 4.8.0 cannot import cert roles". CAP-010 AC1 is amended accordingly |
+| `vault_token_auth_backend_role` | `auth/token/roles/<name>` | none | The `token/` mount is not listed in `sys/auth`; roles are read from `auth/token/roles` |
+| `vault_jwt_auth_backend` (oidc, jwt) | mount path | `oidc_client_secret` never returned | As in `admin-config`; static `jwt_validation_pubkeys` is public |
+| `vault_jwt_auth_backend_role` | `auth/<p>/role/<name>` | none | |
+
+The exporter policy had `auth/+/role`, `auth/+/role/*` and `auth/+/config` only. LDAP groups and users, cert roles, token roles and the AWS client need extra read and list grants (TASK-S05).
+

@@ -55,7 +55,7 @@ Capability specs CAP-008 to CAP-012 for stage 2. They extend the stage-1 specs i
 **Description**: Emit configuration, not only the mount, for the auth methods that stage 1 left as mounts: LDAP, Kubernetes, AWS, cert, token roles, and JWT/OIDC outside `admin`. Methods outside the slice stay mount-only and are listed for review.
 **Fixture** (TASK-S03): a scratch variant, as in TASK-026, that enables each method in a tenant namespace with synthetic configuration. They run on throwaway containers; the committed harness is not touched unless the fixture is small and stable.
 **Acceptance Criteria**:
-- AC1: For each method in the slice, the output contains the method's configuration resource and its role or group resources, in the owning namespace's alias.
+- AC1: For each method in the slice, the output contains the method's configuration resource and its role or group resources, in the owning namespace's alias. Exception: `vault_cert_auth_backend_role` has no importer in provider 4.8.0, so cert roles are listed in `coverage.md` as "review manually" and not emitted (`task-s01-decision.md` section 6).
 - AC2: `bindpass`, `client_secret`, `token_reviewer_jwt`, `secret_key` and similar fields are sensitive variables with no default, and the fixture value appears in no file (CAC10).
 - AC3: A method outside the slice is emitted as `vault_auth_backend` and listed in `coverage.md` as "review manually", as in stage 1.
 - AC4: Roles that name a policy not present in the namespace are flagged dangling, as in CAP-006 AC5.

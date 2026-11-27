@@ -1,10 +1,107 @@
 # Handoff Document — terraform-vault-vault-codifier
 
-**Date**: 2026-11-26
-**Commit**: `main` on `origin` (https://github.com/abuxton/vault-agentic-codifier); see section 10
-**Status**: Phase 1 and Phase 2 **done and validated**. **Phases 3 and 4 are complete**. **All 34 tasks are done** (TASK-005 is superseded). TASK-028 to TASK-030 (docs) and TASK-032 (publish) closed Phase 5. An earlier version of this file said 33 of 34; that was a counting error (30 were done at that point). `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
+**Date**: 2026-11-25 (stage 2 in progress; stage 1 section dated 2026-11-26 earlier)
+**Commit**: stage 1 is on `main` at `76bfcd8`. Stage 2 is on `feature/16-stage-2-enterprise-config` at `97707a4` plus uncommitted TASK-S05 work. See section 10.
+**Status**: **Stage 1 (34 of 34 tasks) is done and published.** **Stage 2 is in progress: TASK-S01 to S04 done, TASK-S05 in progress, TASK-S06 to S10 pending.** `bash skills/codification-layer-assembly/scripts/assemble.sh` regenerates and checks everything. Full numbers are in [`STATUS_REPORT.md`](STATUS_REPORT.md).
 
 > **Approach**: the whole deliverable is a set of **agent skills** (`skills/*/SKILL.md`). There is no Python. See §3 for which tool each phase uses and why.
+
+---
+
+## 0. Stage 2 — resume here
+
+Plan: `openspec/changes/vault-codifier-stage-2/{proposal,specs,design,tasks}.md` and `task-s01-decision.md`. GitHub issues #1 to #10, tracking issue #16. A separate change, `openspec/changes/vault-codifier-remote-review/` (CAP-013, TASK-R01 to R05, issues #11 to #15, tracking #17), is **not started** and needs the cluster owner's written approval.
+
+### Task status
+
+| Task | Issue | Title | Status | Commit |
+|---|---|---|---|---|
+| TASK-S01 | #1 | Verify provider resources and import ids | Done, closed | `dea74e7` |
+| TASK-S02 | #2 | Synthetic EGP, RGP and TOTP MFA fixtures | Done, closed | `f624f82` |
+| TASK-S03 | #3 | Sentinel EGP and RGP discovery and codification (CAP-008) | Done, closed | `3188dca`, `f332cf5` |
+| TASK-S04 | #4 | MFA methods and login enforcement (CAP-009) | Done, closed | `97707a4` |
+| TASK-S05 | #5 | Auth method configuration (CAP-010) | **In progress** (see below) | uncommitted, WIP commit pending |
+| TASK-S06 | #6 | Engine configuration (CAP-011) | Ready to start | — |
+| TASK-S07 | #7 | Verification extensions | Blocked on S03 to S06 | — |
+| TASK-S08 | #8 | Waza eval suite scaffolding (mock executor, "harness only") | Blocked | — |
+| TASK-S09 | #9 | Real-executor eval run | Blocked; **needs the owner's approval of model, trials and cost** | — |
+| TASK-S10 | #10 | Docs, traceability, publish | Blocked | — |
+
+Current numbers: `spec-check` has 51 criteria (40 stage 1, 5 CAP-008, 6 CAP-009), the self-test injects 17 faults, the harness has 2 EGP, 2 RGP, 1 TOTP method and 1 login enforcement (all in `admin`). The last full `make codify-test`, `make spec-check-selftest` and `make variants` were green at `97707a4`.
+
+### Resume commands
+
+```bash
+cd /Users/abuxton/src/github/terraform-vault-vault-codifier/.worktrees/feature-stage-2-enterprise-config
+export PATH=$PATH:$HOME/.local/bin:/opt/homebrew/bin:$HOME/.rd/bin VAULT_CONFIG_PATH=/dev/null VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=root
+git status --short && git log --oneline -8
+docker rm -f vault-codifier-s05 vault-codifier-mfa 2>/dev/null   # scratch containers from last session
+docker ps --format '{{.Names}} {{.Ports}}' | grep vault-codifier  # expect only vault-codifier-dev on 8200
+```
+
+### Working rules
+
+- **Git flow with a worktree.** All stage-2 work happens in `.worktrees/feature-stage-2-enterprise-config`. At the end merge the feature into `develop` with `--no-ff`. `main` is the published stage-1 line; ask the user before merging `develop` to `main`.
+- **One conventional commit per task**, only that task's files, with `Refs #N, #16` in the body. Push after each task: `GIT_TERMINAL_PROMPT=0 git push -v origin HEAD:refs/heads/feature/16-stage-2-enterprise-config` with `background: true`, log to `tmp/work/push.log`, then verify the remote sha equals `git rev-parse HEAD`.
+- **Scanners** (IBM Vault Radar pre-commit and pre-push) run. Fix the code, never bypass. Avoid the words `pass`, `password` and `secret` next to `=` or `:` in scripts, JSON keys and prose. The repo is **public**.
+- **Scratch files go in `./tmp/work/` (git-ignored), never `/tmp`.**
+- zsh on macOS: `GID` is read-only, BSD `sed -i ''`, quote globs, include `$HOME/.rd/bin` in PATH for `docker`. There is no `timeout` or `setsid`. Foreground tool calls die at about 30 s, so run `make codify-test` (about 60 s), `make spec-check-selftest` (about 30 s) and `make variants` (about 3 min) with `background: true` and poll the log.
+- `waza`: `WAZA_NO_UPDATE_CHECK=1 WAZA_TELEMETRY_OPTOUT=1 $HOME/bin/waza check`. Skills stay within 1,500 tokens; put detail in `references/` and link each reference from `## References` in `SKILL.md` (an inline-only mention is reported as an orphan).
+- Generators must stay byte-identical on re-run. Do not commit the run-specific `discovered_terraform/validation/readonly-secrets.*`; `git checkout` them first.
+- After each task: close the GitHub issue with a comment, tick it in #16 (`/opt/homebrew/bin/gh`, `GH_PROMPT_DISABLED=1`, background), and update this file, `STATUS_REPORT.md`, `docs/traceability.md` and `tasks.md`.
+- Acceptance: CAC8 `make codify-test` passes after every task; CAC9 fixtures are synthetic and local; CAC10 no secrets in payloads, files, reports or logs. The harness runs only on 127.0.0.1. `tmp/vault.hclic` is never committed.
+
+### TASK-S05 (CAP-010) — what is done and what is left
+
+**Done (in the working tree):**
+
+- `specs.md`: CAP-010 AC1 amended with the cert-role exception.
+- `task-s01-decision.md` section 6: the verified import-id table, taken from a scratch container where one configuration with 15 `import {}` blocks planned "15 to import, 0 to change", applied, and re-planned with exit 0.
+- `skills/validation-variants/scripts/fixture-auth-config.sh`: new. `fixture_auth_config <ns> <marker> <workdir>` enables ldap, kubernetes, aws, cert, jwt, oidc and a token role with synthetic config, plus a `synthetic-ghost` Kubernetes role whose policy is missing. Marker values go into `bindpass`, `token_reviewer_jwt`, `access_key`, `secret_key`, `iam_server_id_header_value` and `oidc_client_secret`. It was last edited after the scratch container was set up, so **re-run it on a fresh container to check it**.
+
+**Verified findings (provider 4.8.0, Vault 2.2.2+ent):**
+
+| Resource | Import id and notes |
+|---|---|
+| `vault_ldap_auth_backend` | mount path; owns the mount. `bindpass` is never returned. Always emit `max_page_size = 0` (Vault returns 0, the provider default is -1). |
+| `vault_ldap_auth_backend_group` / `_user` | `auth/<p>/groups/<n>` and `auth/<p>/users/<n>` |
+| `vault_kubernetes_auth_backend_config` | `auth/<p>/config`. Vault returns `token_reviewer_jwt_set`, not the JWT. `kubernetes_ca_cert` is public. |
+| `vault_kubernetes_auth_backend_role` | `auth/<p>/role/<n>` |
+| `vault_aws_auth_backend_client` | `auth/<p>/config/client`. **`access_key` is returned in clear**; `secret_key` is never returned. Make both variables and ignore both. |
+| `vault_aws_auth_backend_role` | `auth/<p>/role/<n>`. Vault returns singular names (`bound_iam_principal_arn`); the provider takes plurals. Emit `resolve_aws_unique_ids = false` when it is false. |
+| `vault_cert_auth_backend_role` | **Not importable in 4.8.0**, and a `vault_generic_endpoint` stand-in also plans as a create. **Decision:** do not emit cert roles. Emit the mount as `vault_auth_backend` and list the roles in `coverage.md` as "review manually: provider 4.8.0 cannot import cert roles". |
+| `vault_token_auth_backend_role` | `auth/token/roles/<n>`. `token/` is not in `sys/auth`, so read roles from `auth/token/roles`. |
+| JWT and OIDC outside `admin` | `vault_jwt_auth_backend` plus `vault_jwt_auth_backend_role`, with `oidc_client_secret` as a variable and `ignore_changes`. |
+
+**Left to do:**
+
+1. Exporter policy `test/terraform/admin/policies/exporter.hcl`: add read and list grants at all four namespace depths for LDAP groups and users, cert roles, token roles and `auth/+/config/client` (it currently grants `auth/+/role`, `auth/+/role/*` and `auth/+/config` only). Apply the `admin` layer.
+2. `skills/discovery-orchestrator/scripts/auth-mounts.sh` reads roles for approle only (`unsupported=true` otherwise). Extend it to read per-method config and roles. Extend the `admin-config.sh` mask (`client_secret|bindpass|api_token|password`) with `token_reviewer_jwt`, `secret_key` and `access_key`. Raw payloads must not hold any of them.
+3. `skills/codification-auth-mounts/scripts/generate.sh` skips oidc, jwt and ldap mounts only when `$ns == "admin"` (admin-config owns those). Decide ownership outside `admin`, add the new resource types, and add `owner()` entries in `skills/codification-layer-assembly/scripts/check.sh` (`vault_kubernetes_auth_backend*`, `vault_aws_auth_backend*`, `vault_token_auth_backend_role`; `vault_jwt_auth_backend*` and `vault_ldap_auth_backend*` currently map to `admin-config`). `check.sh` also enforces one import per resource.
+4. `skills/validation-variants/scripts/run-variants.sh`: source `fixture-auth-config.sh`, assert CAP-010 AC1 to AC7, and add `TF_VAR_*` placeholders for the new sensitive variables (it already passes the OIDC and MFA ones). `skills/validation-zero-diff/scripts/zero-diff.sh` needs the same placeholders.
+5. `spec-check.sh` criteria and self-test mutations (extend the `mut` list near line 37), skill and reference updates within budget (`discovery-identity-teams` is at 1492 and `codification-teams` at 1400 tokens), `docs/traceability.md`, then `make codify-test`, `make spec-check-selftest` and `make variants`.
+6. Commit with `Refs #5, #16`, push, close #5, tick it in #16.
+
+### Remaining stage-2 tasks
+
+- **TASK-S06 (#6)**: PKI, database, AWS, transit and SSH engine config. Verify each import id first and append them to `task-s01-decision.md`. Generator: `skills/codification-secrets-engines/scripts/generate.sh`.
+- **TASK-S07 (#7)**: verification extensions in `spec-check`, `verify` and `variants`.
+- **TASK-S08 (#8)**: waza eval suite scaffolding with a mock executor labelled "harness only", plus `make evals`.
+- **TASK-S09 (#9)**: needs the owner's approval of model, trials and cost before any real-executor run.
+- **TASK-S10 (#10)**: update the README limits (line 81 still says "EGP, RGP and MFA are not exercised against a live cluster"), `AGENTS.md`, `docs/usage-guide.md`, this file and `STATUS_REPORT.md`; run a whole-history `vault-radar scan repo` in the background; merge the feature into `develop` with `--no-ff`; push.
+
+### Open decisions for the user
+
+- The repo is public, though TASK-032 said private unless told otherwise.
+- The stage-2 slice of auth methods and engines is my choice: CAP-010 covers LDAP, Kubernetes, AWS, cert, token roles and JWT/OIDC outside `admin`; CAP-011 covers PKI, database, AWS, transit and SSH.
+- TASK-S09 cost approval (above), and the cluster owner's approval for the remote-review change.
+
+### Stage-2 discoveries
+
+- **S03**: discovery writes `<ns>/sentinel.json`. The generator emits `<ns>_sentinel.tf`, `imports_sentinel.tf` and `policies/sentinel/<root|ns__path>/<kind>-<name>.sentinel`. Fixture Sentinel text must not contain `SYNTHETIC-` (CAP-004-AC3 forbids it); it reads "Harness fixture: always passes."
+- **S04**: a child namespace's `LIST identity/mfa/method` also returns its ancestors' methods, so discovery filters on `namespace_path`. Vault never returns Duo, Okta or PingID keys; Okta never returns `primary_email`. Each method type is allowlisted in `mfa.json`. A TOTP method's `name` is empty. Details in `task-s01-decision.md` sections 2 and 5.
+- `openspec/changes/vault-brownfield-research/design.md` links a non-existent `../../test/PREREQUISITES.md`. Not fixed.
+- `tmp/tasklist` and `existing-terraform-change-plan.md` in the main checkout are the user's files. Do not commit them.
 
 ---
 
@@ -162,7 +259,7 @@ Waza 0.42.0 reports 23 of 23 skills `ready`, no `spec-allowed-fields` warnings a
 - **Human auth in `admin`** (`oidc`, `jwt`, `ldap`) is emitted by admin-config; auth-mounts skips those mounts. admin-config's `vault_auth_backend` grep applies to its own files only.
 - The harness has 4 KV mounts (root `secret/` is imported too), 7 entities, 9 groups and 1 alias.
 - The AC-1 counts in the discovery skills and in `codification-policies` and `codification-auth-mounts` now include the `exporter` objects (10 policies, 6 roles). Skills must tolerate harness drift.
-- Variant branches are covered by `make variants` (TASK-026) on throwaway containers; EGP, RGP and MFA are still not exercised.
+- Variant branches are covered by `make variants` (TASK-026) on throwaway containers. EGP, RGP and TOTP MFA are now exercised on the harness (stage 2, TASK-S02 to S04); LDAP, Kubernetes, AWS and cert auth config and the secrets-engine config (CAP-010, CAP-011) are not yet.
 - Provider 4.8.0 import quirks handled in generators: `vault_auth_backend` needs `lifecycle { ignore_changes }` for `disable_remount` and an untuned `tune`; `vault_quota_rate_limit` does not read back `inheritable`; `vault_audit` imports by bare path.
 
 ---
@@ -270,7 +367,7 @@ Vault Enterprise dev-HA flags required: `-dev-ha -dev-transactional -dev-listen-
 4. ~~TASK-023..027 validation skills~~ and ~~TASK-033 waza fixes~~: done, one commit each.
 5. ~~TASK-028 `AGENTS.md`~~ and ~~TASK-029 README and usage guide~~: done, one commit each.
 6. ~~TASK-030 traceability~~ and ~~TASK-032 publish~~: done.
-7. Follow-ups are specified and planned as two OpenSpec changes, not started: `openspec/changes/vault-codifier-stage-2/` (tracking issue #16; CAP-008 to CAP-012: EGP, RGP and MFA fixtures; auth-method and engine configuration; a waza eval suite; 10 tasks) and `openspec/changes/vault-codifier-remote-review/` (tracking issue #17; CAP-013: a guarded review on a non-harness cluster, needs the cluster owner's written approval; 5 tasks). Owners are in `docs/traceability.md` section 6.
+7. Follow-ups are two OpenSpec changes. `openspec/changes/vault-codifier-stage-2/` (tracking issue #16; CAP-008 to CAP-012; 10 tasks) is **in progress**: S01 to S04 are done, S05 is in progress. See section 0. `openspec/changes/vault-codifier-remote-review/` (tracking issue #17; CAP-013: a guarded review on a non-harness cluster, needs the cluster owner's written approval; 5 tasks) is not started. Owners are in `docs/traceability.md` section 6.
 
 Per-generator recipe that worked seven times: load the raw JSON with `jq`, keep jq programs in single-quoted heredocs (`read -r -d '' PROG <<'JQ'`) and pass values with `--arg`/`--argjson`, call `scaffold-layer.sh` for `versions.tf` and `providers.tf`, write `<ns>_<capability>.tf` and `imports_<capability>.tf`, exit 2 on orphans, duplicate labels or credential fields, run `terraform fmt`, then re-run and diff for idempotence.
 
@@ -305,14 +402,18 @@ Terraform and Vault MCP servers are configured for Bob (`.bob/mcp.json`), Claude
 ## 10. Git state
 
 ```
-Branch:  main
-Remote:  origin  https://github.com/abuxton/vault-agentic-codifier  (public; tracks origin/main)
-Head:    run `git log --oneline -5`; the last task commit is "docs: record TASK-032 ..." after 3974133 (TASK-030)
+main     76bfcd8  published stage-1 line (origin/main)
+develop  0f2db79  branches from main; stage 2 merges here with --no-ff
+feature/16-stage-2-enterprise-config  checked out at .worktrees/feature-stage-2-enterprise-config
+  dea74e7 S01   f624f82 S02   3188dca + f332cf5 S03   ab5af83 gitignore tmp/work/   97707a4 S04
+Remote:  origin  https://github.com/abuxton/vault-agentic-codifier  (public)
 Run state (run_report.json, .state.json) is git-ignored. Generated output under discovered_terraform/terraform/ and the evidence under discovered_terraform/validation/ are committed.
 ```
 
-Push with `GIT_TERMINAL_PROMPT=0 git push origin main`. The pre-commit and pre-push hooks run the Vault Radar secret scan; fix findings, never bypass.
+The harness container `vault-codifier-dev` (Vault 2.2.2+ent, 127.0.0.1:8200) is shared by both checkouts. In the worktree, `tmp/vault.hclic` is a symlink to the main checkout's licence (git-ignored) and Terraform state, `.terraform` and lock files are copied into `test/terraform/{admin,namespaces,seed}`.
+
+Push commands are in section 0. The pre-commit and pre-push hooks run the Vault Radar secret scan; fix findings, never bypass.
 
 ---
 
-*Updated 2026-11-26 after TASK-032; all 34 tasks done. Convention: one commit per task.*
+*Updated 2026-11-25 for the stage-2 handoff. Stage 1: 34 of 34 tasks done. Stage 2: S01 to S04 done, S05 in progress. Convention: one commit per task.*

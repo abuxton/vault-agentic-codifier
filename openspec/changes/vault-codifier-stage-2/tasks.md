@@ -29,7 +29,7 @@ Tracking issue: [#16](https://github.com/abuxton/vault-agentic-codifier/issues/1
 | [TASK-S02](https://github.com/abuxton/vault-agentic-codifier/issues/2) | Harness fixtures for EGP, RGP and MFA | A | CAP-008, CAP-009 | implementation | M | **Done** |
 | [TASK-S03](https://github.com/abuxton/vault-agentic-codifier/issues/3) | Sentinel discovery and generator | B | CAP-008 | implementation | L | **Done** |
 | [TASK-S04](https://github.com/abuxton/vault-agentic-codifier/issues/4) | MFA discovery and generator | B | CAP-009 | implementation | L | **Done** |
-| [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | Ready to start |
+| [TASK-S05](https://github.com/abuxton/vault-agentic-codifier/issues/5) | Auth method configuration: variant fixture, discovery, generator | C | CAP-010 | implementation | XL | **In progress** (import ids verified; discovery and generator not started) |
 | [TASK-S06](https://github.com/abuxton/vault-agentic-codifier/issues/6) | Engine configuration: variant fixture, discovery, generator | C | CAP-011 | implementation | XL | Ready to start |
 | [TASK-S07](https://github.com/abuxton/vault-agentic-codifier/issues/7) | Verification extensions (spec-check, verify, variants) | D | CAC8 to CAC10 | test | L | Blocked |
 | [TASK-S08](https://github.com/abuxton/vault-agentic-codifier/issues/8) | Eval suite scaffolding and deterministic graders | E | CAP-012 | test | L | Blocked |
@@ -105,7 +105,7 @@ Phases: A foundation, B Enterprise policy and identity, C breadth, D verificatio
 **Effort**: XL
 **Skill**: `skills/discovery-auth-mounts`, `skills/codification-auth-mounts`
 **Depends on**: TASK-S01
-**Status**: Ready to start
+**Status**: In progress. Import ids are verified (`task-s01-decision.md` section 6) and the variant fixture is written (`skills/validation-variants/scripts/fixture-auth-config.sh`). Provider 4.8.0 cannot import `vault_cert_auth_backend_role`, so cert roles are not emitted: the mount is emitted and the roles are listed in `coverage.md` as "review manually" (CAP-010 AC1 amended). Discovery, generator, exporter-policy grants and verification are still to do. See `HANDOFF.md` section 0.
 **Description**: First verify the CAP-010 resources and import ids as TASK-S01 did, and append them to `task-s01-decision.md`. Then build the scratch variant fixture for LDAP, Kubernetes, AWS, cert, token roles and JWT/OIDC outside `admin`, extend discovery to read the method config and roles with secrets masked, and extend the generator to emit per-method resources. One method at a time, each with its own zero-diff check.
 **Acceptance Criteria**:
 - AC: CAP-010 AC1 to AC7 hold in the variant run.

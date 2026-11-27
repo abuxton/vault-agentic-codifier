@@ -102,9 +102,24 @@ Two generator gaps found by the variants and fixed: `admin-config.sh` now reads 
 | 13 low-severity findings in git history | Repository owner | None is a credential; accepted, listed in `docs/traceability.md` section 6 |
 | `discovered_terraform/terraform/` is committed | Maintainer | Kept as the reviewed reference output; the run state is ignored |
 
+## Stage 2 progress (2026-11-25)
+
+All 34 stage-1 tasks are done and published on `main`. Stage 2 is on `feature/16-stage-2-enterprise-config` (git flow, worktree `.worktrees/feature-stage-2-enterprise-config`).
+
+| Task | Status |
+|---|---|
+| S01 Verify provider resources and import ids | Done (`dea74e7`) |
+| S02 Synthetic EGP, RGP and TOTP MFA fixtures | Done (`f624f82`) |
+| S03 Sentinel EGP and RGP (CAP-008) | Done (`3188dca`, `f332cf5`) |
+| S04 MFA methods and login enforcement (CAP-009) | Done (`97707a4`) |
+| S05 Auth method configuration (CAP-010) | In progress: import ids verified, fixture written; discovery and generator to do. Cert roles cannot be imported in provider 4.8.0, so they are listed for manual review. |
+| S06 to S10 | Pending (S06 ready; S07 to S10 blocked) |
+
+`spec-check` is 51 criteria and its self-test injects 17 faults. The last full `make codify-test`, `make spec-check-selftest` and `make variants` were green at `97707a4`. Resume instructions are in [`HANDOFF.md`](HANDOFF.md) section 0.
+
 ## Next steps, in order
 
-All 34 tasks are done. Follow-ups are specified and planned, not started:
+Stage 1 is done. Follow-ups are specified and planned:
 
-1. [`vault-codifier-stage-2`](openspec/changes/vault-codifier-stage-2/proposal.md): an Enterprise fixture for EGP, RGP and MFA (CAP-008, CAP-009); auth-method and engine configuration beyond AppRole and KV v2 (CAP-010, CAP-011); a waza eval suite (CAP-012). 10 tasks, tracking issue [#16](https://github.com/abuxton/vault-agentic-codifier/issues/16). The real-executor eval run needs the owner's approval of the cost.
+1. [`vault-codifier-stage-2`](openspec/changes/vault-codifier-stage-2/proposal.md): in progress (above). An Enterprise fixture for EGP, RGP and MFA (CAP-008, CAP-009); auth-method and engine configuration beyond AppRole and KV v2 (CAP-010, CAP-011); a waza eval suite (CAP-012). 10 tasks, tracking issue [#16](https://github.com/abuxton/vault-agentic-codifier/issues/16). The real-executor eval run needs the owner's approval of the cost.
 2. [`vault-codifier-remote-review`](openspec/changes/vault-codifier-remote-review/proposal.md): a first, guarded, read-only review on a non-harness cluster (CAP-013). 5 tasks, tracking issue [#17](https://github.com/abuxton/vault-agentic-codifier/issues/17). It needs the cluster owner's written approval and is best run after stage 2.
